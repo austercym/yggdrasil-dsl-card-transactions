@@ -1,0 +1,13 @@
+zookeeper:
+   host: localhost:2181
+bootstrap:
+   host: localhost:9092,localhost:10092
+topic:
+   name: 
+      - com.orwellg.gps.authorisation.request
+   commitInterval: 3         
+application:
+   id: gps-dsl-topic-subscriber
+   name: gps-dsl-topic-subscriber
+configuration:
+   autoOffsetReset: earliest

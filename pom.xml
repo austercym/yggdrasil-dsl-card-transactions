@@ -1,8 +1,33 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>com.orwellg.yggdrasil</groupId>
-  <artifactId>yggdrasil-dsl-card-transactions</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  <name>yggdrasil-dsl-card-transactions</name>
-  <description>DSL Topology to process card transactions</description>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.orwellg.yggdrasil</groupId>
+	<artifactId>yggdrasil-dsl-card-transactions</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>yggdrasil-dsl-card-transactions</name>
+	<description>DSL Topology to process card transactions</description>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+
+		<storm.version>1.1.0</storm.version>
+		<kafka.clients.version>0.11.0.0</kafka.clients.version>
+		<umbrella.version>0.0.1</umbrella.version>
+	</properties>
+
+	<dependencies>
+		<!-- orwell -->
+		<dependency>
+			<groupId>com.orwellg.umbrella</groupId>
+			<artifactId>umbrella-commons</artifactId>
+			<version>${umbrella.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.orwellg.umbrella</groupId>
+			<artifactId>umbrella-commons-storm</artifactId>
+			<version>${umbrella.version}</version>
+		</dependency>
+	</dependencies>
 </project>
