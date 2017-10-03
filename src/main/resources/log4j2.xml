@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="debug">
+	<Appenders>
+		<Console name="CONSOLE" target="SYSTEM_OUT">
+			<PatternLayout pattern="%d %-5p [%t] %C{2} (%F:%L) - %m%n" />
+		</Console>
+		<File name="FILE" fileName="temp">
+			<PatternLayout pattern="%d %-5p [%t] %C{2} (%F:%L) - %m%n" />
+		</File>
+		<!-- 
+		<Kafka name="KAFKA" topic="log.1" syncsend="true" ignoreexceptions="false">
+			<PatternLayout pattern="%d %-5p [%t] %C{2} (%F:%L) - %m%n" />
+      		<Property name="bootstrap.servers">localhost:9092,localhost:10092</Property>
+    	</Kafka>
+    	-->
+		<Async name="ASYNC">
+			<AppenderRef ref="FILE" />
+			<AppenderRef ref="CONSOLE" />
+		</Async>
+	</Appenders>
+	<Loggers>
+		<Logger name="org.apache.kafka" level="INFO">
+			<AppenderRef ref="ASYNC" />
+		</Logger>
+		<Logger name="org.apache.storm" level="INFO">
+			<AppenderRef ref="ASYNC" />
+		</Logger>
+		<Logger name="com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout" level="INFO">
+			<AppenderRef ref="ASYNC" />
+		</Logger>
+		<!--
+		<Logger name="com.orwellg.ipagoo.aml" level="DEBUG">
+			<AppenderRef ref="CONSOLE" />
+		</Logger>
+		-->
+		<Root level="INFO">
+			<AppenderRef ref="ASYNC" />
+		</Root>
+	</Loggers>
+</Configuration>

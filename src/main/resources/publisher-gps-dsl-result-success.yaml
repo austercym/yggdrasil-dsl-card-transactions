@@ -1,0 +1,14 @@
+zookeeper:
+   host: localhost:2181
+bootstrap:
+   host: localhost:9092,localhost:10092
+topic:
+    name: 
+       - com.orwellg.gps.response
+    commitInterval: 3                         
+application:
+    id: gps-dsl-result-success-publisher
+    name: gps-dsl-result-success-publisher
+configuration:
+    retries: 0
+    acks: 1

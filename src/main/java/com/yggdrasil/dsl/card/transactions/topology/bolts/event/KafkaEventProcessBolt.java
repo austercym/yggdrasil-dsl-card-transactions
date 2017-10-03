@@ -28,7 +28,7 @@ public class KafkaEventProcessBolt
 
 		LOG.info("[Key: {}][ProcessId: {}]: Received GPS message event", key, processId);
 
-		// Get the JSON message with the datas
+		// Get the JSON message with the data
 		Message eventData = gson.fromJson(event.getEvent().getData().toString(), Message.class);
 
 		Map<String, Object> values = new HashMap<>();
