@@ -1,14 +1,14 @@
 package com.yggdrasil.dsl.card.transactions.topology.bolts.event;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import com.orwellg.umbrella.avro.types.event.Event;
+import com.orwellg.umbrella.avro.types.gps.Message;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
 
-import com.orwellg.umbrella.avro.types.event.Event;
-import com.orwellg.umbrella.avro.types.gps.Message;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class KafkaEventProcessBolt
 		extends com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventProcessBolt {
@@ -39,5 +39,10 @@ public class KafkaEventProcessBolt
 		send(input, values);
 
 		LOG.info("[Key: {}][ProcessId: {}]: GPS message event sent.", key, processId);
+	}
+
+	@Override
+	public void declareFieldsDefinition() {
+		addFielsDefinition(Arrays.asList("key", "processId", "eventData"));
 	}
 }

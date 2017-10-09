@@ -32,7 +32,9 @@ public class SampleBolt extends BasicRichBolt {
 		LOG.debug("Event received: {}. Starting the decode process.", input);
 		
 		try {
-			Message event = (Message) input.getValues().get(2);
+            List<Object> inputValues = input.getValues();
+            Message event = (Message) inputValues.get(2);
+			String parentKey = (String) inputValues.get(0);
 
 			LOG.info(
 			        "Token: {}, TxnType: {}, Amount: {} {}",
@@ -44,11 +46,14 @@ public class SampleBolt extends BasicRichBolt {
             response.setAvlBalance(19.09);
             response.setCurBalance(20.15);
 
-            Event responseEvent = generateEvent(this.getClass().getName(), CardTransactionEvents.RESPONSE_MESSAGE.getEventName(), response);
+            Event responseEvent = generateEvent(
+                    this.getClass().getName(), CardTransactionEvents.RESPONSE_MESSAGE.getEventName(), response,
+                    parentKey);
 
             Map<String, Object> values = new HashMap<>();
             values.put("key", input.getStringByField("key"));
             values.put("message", RawMessageUtils.encodeToString(Event.SCHEMA$, responseEvent));
+            // TODO: get response topic from input event
             values.put("topic", "com.orwellg.gps.response");
 
             send(input, values);
@@ -58,7 +63,7 @@ public class SampleBolt extends BasicRichBolt {
 			error(e, input);
 		}
 	}
-    private Event generateEvent(String source, String eventName, Object eventData) {
+    private Event generateEvent(String source, String eventName, Object eventData, String parentKey) {
 
         LOG.debug("Generating event with response data.");
 
@@ -71,6 +76,7 @@ public class SampleBolt extends BasicRichBolt {
         eventType.setParentKey(Constants.EMPTY);
         eventType.setKey("EVENT-" + uuid);
         eventType.setSource(source);
+        eventType.setParentKey(parentKey);
         SimpleDateFormat format = new SimpleDateFormat(Constants.getDefaultEventTimestampFormat());
         eventType.setTimestamp(format.format(new Date()));
         eventType.setData(eventData.toString());
