@@ -23,13 +23,13 @@ public class KafkaEventProcessBolt
 	@Override
 	public void sendNextStep(Tuple input, Event event) {
 
-		String key = event.getEvent().getKey().toString();
-		String processId = event.getProcessIdentifier().getUuid().toString();
+		String key = event.getEvent().getKey();
+		String processId = event.getProcessIdentifier().getUuid();
 
 		LOG.info("[Key: {}][ProcessId: {}]: Received GPS message event", key, processId);
 
 		// Get the JSON message with the data
-		Message eventData = gson.fromJson(event.getEvent().getData().toString(), Message.class);
+		Message eventData = gson.fromJson(event.getEvent().getData(), Message.class);
 
 		Map<String, Object> values = new HashMap<>();
 		values.put("key", key);
