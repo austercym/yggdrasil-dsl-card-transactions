@@ -4,7 +4,7 @@
 		<Console name="CONSOLE" target="SYSTEM_OUT">
 			<PatternLayout pattern="%d %-5p [%t] %C{2} (%F:%L) - %m%n" />
 		</Console>
-		<RollingFile name="FILE" filename="yggdrasil-dsl-card-transactions.log" filePattern="yggdrasil-dsl-card-transactions-%d{yyyy-MM-dd}-%i.log">
+		<RollingFile name="FILE" filename="logs/yggdrasil-dsl-card-transactions.log" filePattern="logs/yggdrasil-dsl-card-transactions-%d{yyyy-MM-dd}-%i.log">
 			<PatternLayout pattern="%d %-5p [%t] %C{2} (%F:%L) - %m%n" />
 			<Policies>
 				<SizeBasedTriggeringPolicy size="100 KB"/>

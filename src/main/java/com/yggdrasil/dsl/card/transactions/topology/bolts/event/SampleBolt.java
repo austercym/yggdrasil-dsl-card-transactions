@@ -19,14 +19,11 @@ import java.util.*;
 
 public class SampleBolt extends BasicRichBolt {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 
 	private static final Logger LOG = LogManager.getLogger(SampleBolt.class);
 
-	@Override
+    @Override
 	public void execute(Tuple input) {
 	
 		LOG.debug("Event received: {}. Starting the decode process.", input);
@@ -63,6 +60,7 @@ public class SampleBolt extends BasicRichBolt {
 			error(e, input);
 		}
 	}
+
     private Event generateEvent(String source, String eventName, Object eventData, String parentKey) {
 
         LOG.debug("Generating event with response data.");
