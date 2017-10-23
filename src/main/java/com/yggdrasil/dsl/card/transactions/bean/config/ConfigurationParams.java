@@ -22,8 +22,9 @@ public class ConfigurationParams extends ZkConfigurationParams implements Serial
 
     public static final String DEFAULT_PROPERTIES_FILE = "yggdrasil-dsl-card-transactions.properties";
 
-    public static final String DEFAULT_SUB_BRANCH      = "/yggdrasil/card/transactions/dsl";
-    public static final String ZK_SUB_BRANCH_KEY       = "zookeeper.dsl.card.transactions.config.subbranch";
+    public static final String DEFAULT_SUB_BRANCH        = "/yggdrasil/card/transactions/dsl";
+    public static final String DEFAULT_SCYLLA_SUB_BRANCH = DEFAULT_SUB_BRANCH + "/scylla";
+    public static final String ZK_SUB_BRANCH_KEY         = "zookeeper.dsl.card.transactions.config.subbranch";
 
 
     private TopologyParams topologyParams;
@@ -80,6 +81,7 @@ public class ConfigurationParams extends ZkConfigurationParams implements Serial
     public ConfigurationParams() {
         LOG.info("Loading configuration params.");
         scyllaConfig = new ScyllaConfig(DEFAULT_PROPERTIES_FILE);
+        scyllaConfig.setApplicationRootConfig(ScyllaConfig.ZK_SUB_BRANCH_KEY, DEFAULT_SCYLLA_SUB_BRANCH);
         super.setPropertiesFile(DEFAULT_PROPERTIES_FILE);
         super.setApplicationRootConfig(ZK_SUB_BRANCH_KEY, DEFAULT_SUB_BRANCH);
         LOG.info("Configuration params loaded.");

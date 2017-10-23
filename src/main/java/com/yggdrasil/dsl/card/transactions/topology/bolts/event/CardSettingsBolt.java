@@ -4,7 +4,7 @@ import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.repositories.CardSettingsRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.CardSettingsRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.generics.scylla.ScyllaRichBolt;
-import com.orwellg.umbrella.commons.types.scylla.entities.CardSettings;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
