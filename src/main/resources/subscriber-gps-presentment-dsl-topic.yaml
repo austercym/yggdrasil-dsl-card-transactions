@@ -3,9 +3,9 @@ zookeeper:
 bootstrap:
    host: localhost:9092,localhost:10092
 topic:
-   name: 
-      - com.orwellg.gps.request
-   commitInterval: 3         
+   name:
+      - com.orwellg.gps.presentment.request
+   commitInterval: 3
 application:
    id: gps-dsl-topic-subscriber
    name: gps-dsl-topic-subscriber
