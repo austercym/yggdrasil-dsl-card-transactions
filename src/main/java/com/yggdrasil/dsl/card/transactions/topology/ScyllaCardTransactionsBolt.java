@@ -8,6 +8,7 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 
+
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +18,8 @@ public class ScyllaCardTransactionsBolt extends ScyllaRichBolt<List<CardTransact
 
     @Override
     protected void setScyllaConnectionParameters() {
+        //setScyllaNodes(ComponentFactory.getCon().getScyllaConfig().getScyllaParams().getNodeList());
+        //setScyllaKeyspace(ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getKeyspace());
         setScyllaNodes("localhost:9042"); //todo: config
         setScyllaKeyspace("cards"); //todo: config
     }

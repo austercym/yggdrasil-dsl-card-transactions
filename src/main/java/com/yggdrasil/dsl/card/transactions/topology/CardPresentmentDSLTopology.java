@@ -10,6 +10,7 @@ import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
 import com.yggdrasil.dsl.card.transactions.topology.bolts.event.KafkaEventProcessBolt;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.event.ValidateAuthenticationBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.Config;
@@ -60,11 +61,15 @@ public class CardPresentmentDSLTopology {
 
 
         //Get card authorisation data
-        GBolt<?> sampleBolt = new GRichBolt("process-db-access", new ScyllaCardTransactionsBolt(), hints);
-        sampleBolt.addGrouping(new ShuffleGrouping("kafka-event-success-process"));
+        GBolt<?> cardAuthorisationBolt = new GRichBolt("process-get-authentication", new ScyllaCardTransactionsBolt(), hints);
+        cardAuthorisationBolt.addGrouping(new ShuffleGrouping("kafka-event-success-process"));
 
 
         //see if data is complete - if it is send message to kafka
+        // Sample processor
+        GBolt<?> authValidationBolt = new GRichBolt("process-validate-authentication", new ValidateAuthenticationBolt(), hints);
+        authValidationBolt.addGrouping(new ShuffleGrouping("process-get-authentication"));
+
         //if it is not - try to get card data from
         //see if this is offline transaction -> try to get account connected to the transaction in the time of the transaction
         //create avro type for sending out presentment response message
@@ -74,7 +79,7 @@ public class CardPresentmentDSLTopology {
         // Build the topology
         StormTopology topology = TopologyFactory.generateTopology(
                 kafkaEventReader,
-                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, sampleBolt));
+                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, cardAuthorisationBolt, authValidationBolt));
         LOG.debug("Topology created");
 
         // Create the basic config and upload the topology
