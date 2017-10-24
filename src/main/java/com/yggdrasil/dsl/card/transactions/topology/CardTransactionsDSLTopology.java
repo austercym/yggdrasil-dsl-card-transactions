@@ -3,6 +3,7 @@ package com.yggdrasil.dsl.card.transactions.topology;
 import java.util.Arrays;
 
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltFieldNameWrapper;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.event.CardSettingsBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.Config;
@@ -45,10 +46,14 @@ public class CardTransactionsDSLTopology {
 		// GBolt for send errors of events to kafka
 		GBolt<?> kafkaErrorProducer = new GRichBolt("kafka-error-producer", new KafkaBoltWrapper("publisher-gps-dsl-error.yaml", String.class, String.class).getKafkaBolt(), hints);
 		kafkaErrorProducer.addGrouping(new ShuffleGrouping("kafka-event-error-process"));
+
+		// Get data from DB
+		GBolt<?> getDataBolt = new GRichBolt("get-data", new CardSettingsBolt(), hints);
+		getDataBolt.addGrouping(new ShuffleGrouping("kafka-event-success-process"));
 		
 		// Sample processor
 		GBolt<?> sampleBolt = new GRichBolt("process-worker", new SampleBolt(), hints);
-		sampleBolt.addGrouping(new ShuffleGrouping("kafka-event-success-process"));
+		sampleBolt.addGrouping(new ShuffleGrouping("get-data"));
 
 		// Send a event with the result
 		GBolt<?> kafkaEventSuccessProducer = new GRichBolt("kafka-event-success-producer", new KafkaBoltFieldNameWrapper("publisher-gps-dsl-result-success.yaml", String.class, String.class).getKafkaBolt(), 10);
@@ -57,7 +62,7 @@ public class CardTransactionsDSLTopology {
 		// Build the topology
 		StormTopology topology = TopologyFactory.generateTopology(
 				kafkaEventReader,
-				Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, sampleBolt,kafkaEventSuccessProducer));
+				Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, getDataBolt, sampleBolt, kafkaEventSuccessProducer));
 		LOG.debug("Topology created");
 		
 		// Create the basic config and upload the topology
