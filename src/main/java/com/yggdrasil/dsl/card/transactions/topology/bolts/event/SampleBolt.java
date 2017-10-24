@@ -99,6 +99,6 @@ public class SampleBolt extends BasicRichBolt {
 
 	@Override
 	public void declareFieldsDefinition() {
-		addFielsDefinition(Arrays.asList("key", "message", "topic"));
+		addFielsDefinition(Arrays.asList("key", "processId", "message", "topic"));
 	}
 }
