@@ -1,10 +1,11 @@
-package com.yggdrasil.dsl.card.transactions.topology;
+package com.yggdrasil.dsl.card.transactions.topology.bolts.event;
 
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.repositories.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.generics.scylla.ScyllaRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
+import com.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 
@@ -12,16 +13,14 @@ import org.apache.storm.task.TopologyContext;
 import java.util.List;
 import java.util.Map;
 
-public class ScyllaCardTransactionsBolt extends ScyllaRichBolt<List<CardTransaction>, Message> {
+public class PresentmentScyllaCardTransactionsBolt extends ScyllaRichBolt<List<CardTransaction>, Message> {
 
     private CardTransactionRepository repository;
 
     @Override
     protected void setScyllaConnectionParameters() {
-        //setScyllaNodes(ComponentFactory.getCon().getScyllaConfig().getScyllaParams().getNodeList());
-        //setScyllaKeyspace(ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getKeyspace());
-        setScyllaNodes("localhost:9042"); //todo: config
-        setScyllaKeyspace("cards"); //todo: config
+        setScyllaNodes(ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getNodeList());
+        setScyllaKeyspace(ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getKeyspace());
     }
 
     @Override

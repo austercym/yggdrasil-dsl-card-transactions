@@ -7,10 +7,13 @@ import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GBolt;
 import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GRichBolt;
 import com.orwellg.umbrella.commons.storm.topology.generic.grouping.ShuffleGrouping;
 import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
+import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltFieldNameWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
 import com.yggdrasil.dsl.card.transactions.topology.bolts.event.KafkaEventProcessBolt;
-import com.yggdrasil.dsl.card.transactions.topology.bolts.event.ValidateAuthenticationBolt;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.event.PresentmentOfflineMockBolt;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.event.PresentmentValidateAuthorisationBolt;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.event.PresentmentScyllaCardTransactionsBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.Config;
@@ -21,7 +24,8 @@ import java.util.Arrays;
 
 public class CardPresentmentDSLTopology {
 
-    private final static Logger LOG = LogManager.getLogger(CardTransactionsDSLTopology.class);
+    private final static Logger LOG = LogManager.getLogger(CardPresentmentDSLTopology.class);
+    public final static String OFFLINE_PRESENTMENT_STREAM = "offline-presentment-stream";
 
     public static void main(String[] args) throws Exception {
 
@@ -61,25 +65,28 @@ public class CardPresentmentDSLTopology {
 
 
         //Get card authorisation data
-        GBolt<?> cardAuthorisationBolt = new GRichBolt("process-get-authentication", new ScyllaCardTransactionsBolt(), hints);
+        GBolt<?> cardAuthorisationBolt = new GRichBolt("process-get-authentication", new PresentmentScyllaCardTransactionsBolt(), hints);
         cardAuthorisationBolt.addGrouping(new ShuffleGrouping("kafka-event-success-process"));
 
 
         //see if data is complete - if it is send message to kafka
-        // Sample processor
-        GBolt<?> authValidationBolt = new GRichBolt("process-validate-authentication", new ValidateAuthenticationBolt(), hints);
+        GBolt<?> authValidationBolt = new GRichBolt("process-validate-authentication", new PresentmentValidateAuthorisationBolt(), hints);
         authValidationBolt.addGrouping(new ShuffleGrouping("process-get-authentication"));
 
-        //if it is not - try to get card data from
-        //see if this is offline transaction -> try to get account connected to the transaction in the time of the transaction
-        //create avro type for sending out presentment response message
 
+        GBolt<?> offlinePresentmentBolt = new GRichBolt("process-offline-presentment", new PresentmentOfflineMockBolt(), hints);
+        offlinePresentmentBolt.addGrouping(new ShuffleGrouping("process-validate-authentication", OFFLINE_PRESENTMENT_STREAM));
+
+        // Send a event with the result
+        GBolt<?> kafkaEventSuccessProducer = new GRichBolt("kafka-event-success-producer", new KafkaBoltFieldNameWrapper("publisher-gps-dsl-presentment-msg-processed-success.yaml", String.class, String.class).getKafkaBolt(), 10);
+        kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping("process-validate-authentication"));
+        kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping("process-offline-presentment"));
 
 
         // Build the topology
         StormTopology topology = TopologyFactory.generateTopology(
                 kafkaEventReader,
-                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, cardAuthorisationBolt, authValidationBolt));
+                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, cardAuthorisationBolt, authValidationBolt, offlinePresentmentBolt, kafkaEventSuccessProducer));
         LOG.debug("Topology created");
 
         // Create the basic config and upload the topology
