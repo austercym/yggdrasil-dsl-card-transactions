@@ -34,7 +34,7 @@ public class AuthorisationDSLTopology {
 		Integer hints = 1;
 		
 		// Create the spout that read the events from Kafka
-		GSpout kafkaEventReader = new GSpout("kafka-event-reader", new KafkaSpoutWrapper("subscriber-gps-dsl-topic.yaml", String.class, String.class).getKafkaSpout(), hints);
+		GSpout kafkaEventReader = new GSpout("kafka-event-reader", new KafkaSpoutWrapper("subscriber-gps-authorisation-dsl-topic.yaml", String.class, String.class).getKafkaSpout(), hints);
 		
 		// Parse the events and we send it to the rest of the topology
 		GBolt<?> kafkaEventProcess = new GRichBolt("kafka-event-success-process", new KafkaEventProcessBolt(), hints);
