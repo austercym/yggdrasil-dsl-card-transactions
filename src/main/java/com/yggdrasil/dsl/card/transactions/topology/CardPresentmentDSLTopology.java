@@ -25,6 +25,7 @@ import java.util.Arrays;
 public class CardPresentmentDSLTopology {
 
     private final static Logger LOG = LogManager.getLogger(CardPresentmentDSLTopology.class);
+  
     public final static String OFFLINE_PRESENTMENT_STREAM = "offline-presentment-stream";
 
     public static void main(String[] args) throws Exception {

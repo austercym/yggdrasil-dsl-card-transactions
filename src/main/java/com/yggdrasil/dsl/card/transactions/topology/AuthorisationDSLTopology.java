@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltFieldNameWrapper;
 import com.yggdrasil.dsl.card.transactions.topology.bolts.event.CardSettingsBolt;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.event.ProcessJoinValidatorBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.Config;
@@ -20,11 +21,11 @@ import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
 import com.yggdrasil.dsl.card.transactions.topology.bolts.event.KafkaEventProcessBolt;
-import com.yggdrasil.dsl.card.transactions.topology.bolts.event.SampleBolt;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.event.ResponseGeneratorBolt;
 
-public class CardTransactionsDSLTopology {
+public class AuthorisationDSLTopology {
 	
-	private final static Logger LOG = LogManager.getLogger(CardTransactionsDSLTopology.class);
+	private final static Logger LOG = LogManager.getLogger(AuthorisationDSLTopology.class);
 
 
 	public static void main(String[] args) throws Exception {
@@ -33,7 +34,7 @@ public class CardTransactionsDSLTopology {
 		Integer hints = 1;
 		
 		// Create the spout that read the events from Kafka
-		GSpout kafkaEventReader = new GSpout("kafka-event-reader", new KafkaSpoutWrapper("subscriber-gps-dsl-topic.yaml", String.class, String.class).getKafkaSpout(), hints);
+		GSpout kafkaEventReader = new GSpout("kafka-event-reader", new KafkaSpoutWrapper("subscriber-gps-authorisation-dsl-topic.yaml", String.class, String.class).getKafkaSpout(), hints);
 		
 		// Parse the events and we send it to the rest of the topology
 		GBolt<?> kafkaEventProcess = new GRichBolt("kafka-event-success-process", new KafkaEventProcessBolt(), hints);
@@ -50,19 +51,23 @@ public class CardTransactionsDSLTopology {
 		// Get data from DB
 		GBolt<?> getDataBolt = new GRichBolt("get-data", new CardSettingsBolt(), hints);
 		getDataBolt.addGrouping(new ShuffleGrouping("kafka-event-success-process"));
-		
-		// Sample processor
-		GBolt<?> sampleBolt = new GRichBolt("process-worker", new SampleBolt(), hints);
-		sampleBolt.addGrouping(new ShuffleGrouping("get-data"));
+
+		// Validation bolt
+		GBolt<?> processValidationBolt = new GRichBolt("process-validation", new ProcessJoinValidatorBolt("process-validation"), 20);
+		processValidationBolt.addGrouping(new ShuffleGrouping("get-data"));
+
+		// Response generation bolt
+		GBolt<?> sampleBolt = new GRichBolt("response-generator", new ResponseGeneratorBolt(), hints);
+		sampleBolt.addGrouping(new ShuffleGrouping("process-validation"));
 
 		// Send a event with the result
 		GBolt<?> kafkaEventSuccessProducer = new GRichBolt("kafka-event-success-producer", new KafkaBoltFieldNameWrapper("publisher-gps-dsl-result-success.yaml", String.class, String.class).getKafkaBolt(), 10);
-		kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping("process-worker"));
+		kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping("response-generator"));
 
 		// Build the topology
 		StormTopology topology = TopologyFactory.generateTopology(
 				kafkaEventReader,
-				Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, getDataBolt, sampleBolt, kafkaEventSuccessProducer));
+				Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, getDataBolt, processValidationBolt, sampleBolt, kafkaEventSuccessProducer));
 		LOG.debug("Topology created");
 		
 		// Create the basic config and upload the topology
