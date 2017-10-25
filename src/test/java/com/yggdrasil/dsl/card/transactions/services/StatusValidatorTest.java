@@ -14,7 +14,7 @@ import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.*;
 
 @RunWith(Parameterized.class)
-public class StatusValidationServiceImplTest {
+public class StatusValidatorTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -31,16 +31,16 @@ public class StatusValidationServiceImplTest {
 
     private Boolean expectedIsValid;
 
-    private StatusValidationServiceImpl validator;
+    private StatusValidator validator;
 
-    public StatusValidationServiceImplTest(CardStatus status, Boolean expectedIsValid) {
+    public StatusValidatorTest(CardStatus status, Boolean expectedIsValid) {
         this.status = status;
         this.expectedIsValid = expectedIsValid;
     }
 
     @Before
     public void initialize() {
-        validator = new StatusValidationServiceImpl();
+        validator = new StatusValidator();
     }
 
     @Test

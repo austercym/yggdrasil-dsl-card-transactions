@@ -4,8 +4,9 @@ import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
-import com.yggdrasil.dsl.card.transactions.services.AuthorisationValidationService;
-import com.yggdrasil.dsl.card.transactions.services.StatusValidationServiceImpl;
+import com.yggdrasil.dsl.card.transactions.services.AuthorisationValidator;
+import com.yggdrasil.dsl.card.transactions.services.StatusValidator;
+import com.yggdrasil.dsl.card.transactions.services.TransactionTypeValidator;
 import com.yggdrasil.dsl.card.transactions.services.ValidationResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,20 +44,20 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<Message> {
 
         try {
             CardSettings settings = (CardSettings) input.getValueByField("retrieveValue");
-            AuthorisationValidationService statusValidation = new StatusValidationServiceImpl();
             CompletableFuture<ValidationResult> statusFuture = CompletableFuture.supplyAsync(
-                    () -> statusValidation.validate(eventData, settings));
-            ValidationResult statusResult = statusFuture.get();
+                    () -> validateStatus(eventData, settings, logPrefix));
+            CompletableFuture<ValidationResult> transactionTypeFuture = CompletableFuture.supplyAsync(
+                    () -> validateTransactionType(eventData, settings, logPrefix));
 
-            LOG.debug("{}Card status validation result: {}", logPrefix, statusResult);
-
+            CompletableFuture.allOf(statusFuture, transactionTypeFuture);
 
             Map<String, Object> values = new HashMap<>();
             values.put("key", key);
             values.put("processId", processId);
             values.put("eventData", eventData);
             values.put("retrieveValue", settings);
-            values.put("statusValidationResult", statusResult);
+            values.put("statusValidationResult", statusFuture.get());
+            values.put("transactionTypeValidationResult", transactionTypeFuture.get());
 
             send(input, values);
 
@@ -68,6 +69,21 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<Message> {
 
     @Override
     public void declareFieldsDefinition() {
-        addFielsDefinition(Arrays.asList("key", "processId", "eventData", "retrieveValue", "statusValidationResult"));
+        addFielsDefinition(Arrays.asList(
+                "key", "processId", "eventData", "retrieveValue", "statusValidationResult", "transactionTypeValidationResult"));
+    }
+
+    private ValidationResult validateStatus(Message message, CardSettings settings, String logPrefix) {
+        AuthorisationValidator statusValidation = new StatusValidator();
+        ValidationResult result = statusValidation.validate(message, settings);
+        LOG.info("{}Card status validation result: {}", logPrefix, result);
+        return result;
+    }
+
+    private ValidationResult validateTransactionType(Message message, CardSettings settings, String logPrefix) {
+        AuthorisationValidator statusValidation = new TransactionTypeValidator();
+        ValidationResult result = statusValidation.validate(message, settings);
+        LOG.info("{}Transaction type validation result: {}", logPrefix, result);
+        return result;
     }
 }

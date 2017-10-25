@@ -31,6 +31,6 @@ public final class ValidationResult {
     public String toString() {
         return isValid
                 ? "Valid"
-                : "Not valid: " + message;
+                : "Not valid - " + message;
     }
 }

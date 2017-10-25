@@ -33,7 +33,8 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         try {
             Message event = (Message) input.getValueByField("eventData");
             String parentKey = (String) input.getValueByField("key");
-            ValidationResult statusResult = (ValidationResult) input.getValueByField("statusValidationResult");
+            ValidationResult statusValidationResult = (ValidationResult) input.getValueByField("statusValidationResult");
+            ValidationResult transactionTypeValidationResult = (ValidationResult) input.getValueByField("transactionTypeValidationResult");
 
             String logPrefix = String.format(
                     "[TransLink: %s, TxnId: %s, DebitCardId: %s, Token: %s, Amount: %s %s] ",
@@ -43,7 +44,10 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
 
             ResponseCode responseCode = ResponseCode.DO_NOT_HONOUR;
             ResponseMsg response = new ResponseMsg();
-            if (statusResult.getIsValid()) {
+            if (!transactionTypeValidationResult.getIsValid()){
+                responseCode = ResponseCode.DO_NOT_HONOUR;
+            }
+            else if (statusValidationResult.getIsValid()) {
                 responseCode = ResponseCode.ALL_GOOD;
                 response.setAvlBalance(19.09);
                 response.setCurBalance(20.15);
