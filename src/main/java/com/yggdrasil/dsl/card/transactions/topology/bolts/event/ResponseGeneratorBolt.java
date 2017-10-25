@@ -7,9 +7,11 @@ import com.orwellg.umbrella.avro.types.event.ProcessIdentifierType;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.avro.types.gps.ResponseMsg;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.ResponseCode;
 import com.orwellg.umbrella.commons.types.utils.avro.RawMessageUtils;
 import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
+import com.yggdrasil.dsl.card.transactions.services.ValidationResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
@@ -17,31 +19,38 @@ import org.apache.storm.tuple.Tuple;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class SampleBolt extends BasicRichBolt {
+public class ResponseGeneratorBolt extends BasicRichBolt {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private static final Logger LOG = LogManager.getLogger(SampleBolt.class);
+    private static final Logger LOG = LogManager.getLogger(ResponseGeneratorBolt.class);
 
     @Override
-	public void execute(Tuple input) {
-	
-		LOG.debug("Event received: {}. Starting the decode process.", input);
-		
-		try {
-            List<Object> inputValues = input.getValues();
-            Message event = (Message) inputValues.get(2);
-			String parentKey = (String) inputValues.get(0);
+    public void execute(Tuple input) {
 
-			LOG.info(
-			        "Token: {}, TxnType: {}, Amount: {} {}",
-                    event.getToken(), event.getTxnType(), event.getTxnAmt(), event.getTxnCCy());
+        LOG.debug("Event received: {}. Starting the decode process.", input);
 
+        try {
+            Message event = (Message) input.getValueByField("eventData");
+            String parentKey = (String) input.getValueByField("key");
+            ValidationResult statusResult = (ValidationResult) input.getValueByField("statusValidationResult");
+
+            String logPrefix = String.format(
+                    "[TransLink: %s, TxnId: %s, DebitCardId: %s, Token: %s, Amount: %s %s] ",
+                    event.getTransLink(), event.getTXnID(),
+                    event.getToken(), event.getCustRef(), event.getTxnAmt(), event.getTxnCCy());
+            LOG.debug("{}Generating response for authorisation message...", logPrefix);
+
+            ResponseCode responseCode = ResponseCode.DO_NOT_HONOUR;
             ResponseMsg response = new ResponseMsg();
+            if (statusResult.getIsValid()) {
+                responseCode = ResponseCode.ALL_GOOD;
+                response.setAvlBalance(19.09);
+                response.setCurBalance(20.15);
+            }
+
             response.setAcknowledgement("1");
-            response.setResponsestatus("00");
-            response.setAvlBalance(19.09);
-            response.setCurBalance(20.15);
+            response.setResponsestatus(responseCode.getCode());
 
             Event responseEvent = generateEvent(
                     this.getClass().getName(), CardTransactionEvents.RESPONSE_MESSAGE.getEventName(), response,
@@ -55,11 +64,15 @@ public class SampleBolt extends BasicRichBolt {
 
             send(input, values);
 
-		} catch (Exception e) {
-			LOG.error("The received event {} can not be decoded. Message: {}", input, e.getMessage(), e);
-			error(e, input);
-		}
-	}
+            LOG.info(
+                    "{}Response code for authorisation message: {} ({}))",
+                    logPrefix, response.getResponsestatus(), responseCode);
+
+        } catch (Exception e) {
+            LOG.error("The received event {} can not be decoded. Message: {}", input, e.getMessage(), e);
+            error(e, input);
+        }
+    }
 
     private Event generateEvent(String source, String eventName, Object eventData, String parentKey) {
 
@@ -97,8 +110,8 @@ public class SampleBolt extends BasicRichBolt {
         return event;
     }
 
-	@Override
-	public void declareFieldsDefinition() {
-		addFielsDefinition(Arrays.asList("key", "processId", "message", "topic"));
-	}
+    @Override
+    public void declareFieldsDefinition() {
+        addFielsDefinition(Arrays.asList("key", "processId", "message", "topic"));
+    }
 }

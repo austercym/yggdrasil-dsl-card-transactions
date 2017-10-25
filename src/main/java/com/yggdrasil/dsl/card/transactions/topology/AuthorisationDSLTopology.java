@@ -21,7 +21,7 @@ import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
 import com.yggdrasil.dsl.card.transactions.topology.bolts.event.KafkaEventProcessBolt;
-import com.yggdrasil.dsl.card.transactions.topology.bolts.event.SampleBolt;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.event.ResponseGeneratorBolt;
 
 public class AuthorisationDSLTopology {
 	
@@ -56,13 +56,13 @@ public class AuthorisationDSLTopology {
 		GBolt<?> processValidationBolt = new GRichBolt("process-validation", new ProcessJoinValidatorBolt("process-validation"), 20);
 		processValidationBolt.addGrouping(new ShuffleGrouping("get-data"));
 
-		// Sample processor
-		GBolt<?> sampleBolt = new GRichBolt("process-worker", new SampleBolt(), hints);
-		sampleBolt.addGrouping(new ShuffleGrouping("process-validation", ProcessJoinValidatorBolt.EVENT_ACCEPTED_STREAM));
+		// Response generation bolt
+		GBolt<?> sampleBolt = new GRichBolt("response-generator", new ResponseGeneratorBolt(), hints);
+		sampleBolt.addGrouping(new ShuffleGrouping("process-validation"));
 
 		// Send a event with the result
 		GBolt<?> kafkaEventSuccessProducer = new GRichBolt("kafka-event-success-producer", new KafkaBoltFieldNameWrapper("publisher-gps-dsl-result-success.yaml", String.class, String.class).getKafkaBolt(), 10);
-		kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping("process-worker"));
+		kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping("response-generator"));
 
 		// Build the topology
 		StormTopology topology = TopologyFactory.generateTopology(

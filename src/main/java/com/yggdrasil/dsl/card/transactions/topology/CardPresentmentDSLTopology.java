@@ -20,7 +20,7 @@ import java.util.Arrays;
 
 public class CardPresentmentDSLTopology {
 
-    private final static Logger LOG = LogManager.getLogger(CardTransactionsDSLTopology.class);
+    private final static Logger LOG = LogManager.getLogger(CardPresentmentDSLTopology.class);
 
     public static void main(String[] args) throws Exception {
 

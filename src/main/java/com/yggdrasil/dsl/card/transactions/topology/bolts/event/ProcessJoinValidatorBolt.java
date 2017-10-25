@@ -2,8 +2,8 @@ package com.yggdrasil.dsl.card.transactions.topology.bolts.event;
 
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt;
+import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.ResponseCode;
 import com.yggdrasil.dsl.card.transactions.services.AuthorisationValidationService;
 import com.yggdrasil.dsl.card.transactions.services.StatusValidationServiceImpl;
 import com.yggdrasil.dsl.card.transactions.services.ValidationResult;
@@ -20,23 +20,14 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<Message> {
 
     private static final Logger LOG = LogManager.getLogger(ProcessJoinValidatorBolt.class);
 
-    /**
-     * Define the name of the success stream
-     */
-    public static final String EVENT_ACCEPTED_STREAM = "validation-authorisation-accepted-stream";
-    /**
-     * Define the name of the error stream
-     */
-    public static final String EVENT_DECLINED_STREAM = "validation-authorisation-declined-stream";
-
     @Override
     public String getEventSuccessStream() {
-        return EVENT_ACCEPTED_STREAM;
+        return KafkaSpout.EVENT_SUCCESS_STREAM;
     }
 
     @Override
     public String getEventErrorStream() {
-        return EVENT_DECLINED_STREAM;
+        return KafkaSpout.EVENT_ERROR_STREAM;
     }
 
     public ProcessJoinValidatorBolt(String joinId) {
@@ -59,22 +50,15 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<Message> {
 
             LOG.debug("{}Card status validation result: {}", logPrefix, statusResult);
 
-            ResponseCode responseCode = ResponseCode.DO_NOT_HONOUR;
-            String stream = getEventErrorStream();
-            if (statusResult.getIsValid())
-            {
-                responseCode = ResponseCode.ALL_GOOD;
-                stream = getEventSuccessStream();
-            }
 
             Map<String, Object> values = new HashMap<>();
             values.put("key", key);
             values.put("processId", processId);
             values.put("eventData", eventData);
             values.put("retrieveValue", settings);
-            values.put("validationResult", responseCode);
+            values.put("statusValidationResult", statusResult);
 
-            send(stream, input, values);
+            send(input, values);
 
         } catch (Exception e) {
             LOG.error("{} Error processing the authorisation validation. Message: {},", logPrefix, e.getMessage(), e);
@@ -84,7 +68,6 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<Message> {
 
     @Override
     public void declareFieldsDefinition() {
-        addFielsDefinition(EVENT_ACCEPTED_STREAM, Arrays.asList("key", "processId", "eventData", "retrieveValue", "validationResult"));
-        addFielsDefinition(EVENT_DECLINED_STREAM, Arrays.asList("key", "processId", "eventData", "retrieveValue", "validationResult"));
+        addFielsDefinition(Arrays.asList("key", "processId", "eventData", "retrieveValue", "statusValidationResult"));
     }
 }
