@@ -72,15 +72,16 @@ public class PresentmentOfflineMockBolt extends BasicRichBolt {
         gpsMessageProcessed.setGpsTransactionLink(eventData.getTransLink());
         gpsMessageProcessed.setGpsTransactionId(eventData.getTXnID());
         gpsMessageProcessed.setDebitCardId(1l);
-        gpsMessageProcessed.setTransactionTimestamp(eventData.getTxnGPSDate().toString());      //todo: is this a correct field?
+        gpsMessageProcessed.setTransactionTimestamp(new Date().toString());      //todo: is this a correct field?
         gpsMessageProcessed.setInternalAccountId(1l);
-        gpsMessageProcessed.setOriginalWirecardAmount(eventData.getSettleAmt());
-        gpsMessageProcessed.setWirecardAmount(eventData.getSettleAmt());
+        gpsMessageProcessed.setOriginalWirecardAmount(-eventData.getSettleAmt()); //in normal flow the settlement amount comes to us as a negative value
+        gpsMessageProcessed.setWirecardAmount(-eventData.getSettleAmt());
         gpsMessageProcessed.setWirecardCurrency(eventData.getSettleCcy());
         gpsMessageProcessed.setAppliedWirecardAmount(0d);
-        gpsMessageProcessed.setBlockedClientAmount(eventData.getTxnAmt());
-        gpsMessageProcessed.setBlockedClientCurrency(eventData.getTxnCCy());
+        gpsMessageProcessed.setBlockedClientAmount(eventData.getSettleAmt());
+        gpsMessageProcessed.setBlockedClientCurrency(eventData.getSettleCcy());
         gpsMessageProcessed.setAppliedBlockedClientAmount(0d);
+        gpsMessageProcessed.setOriginalBlockedClientAmount(eventData.getSettleAmt());
 
         LOG.debug("Message generated. Parameters: {}", gpsMessageProcessed);
 

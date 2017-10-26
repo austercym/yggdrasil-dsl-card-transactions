@@ -18,9 +18,9 @@ import org.apache.storm.tuple.Tuple;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
+public class PresentmentValidateAuthenticationBolt extends BasicRichBolt {
 
-    private static final Logger LOG = LogManager.getLogger(PresentmentValidateAuthorisationBolt.class);
+    private static final Logger LOG = LogManager.getLogger(PresentmentValidateAuthenticationBolt.class);
 
     @Override
     public void declareFieldsDefinition() {
@@ -43,11 +43,12 @@ public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
 
             CardTransaction lastTransaction = null;
             Optional<CardTransaction> max = cardTransactions.stream()
-                    .filter(x -> x.getGpsTransactionId() == eventData.getTXnID())
+                    .filter(x -> x.getGpsTransactionId() != eventData.getTXnID())
                     .max(Comparator.comparing(CardTransaction::getTransactionTimestamp));
             if (max.isPresent()){
                 lastTransaction = max.get();
             }
+
 
             //todo: check if this is the same message - do not process messages twice
 
@@ -107,9 +108,9 @@ public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
             throw new UnsupportedOperationException("Error when generating gpsMessageProcessed. AppliedBlockedBalance can't be converted to double. Value: " + lastTransaction.getBlockedClientAmount());
         }
 
-
-        double wirecardDiff = appliedWirecardAmount - eventData.getSettleAmt();
-        double clientAmtDiff = appliedBlockedBalance - eventData.getTxnAmt();
+        //todo: calculate this on BigDecimals!! meybe we should calculate this in accounting bolt?
+        double wirecardDiff = -eventData.getSettleAmt() - appliedWirecardAmount;
+        double clientAmtDiff = -(appliedBlockedBalance - eventData.getSettleAmt());
 
         GpsMessageProcessed gpsMessageProcessed = new GpsMessageProcessed();
         gpsMessageProcessed.setGpsTransactionLink(eventData.getTransLink());
@@ -124,6 +125,7 @@ public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
         gpsMessageProcessed.setBlockedClientAmount(clientAmtDiff);
         gpsMessageProcessed.setBlockedClientCurrency(eventData.getTxnCCy());
         gpsMessageProcessed.setAppliedBlockedClientAmount(lastTransaction.getBlockedClientAmount().doubleValue());
+
 
         LOG.debug("Message generated. Parameters: {}", gpsMessageProcessed);
 
