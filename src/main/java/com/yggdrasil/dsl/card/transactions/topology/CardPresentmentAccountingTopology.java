@@ -66,7 +66,7 @@ public class CardPresentmentAccountingTopology {
         conf.setMaxTaskParallelism(30);
 
         LocalCluster cluster = new LocalCluster();
-        cluster.submitTopology("dsl-gps", conf, topology);
+        cluster.submitTopology("dsl-gps-presentment-accounting", conf, topology);
 
         Thread.sleep(3000000);
         cluster.shutdown();

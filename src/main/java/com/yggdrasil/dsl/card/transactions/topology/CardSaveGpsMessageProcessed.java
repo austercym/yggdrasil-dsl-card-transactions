@@ -50,8 +50,6 @@ public class CardSaveGpsMessageProcessed {
                 )
         );
 
-
-
         builder.setBolt("transaction-log-scylla-insert",
                 scyllaCardTransactionInsert,
                 hints
@@ -66,14 +64,13 @@ public class CardSaveGpsMessageProcessed {
         conf.setMaxTaskParallelism(30);
         String keyspace = ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getKeyspace();
         String nodeList = ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getNodeList();
+        //todo: add params in zookeeper for cassandra bolt ?
         conf.put("cassandra.nodes", "localhost");
         conf.put("cassandra.keyspace", keyspace);
         conf.put("cassandra.port", 9042);
-        //conf.setNumWorkers(ScyllaTransactionLogDSLConfigFactory.getScyllaTransactionDSLConfig().getTopologyNumWorkers());
-        //conf.setMaxTaskParallelism(ScyllaTransactionLogDSLConfigFactory.getScyllaTransactionDSLConfig().getTopologyMaxTaskParallelism())
 
         LocalCluster cluster = new LocalCluster();
-        cluster.submitTopology("dsl-gps", conf, topology);
+        cluster.submitTopology("dsl-gps-save-gps-message-processed", conf, topology);
 
         Thread.sleep(3000000);
         cluster.shutdown();

@@ -12,7 +12,7 @@ import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
 import com.yggdrasil.dsl.card.transactions.topology.bolts.event.KafkaEventProcessBolt;
 import com.yggdrasil.dsl.card.transactions.topology.bolts.event.PresentmentOfflineMockBolt;
-import com.yggdrasil.dsl.card.transactions.topology.bolts.event.PresentmentValidateAuthorisationBolt;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.event.PresentmentValidateAuthenticationBolt;
 import com.yggdrasil.dsl.card.transactions.topology.bolts.event.PresentmentScyllaCardTransactionsBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,6 +25,7 @@ import java.util.Arrays;
 public class CardPresentmentDSLTopology {
 
     private final static Logger LOG = LogManager.getLogger(CardPresentmentDSLTopology.class);
+  
     public final static String OFFLINE_PRESENTMENT_STREAM = "offline-presentment-stream";
 
     public static void main(String[] args) throws Exception {
@@ -70,7 +71,7 @@ public class CardPresentmentDSLTopology {
 
 
         //see if data is complete - if it is send message to kafka
-        GBolt<?> authValidationBolt = new GRichBolt("process-validate-authentication", new PresentmentValidateAuthorisationBolt(), hints);
+        GBolt<?> authValidationBolt = new GRichBolt("process-validate-authentication", new PresentmentValidateAuthenticationBolt(), hints);
         authValidationBolt.addGrouping(new ShuffleGrouping("process-get-authentication"));
 
 

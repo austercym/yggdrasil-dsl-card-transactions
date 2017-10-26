@@ -15,6 +15,14 @@ public class PresentmentAccounting extends BasicRichBolt {
     @Override
     public void execute(Tuple tuple) {
         //create EventAccountingData
+        //InternalAccountId
+        //dynamic topic for the processor -> depending on the account
+        //include in same command...
+        //Command -> changes for cards
+        //        code : do not use
+
+        //create additional table for card product
+        //debit card info -> product
 
         //EventAccountingData accountingData = new EventAccountingData();
         //accountingData.setCdtrProduct(); //creditor product? propably an account -> ask
