@@ -62,7 +62,8 @@ public class CardSaveGpsMessageProcessedBolt extends com.orwellg.umbrella.common
             LOG.info("[Key: {}][ProcessId: {}]: GPS message event sent.", key, processId);
 
         }catch(Exception e){
-
+            LOG.error("The received event {} can not be decoded. Message: {}", input, e.getMessage(), e);
+            error(e, input);
         }
     }
 

@@ -17,9 +17,9 @@ import static org.apache.storm.cassandra.DynamicStatementBuilder.async;
 import static org.apache.storm.cassandra.DynamicStatementBuilder.fields;
 import static org.apache.storm.cassandra.DynamicStatementBuilder.simpleQuery;
 
-public class CardSaveGpsMessageProcessed {
+public class CardSaveScyllaGpsMessageProcessedTopology {
 
-    private final static Logger LOG = LogManager.getLogger(CardSaveGpsMessageProcessed.class);
+    private final static Logger LOG = LogManager.getLogger(CardSaveScyllaGpsMessageProcessedTopology.class);
 
     public static void main(String[] args) throws Exception {
 
@@ -63,14 +63,14 @@ public class CardSaveGpsMessageProcessed {
         conf.setDebug(false);
         conf.setMaxTaskParallelism(30);
         String keyspace = ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getKeyspace();
-        String nodeList = ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getNodeList();
+        String hostList = ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getHostList();
         //todo: add params in zookeeper for cassandra bolt ?
-        conf.put("cassandra.nodes", "localhost");
+        conf.put("cassandra.nodes", hostList);
         conf.put("cassandra.keyspace", keyspace);
         conf.put("cassandra.port", 9042);
 
         LocalCluster cluster = new LocalCluster();
-        cluster.submitTopology("dsl-gps-save-gps-message-processed", conf, topology);
+        cluster.submitTopology("card-save-scylla-gps-message-processed", conf, topology);
 
         Thread.sleep(3000000);
         cluster.shutdown();

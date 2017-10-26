@@ -1,4 +1,4 @@
-package com.yggdrasil.dsl.card.transactions.topology.bolts.event;
+package com.yggdrasil.dsl.card.transactions.topology.bolts.processors.presentment;
 
 import com.orwellg.umbrella.avro.types.event.EntityIdentifierType;
 import com.orwellg.umbrella.avro.types.event.Event;
@@ -18,9 +18,9 @@ import org.apache.storm.tuple.Tuple;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class PresentmentValidateAuthenticationBolt extends BasicRichBolt {
+public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
 
-    private static final Logger LOG = LogManager.getLogger(PresentmentValidateAuthenticationBolt.class);
+    private static final Logger LOG = LogManager.getLogger(PresentmentValidateAuthorisationBolt.class);
 
     @Override
     public void declareFieldsDefinition() {
@@ -31,7 +31,7 @@ public class PresentmentValidateAuthenticationBolt extends BasicRichBolt {
     @Override
     public void execute(Tuple tuple) {
 
-        LOG.debug("Authorisation retrieved from database. Starting validation proccess");
+        LOG.debug("Authorisation retrieved from database. Starting validation process");
 
         try{
 
@@ -86,16 +86,38 @@ public class PresentmentValidateAuthenticationBolt extends BasicRichBolt {
 
         }catch (Exception e) {
             //todo: error
-            LOG.error("The received event {} can not be decoded. Message: {}", tuple, e.getMessage(), e);
+            LOG.error("Error when processing Presentment Message. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
             error(e, tuple);
         }
 
 
     }
 
+
+    private void validateMessage(String key, Message eventData, CardTransaction lastTransaction) throws Exception {
+
+        LOG.debug("Validating GPS Message. Key: {}", key);
+
+        String appliedWirecardCurrency = lastTransaction.getWirecardCurrency();
+        String blockedClientCurrency = lastTransaction.getBlockedClientCurrency();
+        String wirecardCurrency = eventData.getSettleCcy();
+
+        if(appliedWirecardCurrency != wirecardCurrency){
+            throw new Exception(String.format("Wirecard Curency from last CardTransaction entry: {} and from the message: {} does not match. Can't calculate balance changes.", appliedWirecardCurrency, wirecardCurrency));
+        }
+
+        if (lastTransaction.getBlockedClientCurrency() != eventData.getSettleCcy()){
+            throw new Exception(String.format("ClientBlockedAmount Curency from last CardTransaction entry: {} and from the message: {} does not match. Can't calculate balance changes.", blockedClientCurrency, wirecardCurrency));
+        }
+
+        LOG.info("GPS Message is valid. Key: {}", key);
+
+    }
+
     private GpsMessageProcessed generateMessageProcessed(Message eventData, CardTransaction lastTransaction){
 
         LOG.debug("Generating gpsMessageProcessed message");
+
 
         //todo: check currencies -> if different - error
         double appliedWirecardAmount = lastTransaction.getWirecardAmount().doubleValue();
@@ -108,7 +130,7 @@ public class PresentmentValidateAuthenticationBolt extends BasicRichBolt {
             throw new UnsupportedOperationException("Error when generating gpsMessageProcessed. AppliedBlockedBalance can't be converted to double. Value: " + lastTransaction.getBlockedClientAmount());
         }
 
-        //todo: calculate this on BigDecimals!! meybe we should calculate this in accounting bolt?
+        //todo: calculate this on BigDecimals!!
         double wirecardDiff = -eventData.getSettleAmt() - appliedWirecardAmount;
         double clientAmtDiff = -(appliedBlockedBalance - eventData.getSettleAmt());
 
