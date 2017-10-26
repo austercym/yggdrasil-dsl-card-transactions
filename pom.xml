@@ -53,4 +53,10 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+        <dependency>
+            <groupId>org.apache.storm</groupId>
+            <artifactId>storm-cassandra</artifactId>
+            <version>RELEASE</version>
+        </dependency>
+    </dependencies>
 </project>

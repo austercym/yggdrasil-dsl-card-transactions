@@ -4,10 +4,10 @@ bootstrap:
    host: localhost:9092,localhost:10092
 topic:
    name:
-      - com.orwellg.gps.presentment.request
+      - com.orwellg.gps.presentment.response
    commitInterval: 3
 application:
-   id: gps-dsl-topic-subscriber
-   name: gps-dsl-topic-subscriber
+   id: card-save-gps-message-processed
+   name: card-save-gps-message-processed
 configuration:
    autoOffsetReset: latest

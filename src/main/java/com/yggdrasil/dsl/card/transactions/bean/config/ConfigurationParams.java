@@ -2,9 +2,10 @@ package com.yggdrasil.dsl.card.transactions.bean.config;
 
 import com.netflix.config.DynamicPropertyFactory;
 import com.orwellg.umbrella.commons.beans.config.zookeeper.ZkConfigurationParams;
+import com.orwellg.umbrella.commons.config.ScyllaConfig;
 import com.orwellg.umbrella.commons.storm.config.params.TopologyParams;
 import com.orwellg.umbrella.commons.utils.config.ZookeeperUtils;
-import com.orwellg.yggdrasil.commons.config.ScyllaConfig;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

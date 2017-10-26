@@ -12,7 +12,7 @@ import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
 import com.yggdrasil.dsl.card.transactions.topology.bolts.event.KafkaEventProcessBolt;
 import com.yggdrasil.dsl.card.transactions.topology.bolts.event.PresentmentOfflineMockBolt;
-import com.yggdrasil.dsl.card.transactions.topology.bolts.event.PresentmentValidateAuthorisationBolt;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.event.PresentmentValidateAuthenticationBolt;
 import com.yggdrasil.dsl.card.transactions.topology.bolts.event.PresentmentScyllaCardTransactionsBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -71,7 +71,7 @@ public class CardPresentmentDSLTopology {
 
 
         //see if data is complete - if it is send message to kafka
-        GBolt<?> authValidationBolt = new GRichBolt("process-validate-authentication", new PresentmentValidateAuthorisationBolt(), hints);
+        GBolt<?> authValidationBolt = new GRichBolt("process-validate-authentication", new PresentmentValidateAuthenticationBolt(), hints);
         authValidationBolt.addGrouping(new ShuffleGrouping("process-get-authentication"));
 
 
@@ -96,7 +96,7 @@ public class CardPresentmentDSLTopology {
         conf.setMaxTaskParallelism(30);
 
         LocalCluster cluster = new LocalCluster();
-        cluster.submitTopology("dsl-gps", conf, topology);
+        cluster.submitTopology("dsl-gps-presentment", conf, topology);
 
         Thread.sleep(3000000);
         cluster.shutdown();
