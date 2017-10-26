@@ -8,7 +8,7 @@ public class StatusValidator implements AuthorisationValidator {
     @Override
     public ValidationResult validate(Message message, CardSettings cardSettings) {
         return cardSettings.getStatus() == CardStatus.ACTIVE
-                ? ValidationResult.Valid()
-                : ValidationResult.Error(String.format("%s card", cardSettings.getStatus()));
+                ? ValidationResult.valid()
+                : ValidationResult.error(String.format("%s card", cardSettings.getStatus()));
     }
 }

@@ -44,10 +44,8 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
 
             ResponseCode responseCode = ResponseCode.DO_NOT_HONOUR;
             ResponseMsg response = new ResponseMsg();
-            if (!transactionTypeValidationResult.getIsValid()){
-                responseCode = ResponseCode.DO_NOT_HONOUR;
-            }
-            else if (statusValidationResult.getIsValid()) {
+            if (statusValidationResult.getIsValid()
+                    && transactionTypeValidationResult.getIsValid()) {
                 responseCode = ResponseCode.ALL_GOOD;
                 response.setAvlBalance(19.09);
                 response.setCurBalance(20.15);

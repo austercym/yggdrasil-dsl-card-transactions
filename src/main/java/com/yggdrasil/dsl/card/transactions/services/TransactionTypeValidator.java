@@ -25,7 +25,7 @@ public class TransactionTypeValidator implements AuthorisationValidator {
                 ? null
                 : cardSettings.getAllowedTransactionTypes();
         return allowedTransactionTypes == null || !allowedTransactionTypes.contains(transactionType)
-                ? ValidationResult.Error(String.format("%s transaction type is not allowed", transactionType))
-                : ValidationResult.Valid();
+                ? ValidationResult.error(String.format("%s transaction type is not allowed", transactionType))
+                : ValidationResult.valid();
     }
 }
