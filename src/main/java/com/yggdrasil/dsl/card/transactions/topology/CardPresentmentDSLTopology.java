@@ -95,7 +95,7 @@ public class CardPresentmentDSLTopology {
         conf.setMaxTaskParallelism(30);
 
         LocalCluster cluster = new LocalCluster();
-        cluster.submitTopology("dsl-gps", conf, topology);
+        cluster.submitTopology("dsl-gps-presentment", conf, topology);
 
         Thread.sleep(3000000);
         cluster.shutdown();

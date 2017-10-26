@@ -43,11 +43,12 @@ public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
 
             CardTransaction lastTransaction = null;
             Optional<CardTransaction> max = cardTransactions.stream()
-                    .filter(x -> x.getGpsTransactionId() == eventData.getTXnID())
+                    .filter(x -> x.getGpsTransactionId() != eventData.getTXnID())
                     .max(Comparator.comparing(CardTransaction::getTransactionTimestamp));
             if (max.isPresent()){
                 lastTransaction = max.get();
             }
+
 
             //todo: check if this is the same message - do not process messages twice
 
@@ -107,9 +108,9 @@ public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
             throw new UnsupportedOperationException("Error when generating gpsMessageProcessed. AppliedBlockedBalance can't be converted to double. Value: " + lastTransaction.getBlockedClientAmount());
         }
 
-
-        double wirecardDiff = appliedWirecardAmount - eventData.getSettleAmt();
-        double clientAmtDiff = appliedBlockedBalance - eventData.getTxnAmt();
+        //todo: calculate this on BigDecimals!!
+        double wirecardDiff = -eventData.getSettleAmt() - appliedWirecardAmount;
+        double clientAmtDiff = -(appliedBlockedBalance - eventData.getSettleAmt());
 
         GpsMessageProcessed gpsMessageProcessed = new GpsMessageProcessed();
         gpsMessageProcessed.setGpsTransactionLink(eventData.getTransLink());

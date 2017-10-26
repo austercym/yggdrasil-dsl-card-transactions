@@ -35,5 +35,10 @@
 			<artifactId>yggdrasil-commons</artifactId>
 			<version>${yggdrasil.version}</version>
 		</dependency>
+        <dependency>
+            <groupId>org.apache.storm</groupId>
+            <artifactId>storm-cassandra</artifactId>
+            <version>RELEASE</version>
+        </dependency>
     </dependencies>
 </project>
