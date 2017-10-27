@@ -23,6 +23,10 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<Message> {
     private AuthorisationValidator transactionTypeValidator;
     private AuthorisationValidator merchantValidator;
 
+    public ProcessJoinValidatorBolt(String joinId) {
+        super(joinId);
+    }
+
     @Override
     public String getEventSuccessStream() {
         return KafkaSpout.EVENT_SUCCESS_STREAM;
@@ -31,10 +35,6 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<Message> {
     @Override
     public String getEventErrorStream() {
         return KafkaSpout.EVENT_ERROR_STREAM;
-    }
-
-    public ProcessJoinValidatorBolt(String joinId) {
-        super(joinId);
     }
 
     @Override
@@ -54,12 +54,12 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<Message> {
 
         try {
             CardSettings settings = (CardSettings) input.getValueByField("retrieveValue");
-            CompletableFuture<ValidationResult> statusFuture = CompletableFuture.supplyAsync(
-                    () -> validateStatus(eventData, settings, logPrefix));
-            CompletableFuture<ValidationResult> transactionTypeFuture = CompletableFuture.supplyAsync(
-                    () -> validateTransactionType(eventData, settings, logPrefix));
-            CompletableFuture<ValidationResult> merchantFuture = CompletableFuture.supplyAsync(
-                    () -> validateMerchant(eventData, settings, logPrefix));
+            CompletableFuture<ValidationResult> statusFuture =
+                    validate("Card status", statusValidator, eventData, settings, logPrefix);
+            CompletableFuture<ValidationResult> transactionTypeFuture =
+                    validate("Transaction type", transactionTypeValidator, eventData, settings, logPrefix);
+            CompletableFuture<ValidationResult> merchantFuture =
+                    validate("Merchant", merchantValidator, eventData, settings, logPrefix);
 
             CompletableFuture.allOf(statusFuture, transactionTypeFuture);
 
@@ -87,21 +87,13 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<Message> {
                 "statusValidationResult", "transactionTypeValidationResult", "merchantValidationResult"));
     }
 
-    private ValidationResult validateStatus(Message message, CardSettings settings, String logPrefix) {
-        ValidationResult result = statusValidator.validate(message, settings);
-        LOG.info("{}Card status validation result: {}", logPrefix, result);
-        return result;
-    }
-
-    private ValidationResult validateTransactionType(Message message, CardSettings settings, String logPrefix) {
-        ValidationResult result = transactionTypeValidator.validate(message, settings);
-        LOG.info("{}Transaction type validation result: {}", logPrefix, result);
-        return result;
-    }
-
-    private ValidationResult validateMerchant(Message message, CardSettings settings, String logPrefix) {
-        ValidationResult result = merchantValidator.validate(message, settings);
-        LOG.info("{}Merchant validation result: {}", logPrefix, result);
-        return result;
+    private CompletableFuture<ValidationResult> validate(
+            String name, AuthorisationValidator validator, Message message, CardSettings settings, String logPrefix) {
+        return CompletableFuture.supplyAsync(
+                () -> {
+                    ValidationResult result = validator.validate(message, settings);
+                    LOG.info("{}{} validation result: {}", logPrefix, name, result);
+                    return result;
+                });
     }
 }
