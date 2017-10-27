@@ -34,7 +34,7 @@ public class MerchantValidator implements AuthorisationValidator {
         if (merchantId == null || merchantId.isEmpty()){
             return ValidationResult.error("Merchant id is required for card not present transactions");
         }
-        Boolean merchantExists = merchants.containsKey(merchantId);
+        Boolean merchantExists = merchants != null && merchants.containsKey(merchantId);
         if (!merchantExists) {
             return ValidationResult.error(String.format(
                     "Card not present transactions from %s merchant are not allowed", merchantId));

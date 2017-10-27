@@ -59,7 +59,7 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<Message> {
             CompletableFuture<ValidationResult> transactionTypeFuture = CompletableFuture.supplyAsync(
                     () -> validateTransactionType(eventData, settings, logPrefix));
             CompletableFuture<ValidationResult> merchantFuture = CompletableFuture.supplyAsync(
-                    () -> validateTransactionType(eventData, settings, logPrefix));
+                    () -> validateMerchant(eventData, settings, logPrefix));
 
             CompletableFuture.allOf(statusFuture, transactionTypeFuture);
 
@@ -83,7 +83,8 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<Message> {
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList(
-                "key", "processId", "eventData", "retrieveValue", "statusValidationResult", "transactionTypeValidationResult"));
+                "key", "processId", "eventData", "retrieveValue",
+                "statusValidationResult", "transactionTypeValidationResult", "merchantValidationResult"));
     }
 
     private ValidationResult validateStatus(Message message, CardSettings settings, String logPrefix) {
