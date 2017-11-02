@@ -4,6 +4,7 @@ import com.orwellg.umbrella.avro.types.event.EntityIdentifierType;
 import com.orwellg.umbrella.avro.types.event.Event;
 import com.orwellg.umbrella.avro.types.event.EventType;
 import com.orwellg.umbrella.avro.types.event.ProcessIdentifierType;
+import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.avro.types.gps.ResponseMsg;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
@@ -35,6 +36,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
             String parentKey = (String) input.getValueByField("key");
             ValidationResult statusValidationResult = (ValidationResult) input.getValueByField("statusValidationResult");
             ValidationResult transactionTypeValidationResult = (ValidationResult) input.getValueByField("transactionTypeValidationResult");
+            ValidationResult merchantValidationResult = (ValidationResult) input.getValueByField("merchantValidationResult");
 
             String logPrefix = String.format(
                     "[TransLink: %s, TxnId: %s, DebitCardId: %s, Token: %s, Amount: %s %s] ",
@@ -44,10 +46,9 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
 
             ResponseCode responseCode = ResponseCode.DO_NOT_HONOUR;
             ResponseMsg response = new ResponseMsg();
-            if (!transactionTypeValidationResult.getIsValid()){
-                responseCode = ResponseCode.DO_NOT_HONOUR;
-            }
-            else if (statusValidationResult.getIsValid()) {
+            if (statusValidationResult.getIsValid()
+                    && transactionTypeValidationResult.getIsValid()
+                    && merchantValidationResult.getIsValid()) {
                 responseCode = ResponseCode.ALL_GOOD;
                 response.setAvlBalance(19.09);
                 response.setCurBalance(20.15);
@@ -56,8 +57,10 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
             response.setAcknowledgement("1");
             response.setResponsestatus(responseCode.getCode());
 
+            GpsMessageProcessed processedMessage = generateMessageProcessed(event, response);
+
             Event responseEvent = generateEvent(
-                    this.getClass().getName(), CardTransactionEvents.RESPONSE_MESSAGE.getEventName(), response,
+                    this.getClass().getName(), CardTransactionEvents.RESPONSE_MESSAGE.getEventName(), processedMessage,
                     parentKey);
 
             Map<String, Object> values = new HashMap<>();
@@ -76,6 +79,21 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
             LOG.error("The received event {} can not be decoded. Message: {}", input, e.getMessage(), e);
             error(e, input);
         }
+    }
+
+    private GpsMessageProcessed generateMessageProcessed(Message authorisation, ResponseMsg response){
+
+        LOG.debug("Generating gpsMessageProcessed message");
+        GpsMessageProcessed gpsMessageProcessed = new GpsMessageProcessed();
+        gpsMessageProcessed.setGpsTransactionLink(authorisation.getTransLink());
+        gpsMessageProcessed.setGpsTransactionId(authorisation.getTXnID());
+        gpsMessageProcessed.setDebitCardId(Long.parseLong(authorisation.getCustRef()));
+        gpsMessageProcessed.setTransactionTimestamp(authorisation.getTxnGPSDate().toString());      //todo: is this a correct field?
+        gpsMessageProcessed.setEhiResponse(response);
+
+        LOG.debug("Message generated. Parameters: {}", gpsMessageProcessed);
+
+        return gpsMessageProcessed;
     }
 
     private Event generateEvent(String source, String eventName, Object eventData, String parentKey) {
