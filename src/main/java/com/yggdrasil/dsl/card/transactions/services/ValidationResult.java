@@ -19,11 +19,11 @@ public final class ValidationResult {
         this.message = message;
     }
 
-    public static ValidationResult Valid() {
+    public static ValidationResult valid() {
         return new ValidationResult(true, null);
     }
 
-    public static ValidationResult Error(String message) {
+    public static ValidationResult error(String message) {
         return new ValidationResult(false, message);
     }
 
