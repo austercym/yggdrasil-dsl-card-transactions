@@ -80,31 +80,67 @@ public class AccountingBolt extends BasicRichBolt {
     private AccountingCommandData generateCommand(GpsMessageProcessed gpsMessageProcessed) {
 
         AccountingCommandData commandData = new AccountingCommandData();
-        AccountInfo clientAccountInfo = new AccountInfo();
-        //clientAccountInfo.setCreditAccountId(2l); //todo: set here a wirecard account id
-        //clientAccountInfo.setCreditAccountNumber(); //if needed go to AccountIBAN bolt
-        clientAccountInfo.setDebitAccountId(gpsMessageProcessed.getInternalAccountId()); //client account
-        //clientAccountInfo.setDebitAccountNumber(); //account identification
+        AccountingInfo accountingInfo = new AccountingInfo();
 
-        // TODO: Change this
-        //commandData.setProductInfo(new ProductInfo());
-        //commandData.getProductInfo().setId(String.valueOf(product.getProductId()));
-        //commandData.getProductInfo().setDescription(product.getProductFeatures());
+        AccountInfo clientAccount = new AccountInfo();
+        clientAccount.setAccountId(gpsMessageProcessed.getInternalAccountId().toString());
+        //clientAccount.setAccountNumber(); todo
+        AccountInfo wirecardAccount = new AccountInfo(); //todo: get wirecard account
 
-        commandData.setTransactionInfo(new TransactionInfo());
-        commandData.getTransactionInfo().setAmount(gpsMessageProcessed.getWirecardAmount());
-        commandData.getTransactionInfo().setCurrency(gpsMessageProcessed.getWirecardCurrency());
-        commandData.getTransactionInfo().setData(gpsMessageProcessed.getGpsTransactionLink());
-        commandData.getTransactionInfo().setId(gpsMessageProcessed.getGpsTransactionId());
-        commandData.getTransactionInfo().setDirection(TransactionDirection.OUTGOING);//todo: is card transaction outgoing or incoming?
-        Boolean isDebit = gpsMessageProcessed.getWirecardAmount() > 0;
-        if (isDebit) {
-            commandData.getTransactionInfo().setTransactionType(TransactionType.DEBIT); //todo: depends on presentment sign..
-        }else {
-            commandData.getTransactionInfo().setTransactionType(TransactionType.CREDIT); //todo: depends on presentment sign..
-        }
         return commandData;
     }
+
+    private void setWirecardAccountingData(GpsMessageProcessed gpsMessageProcessed, AccountInfo clientAccount, AccountInfo wirecardAccount){
+
+        //1. check what we need to apply to wirecard
+        //if 0 - just create ledger or available balance with same amount as before - dependent on debit or credit
+        //if something else - create adjustment in balances: will need to apply two different rates
+        //or revert previous balances and create new ones?
+
+        AccountingInfo accountingInfo = new AccountingInfo();
+        TransactionAccountingInfo transactionAccountingInfo = new TransactionAccountingInfo();
+
+        //just
+        if (gpsMessageProcessed.getWirecardAmount() == 0){
+
+            if (gpsMessageProcessed.getAppliedWirecardAmount() == 0){
+                //todo: ??
+            }
+
+            //credit wirecard available and debit the client total
+            if (gpsMessageProcessed.getAppliedWirecardAmount() > 0){
+                accountingInfo.setDebitAccount(clientAccount);
+                accountingInfo.setCreditAccount(wirecardAccount);
+
+                //todo: need to set the amount here - same as for authorisation
+                //transactionAccountingInfo.setAmount(); //todo: ??
+
+                accountingInfo.setCreditBalanceUpdate(BalanceUpdateType.AVAILABLE);
+                accountingInfo.setDebitBalanceUpdate(BalanceUpdateType.LEDGER);
+            }
+
+            if (gpsMessageProcessed.getAppliedWirecardAmount() < 0){
+
+                accountingInfo.setDebitAccount(wirecardAccount);
+                accountingInfo.setCreditAccount(clientAccount);
+
+                accountingInfo.setCreditBalanceUpdate(BalanceUpdateType.AVAILABLE);
+                accountingInfo.setDebitBalanceUpdate(BalanceUpdateType.LEDGER);
+
+            }
+        }
+
+        if (gpsMessageProcessed.getWirecardAmount() > 0){
+
+            //offline transaction
+            if (gpsMessageProcessed.getAppliedWirecardAmount() == 0){
+
+            }
+
+            //...
+        }
+    }
+
 
 
 

@@ -43,9 +43,11 @@ public class CardSaveScyllaGpsMessageProcessedTopology {
         //save message to scylla db
         CassandraWriterBolt scyllaCardTransactionInsert = new CassandraWriterBolt(
                 async(
-                        simpleQuery("INSERT INTO CardTransactions (GpsTransactionLink, GpsTransactionId, DebitCardId, TransactionTimestamp, InternalAccountId, WirecardAmount, WirecardCurrency, BlockedClientAmount, BlockedClientCurrency) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);")
+                        simpleQuery("INSERT INTO CardTransactions (GpsTransactionLink, GpsTransactionId, GpsTransactionDateTime, DebitCardId, TransactionTimestamp, InternalAccountId, " +
+                                "WirecardAmount, WirecardCurrency, BlockedClientAmount, BlockedClientCurrency, GpsMessageType, FeeAmount, FeeCurrency, InternalAccountCurrency) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);")
                                 .with(
-                                        fields("gpsTransactionLink", "gpsTransactionId", "debitCardId", "transactionTimestamp", "internalAccountId", "wirecardAmount", "wirecardCurrency", "blockedClientAmount", "blockedClientCurrency")
+                                        fields("gpsTransactionLink", "gpsTransactionId", "gpsTransactionDateTime", "debitCardId", "transactionTimestamp", "internalAccountId",
+                                                "wirecardAmount", "wirecardCurrency", "blockedClientAmount", "blockedClientCurrency", "gpsMessageType", "feeAmount", "feeCurrency", "internalAccountCurrency")
                                 )
                 )
         );

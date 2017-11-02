@@ -20,8 +20,8 @@ public class CardSaveGpsMessageProcessedBolt extends com.orwellg.umbrella.common
 
     @Override
     public void declareFieldsDefinition() {
-        addFielsDefinition(Arrays.asList("gpsTransactionLink", "gpsTransactionId", "debitCardId", "transactionTimestamp",
-                "internalAccountId", "wirecardAmount", "wirecardCurrency", "blockedClientAmount", "blockedClientCurrency"));
+        addFielsDefinition(Arrays.asList("gpsTransactionLink", "gpsTransactionId", "gpsTransactionDateTime", "debitCardId", "transactionTimestamp",
+                "internalAccountId", "wirecardAmount", "wirecardCurrency", "blockedClientAmount", "blockedClientCurrency", "gpsMessageType", "feeAmount", "feeCurrency", "internalAccountCurrency"));
     }
 
     @Override
@@ -46,16 +46,21 @@ public class CardSaveGpsMessageProcessedBolt extends com.orwellg.umbrella.common
             //String timestamp = message.getTransactionTimestamp();
             //Date date = parser.parse(timestamp);
             values.put("transactionTimestamp", new Date()); //todo!!
+            values.put("gpsTransactionDateTime", new Date());
 
             values.put("internalAccountId", message.getInternalAccountId());
-
             //todo: avro send bigDecimal??
-            NumberFormat formatter = new DecimalFormat("#0.00");
-            values.put("wirecardAmount", new BigDecimal(formatter.format(message.getWirecardAmount())));
-            values.put("blockedClientAmount", new BigDecimal(formatter.format(message.getBlockedClientAmount())));
-
+            BigDecimal wirecardAmount = BigDecimal.valueOf(message.getWirecardAmount());
+            BigDecimal clientAmount = BigDecimal.valueOf(message.getBlockedClientAmount());
+            BigDecimal feeAmount = BigDecimal.valueOf(message.getFeesAmount());
+            values.put("wirecardAmount", wirecardAmount);
+            values.put("blockedClientAmount", clientAmount);
             values.put("wirecardCurrency", message.getWirecardCurrency());
-            values.put("blockedClientCurrency", message.getWirecardCurrency());
+            values.put("blockedClientCurrency", message.getBlockedClientCurrency());
+            values.put("feeAmount", feeAmount);
+            values.put("feeCurrency", message.getFeesCurrency());
+            values.put("gpsMessageType", message.getGpsMessageType());
+            values.put("internalAccountCurrency", message.getInternalAccountCurrency());
 
             send(input, values);
 

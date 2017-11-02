@@ -1,31 +1,26 @@
 package com.yggdrasil.dsl.card.transactions.topology.bolts.processors.presentment;
 
-import com.orwellg.umbrella.avro.types.event.EntityIdentifierType;
-import com.orwellg.umbrella.avro.types.event.Event;
-import com.orwellg.umbrella.avro.types.event.EventType;
-import com.orwellg.umbrella.avro.types.event.ProcessIdentifierType;
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
-import com.orwellg.umbrella.commons.types.utils.avro.RawMessageUtils;
-import com.orwellg.umbrella.commons.utils.constants.Constants;
-import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
+import com.yggdrasil.dsl.card.transactions.GpsMessage;
+import com.yggdrasil.dsl.card.transactions.services.ParseMessageService;
 import com.yggdrasil.dsl.card.transactions.topology.CardPresentmentDSLTopology;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
 
     private static final Logger LOG = LogManager.getLogger(PresentmentValidateAuthorisationBolt.class);
+    private static final ParseMessageService parseMessageService = new ParseMessageService();
 
     @Override
     public void declareFieldsDefinition() {
-        addFielsDefinition(Arrays.asList("key", "processId", "eventData", "message"));
-        addFielsDefinition(CardPresentmentDSLTopology.OFFLINE_PRESENTMENT_STREAM, Arrays.asList("key", "processId", "eventData", "message"));
+        addFielsDefinition(Arrays.asList("key", "processId", "eventData", "gpsMessage"));
+        addFielsDefinition(CardPresentmentDSLTopology.OFFLINE_PRESENTMENT_STREAM, Arrays.asList("key", "processId", "eventData", "gpsMessage"));
     }
 
     @Override
@@ -54,139 +49,59 @@ public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
 
             if (lastTransaction != null){
 
-                LOG.debug("Processing Presentment. GpsTransactionId: {}, GpsTransactionLink: {}", eventData.getTXnID(), eventData.getTransLink());
+                LOG.debug("Processing GpsMessage. GpsTransactionId: {}, GpsTransactionLink: {}", eventData.getTXnID(), eventData.getTransLink());
 
-                GpsMessageProcessed message = generateMessageProcessed(eventData, lastTransaction);
-                Event presentmentEvent = generteEvent(this.getClass().getName()
-                                                     ,CardTransactionEvents.RESPONSE_MESSAGE.getEventName()
-                                                     ,key
-                                                     ,message);
+                GpsMessage gpsMessage = mapToPresentment(eventData, lastTransaction);
 
                 Map<String, Object> values = new HashMap<>();
                 values.put("key", key);
                 values.put("processId", originalProcessId);
                 values.put("eventData", eventData);
-                values.put("message", RawMessageUtils.encodeToString(Event.SCHEMA$, presentmentEvent));
+                values.put("gpsMessage", gpsMessage);
 
-                LOG.info("Presentment processed. GpsTransactionId: {}, GpsTransactionLink: {}", eventData.getTXnID(), eventData.getTransLink());
+                LOG.info("GpsMessage processed. GpsTransactionId: {}, GpsTransactionLink: {}", eventData.getTXnID(), eventData.getTransLink());
                 send(tuple, values);
             }
             else {
-                LOG.debug("No authorisation has been found for GpsTransactionId: {}, GpsTransactionLink: {}. Continuing with Offline Presentment flow", eventData.getTXnID(), eventData.getTransLink());
+                LOG.debug("No authorisation has been found for GpsTransactionId: {}, GpsTransactionLink: {}. Continuing with Offline GpsMessage flow", eventData.getTXnID(), eventData.getTransLink());
+
+                GpsMessage gpsMessage = mapToPresentment(eventData, lastTransaction);
 
                 Map<String, Object> values = new HashMap<>();
                 values.put("key", key);
                 values.put("processId", originalProcessId);
                 values.put("eventData", eventData);
-                values.put("message", null);
+                values.put("gpsMessage", gpsMessage);
 
-                LOG.info("Offline Presentment processed. GpsTransactionId: {}, GpsTransactionLink: {}", eventData.getTXnID(), eventData.getTransLink());
+                LOG.info("Offline GpsMessage processed. GpsTransactionId: {}, GpsTransactionLink: {}", eventData.getTXnID(), eventData.getTransLink());
                 send(CardPresentmentDSLTopology.OFFLINE_PRESENTMENT_STREAM, tuple, values);
             }
 
         }catch (Exception e) {
             //todo: error
-            LOG.error("Error when processing Presentment Message. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
+            LOG.error("Error when processing GpsMessage Message. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
             error(e, tuple);
         }
 
 
     }
 
+    private GpsMessage mapToPresentment(Message message, CardTransaction transaction){
 
-    private void validateMessage(String key, Message eventData, CardTransaction lastTransaction) throws Exception {
-
-        LOG.debug("Validating GPS Message. Key: {}", key);
-
-        String appliedWirecardCurrency = lastTransaction.getWirecardCurrency();
-        String blockedClientCurrency = lastTransaction.getBlockedClientCurrency();
-        String wirecardCurrency = eventData.getSettleCcy();
-
-        if(appliedWirecardCurrency != wirecardCurrency){
-            throw new Exception(String.format("Wirecard Curency from last CardTransaction entry: {} and from the message: {} does not match. Can't calculate balance changes.", appliedWirecardCurrency, wirecardCurrency));
+        GpsMessage presentment = parseMessageService.parse(message);
+        if (transaction != null){
+            presentment.setAuthBlockedClientAmaount(transaction.getBlockedClientAmount());
+            presentment.setAuthBlockedClientCurrency(transaction.getBlockedClientCurrency());
+            presentment.setAuthWirecardAmount(transaction.getWirecardAmount());
+            presentment.setAuthWirecardCurrency(transaction.getWirecardCurrency());
+            presentment.setInternalAccountId(transaction.getInternalAccountId());
+            presentment.setInternalAccountCurrency(transaction.getInternalAccountCurrency()); //todo:??
+            presentment.setAuthFeeAmount(transaction.getFeeAmount());
+            presentment.setAuthFeeCurrency(transaction.getInternalAccountCurrency()); //todo: what currency should we get fees?
         }
-
-        if (lastTransaction.getBlockedClientCurrency() != eventData.getSettleCcy()){
-            throw new Exception(String.format("ClientBlockedAmount Curency from last CardTransaction entry: {} and from the message: {} does not match. Can't calculate balance changes.", blockedClientCurrency, wirecardCurrency));
-        }
-
-        LOG.info("GPS Message is valid. Key: {}", key);
-
+        return presentment;
     }
 
-    private GpsMessageProcessed generateMessageProcessed(Message eventData, CardTransaction lastTransaction){
-
-        LOG.debug("Generating gpsMessageProcessed message");
 
 
-        //todo: check currencies -> if different - error
-        double appliedWirecardAmount = lastTransaction.getWirecardAmount().doubleValue();
-        if (appliedWirecardAmount == Double.NEGATIVE_INFINITY || appliedWirecardAmount == Double.POSITIVE_INFINITY){
-            throw new UnsupportedOperationException("Error when generating gpsMessageProcessed. AppliedWirecardAmount can't be converted to double. Value: " + lastTransaction.getWirecardAmount());
-        }
-
-        double appliedBlockedBalance = lastTransaction.getBlockedClientAmount().doubleValue();
-        if (appliedBlockedBalance == Double.NEGATIVE_INFINITY || appliedBlockedBalance == Double.POSITIVE_INFINITY){
-            throw new UnsupportedOperationException("Error when generating gpsMessageProcessed. AppliedBlockedBalance can't be converted to double. Value: " + lastTransaction.getBlockedClientAmount());
-        }
-
-        //todo: calculate this on BigDecimals!!
-        double wirecardDiff = -eventData.getSettleAmt() - appliedWirecardAmount;
-        double clientAmtDiff = -(appliedBlockedBalance - eventData.getSettleAmt());
-
-        GpsMessageProcessed gpsMessageProcessed = new GpsMessageProcessed();
-        gpsMessageProcessed.setGpsTransactionLink(eventData.getTransLink());
-        gpsMessageProcessed.setGpsTransactionId(eventData.getTXnID());
-        gpsMessageProcessed.setDebitCardId(lastTransaction.getDebitCardId());
-        gpsMessageProcessed.setTransactionTimestamp(eventData.getTxnGPSDate().toString());      //todo: is this a correct field?
-        gpsMessageProcessed.setInternalAccountId(lastTransaction.getInternalAccountId());
-        gpsMessageProcessed.setOriginalWirecardAmount(eventData.getSettleAmt());
-        gpsMessageProcessed.setWirecardAmount(wirecardDiff);
-        gpsMessageProcessed.setWirecardCurrency(eventData.getSettleCcy());
-        gpsMessageProcessed.setAppliedWirecardAmount(lastTransaction.getWirecardAmount().doubleValue());
-        gpsMessageProcessed.setBlockedClientAmount(clientAmtDiff);
-        gpsMessageProcessed.setBlockedClientCurrency(eventData.getTxnCCy());
-        gpsMessageProcessed.setAppliedBlockedClientAmount(lastTransaction.getBlockedClientAmount().doubleValue());
-
-
-        LOG.debug("Message generated. Parameters: {}", gpsMessageProcessed);
-
-        return gpsMessageProcessed;
-    }
-
-    private Event generteEvent(String eventName, String source, String parentKey, Object eventData){
-
-        LOG.debug("Generating event with presentment data");
-
-        String uuid = UUID.randomUUID().toString();
-
-        // Create the event type
-        EventType eventType = new EventType();
-        eventType.setName(eventName);
-        eventType.setVersion(Constants.getDefaultEventVersion()); //??
-        eventType.setParentKey(Constants.EMPTY);
-        eventType.setKey("EVENT-" + uuid); //todo: should this be the key?
-        eventType.setSource(source);
-        eventType.setParentKey(parentKey);
-        SimpleDateFormat format = new SimpleDateFormat(Constants.getDefaultEventTimestampFormat());
-        eventType.setTimestamp(format.format(new Date()));
-        eventType.setData(eventData.toString());
-
-        ProcessIdentifierType processIdentifier = new ProcessIdentifierType();
-        processIdentifier.setUuid("PROCESS-" + uuid);
-
-        EntityIdentifierType entityIdentifier = new EntityIdentifierType();
-        entityIdentifier.setEntity(Constants.IPAGOO_ENTITY);
-        entityIdentifier.setBrand(Constants.IPAGOO_BRAND);
-
-        // Create the correspondent event
-        Event event = new Event();
-        event.setEvent(eventType);
-        event.setProcessIdentifier(processIdentifier);
-        event.setEntityIdentifier(entityIdentifier);
-
-        LOG.debug("Eevent with presentment data generated correctly. Parameters: {}", eventData);
-
-        return event;
-    }
 }

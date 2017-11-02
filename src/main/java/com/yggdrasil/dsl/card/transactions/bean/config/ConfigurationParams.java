@@ -22,7 +22,7 @@ public class ConfigurationParams extends ZkConfigurationParams implements Serial
     private static final long serialVersionUID = 1L;
 
 
-    public static final String DEFAULT_PROPERTIES_FILE = "yggdrasil-dsl-card-transactions.properties";
+    public static final String DEFAULT_PROPERTIES_FILE = "yggdrasil-dsl-card-transactions2.properties";
 
     public static final String DEFAULT_SUB_BRANCH        = "/yggdrasil/card/transactions/dsl";
     public static final String DEFAULT_SCYLLA_SUB_BRANCH = DEFAULT_SUB_BRANCH + "/scylla";

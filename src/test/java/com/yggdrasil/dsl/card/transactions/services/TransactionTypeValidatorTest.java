@@ -9,11 +9,16 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+
 import java.util.Arrays;
 import java.util.HashSet;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TransactionTypeValidatorTest {
