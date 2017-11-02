@@ -36,7 +36,7 @@ public class FeeSchemaBolt extends ScyllaRichBolt<List<FeeSchema>, GpsMessage> {
     @Override
     protected List<FeeSchema> retrieve(GpsMessage presentment) {
         List<FeeSchema> cardSettings =
-                repository.getFeeHistory(presentment.getDebitCardId(), presentment.getTransactionTimestamp(),presentment.getTransactionType());
+                repository.getFeeHistory(presentment.getDebitCardId(), presentment.getTransactionTimestamp(),presentment.getFeeTransactionType().toString());
         return cardSettings;
     }
 

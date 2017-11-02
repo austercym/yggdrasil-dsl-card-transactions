@@ -87,12 +87,8 @@ public class PresentmentCalculateAmountsBolt extends BasicRichBolt {
     private GpsMessageProcessed generateMessageProcessed(GpsMessage presentment, FeeSchema feeSchema){
 
         LOG.debug("Generating gpsMessageProcessed message");
-        BigDecimal wirecardAmount =
-                accountingService.calculateWirecardAmount(presentment.getAuthWirecardAmount(), presentment.getSettlementAmount());
-        BigDecimal clientAmount =
-                accountingService.calculateBlockedClientAmount(presentment.getAuthBlockedClientAmount(), presentment.getSettlementAmount(), feeSchema);
+
         BigDecimal feesAmount = accountingService.getFeeAmount(feeSchema, presentment.getSettlementAmount());
-        BigDecimal calculatedFees = accountingService.calculateFees(presentment.getAuthFeeAmount(), feesAmount);
 
         GpsMessageProcessed gpsMessageProcessed = new GpsMessageProcessed();
         gpsMessageProcessed.setGpsTransactionLink(presentment.getGpsTransactionLink());
@@ -100,11 +96,11 @@ public class PresentmentCalculateAmountsBolt extends BasicRichBolt {
         gpsMessageProcessed.setDebitCardId(presentment.getDebitCardId());
         gpsMessageProcessed.setTransactionTimestamp(presentment.getTransactionTimestamp().toString());      //todo: is this a correct field?
         gpsMessageProcessed.setInternalAccountId(presentment.getInternalAccountId());
-        gpsMessageProcessed.setWirecardAmount(wirecardAmount.doubleValue());
-        gpsMessageProcessed.setWirecardCurrency(presentment.getAuthWirecardCurrency());
-        gpsMessageProcessed.setBlockedClientAmount(clientAmount.doubleValue());
+        gpsMessageProcessed.setWirecardAmount(presentment.getSettlementAmount().doubleValue());
+        gpsMessageProcessed.setWirecardCurrency(presentment.getSettlementCurrency());
+        gpsMessageProcessed.setBlockedClientAmount(presentment.getSettlementAmount().negate().doubleValue());
         gpsMessageProcessed.setBlockedClientCurrency(presentment.getSettlementCurrency());
-        gpsMessageProcessed.setFeesAmount(calculatedFees.doubleValue());
+        gpsMessageProcessed.setFeesAmount(feesAmount.doubleValue());
         gpsMessageProcessed.setFeesCurrency(presentment.getInternalAccountCurrency());
         gpsMessageProcessed.setGpsMessageType(presentment.getGpsMessageType());
         gpsMessageProcessed.setInternalAccountCurrency(presentment.getInternalAccountCurrency());

@@ -10,6 +10,8 @@ import com.yggdrasil.dsl.card.transactions.topology.CardPresentmentDSLTopology;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
+
+import java.text.ParseException;
 import java.util.*;
 
 public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
@@ -86,7 +88,7 @@ public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
 
     }
 
-    private GpsMessage mapToPresentment(Message message, CardTransaction transaction){
+    private GpsMessage mapToPresentment(Message message, CardTransaction transaction) throws ParseException {
 
         GpsMessage presentment = parseMessageService.parse(message);
         if (transaction != null){

@@ -52,13 +52,11 @@ public class CardPresentmentDSLTopology {
         GBolt<?> kafkaErrorProducer = new GRichBolt("kafka-error-producer", new KafkaBoltWrapper("publisher-gps-dsl-error.yaml", String.class, String.class).getKafkaBolt(), hints);
         kafkaErrorProducer.addGrouping(new ShuffleGrouping("kafka-event-error-process"));
 
-
         //------------------------- Processing GpsMessage ------------------------------------------------------
 
         //Get card authorisation data
         GBolt<?> cardAuthorisationBolt = new GRichBolt("process-get-authorisation", new CardTransactionsBolt(), hints);
         cardAuthorisationBolt.addGrouping(new ShuffleGrouping("kafka-event-success-process"));
-
 
         //see if this is offline presentment
         GBolt<?> authValidationBolt = new GRichBolt("process-validate-authorisation", new PresentmentValidateAuthorisationBolt(), hints);
