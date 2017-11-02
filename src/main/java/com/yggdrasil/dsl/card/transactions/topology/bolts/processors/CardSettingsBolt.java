@@ -1,4 +1,4 @@
-package com.yggdrasil.dsl.card.transactions.topology.bolts.event;
+package com.yggdrasil.dsl.card.transactions.topology.bolts.processors;
 
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.repositories.CardSettingsRepository;

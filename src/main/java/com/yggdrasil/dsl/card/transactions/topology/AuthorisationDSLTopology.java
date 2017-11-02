@@ -3,7 +3,7 @@ package com.yggdrasil.dsl.card.transactions.topology;
 import java.util.Arrays;
 
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltFieldNameWrapper;
-import com.yggdrasil.dsl.card.transactions.topology.bolts.event.CardSettingsBolt;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.processors.CardSettingsBolt;
 import com.yggdrasil.dsl.card.transactions.topology.bolts.event.ProcessJoinValidatorBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

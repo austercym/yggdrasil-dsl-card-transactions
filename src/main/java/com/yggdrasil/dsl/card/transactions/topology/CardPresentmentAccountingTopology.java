@@ -10,7 +10,7 @@ import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
 import com.yggdrasil.dsl.card.transactions.topology.bolts.event.KafkaEventProcessBolt;
-import com.yggdrasil.dsl.card.transactions.topology.bolts.event.PresentmentAccounting;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.processors.AccountingBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.Config;
@@ -48,16 +48,16 @@ public class CardPresentmentAccountingTopology {
         GBolt<?> kafkaErrorProducer = new GRichBolt("kafka-error-producer", new KafkaBoltWrapper("publisher-gps-dsl-error.yaml", String.class, String.class).getKafkaBolt(), hints);
         kafkaErrorProducer.addGrouping(new ShuffleGrouping("kafka-event-error-process"));
 
-        //todo: get wirecard account from db
+        //todo: get wirecard account?
 
         //create events to debit/credit client
-        GBolt<?> accountingEventsProducer = new GRichBolt("accounting-events-producer", new PresentmentAccounting(), hints);
-        accountingEventsProducer.addGrouping(new ShuffleGrouping("kafka-event-success-process"));
+        GBolt<?> accountingCommandsProducer = new GRichBolt("accounting-commands-producer", new AccountingBolt(), hints);
+        accountingCommandsProducer.addGrouping(new ShuffleGrouping("kafka-event-success-process"));
 
 
         StormTopology topology = TopologyFactory.generateTopology(
                 kafkaEventReader,
-                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, accountingEventsProducer));
+                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, accountingCommandsProducer));
         LOG.debug("Topology created");
 
         // Create the basic config and upload the topology
@@ -66,7 +66,7 @@ public class CardPresentmentAccountingTopology {
         conf.setMaxTaskParallelism(30);
 
         LocalCluster cluster = new LocalCluster();
-        cluster.submitTopology("dsl-gps-presentment-accounting", conf, topology);
+        cluster.submitTopology("card-presentment-accounting", conf, topology);
 
         Thread.sleep(3000000);
         cluster.shutdown();

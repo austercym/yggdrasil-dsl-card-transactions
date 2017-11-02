@@ -1,4 +1,4 @@
-package com.yggdrasil.dsl.card.transactions.topology.bolts.event;
+package com.yggdrasil.dsl.card.transactions.topology.bolts.processors;
 
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.repositories.CardTransactionRepository;
@@ -13,7 +13,7 @@ import org.apache.storm.task.TopologyContext;
 import java.util.List;
 import java.util.Map;
 
-public class PresentmentScyllaCardTransactionsBolt extends ScyllaRichBolt<List<CardTransaction>, Message> {
+public class CardTransactionsBolt extends ScyllaRichBolt<List<CardTransaction>, Message> {
 
     private CardTransactionRepository repository;
 
