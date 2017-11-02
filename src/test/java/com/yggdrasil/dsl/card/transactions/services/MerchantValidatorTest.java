@@ -39,7 +39,7 @@ public class MerchantValidatorTest {
 
         HashMap<String, Date> allowedMerchants = new HashMap<String, Date>();
         allowedMerchants.put("foo", new Date());
-        cardSettings.setAllowedCardNotPresentMerchants(allowedMerchants);
+        cardSettings.setAllowedOnlineMerchants(allowedMerchants);
 
         when(cardPresenceResolverMock.isCardPresent(any())).thenReturn(false);
 
@@ -64,7 +64,7 @@ public class MerchantValidatorTest {
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.YEAR, -1);
         allowedMerchants.put("foo", cal.getTime());
-        cardSettings.setAllowedCardNotPresentMerchants(allowedMerchants);
+        cardSettings.setAllowedOnlineMerchants(allowedMerchants);
 
         when(cardPresenceResolverMock.isCardPresent(any())).thenReturn(false);
 
@@ -89,7 +89,7 @@ public class MerchantValidatorTest {
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.YEAR, 1);
         allowedMerchants.put("foo", cal.getTime());
-        cardSettings.setAllowedCardNotPresentMerchants(allowedMerchants);
+        cardSettings.setAllowedOnlineMerchants(allowedMerchants);
 
         when(cardPresenceResolverMock.isCardPresent(any())).thenReturn(false);
 
@@ -112,7 +112,7 @@ public class MerchantValidatorTest {
 
         HashMap<String, Date> allowedMerchants = new HashMap<String, Date>();
         allowedMerchants.put("foo", null);
-        cardSettings.setAllowedCardNotPresentMerchants(allowedMerchants);
+        cardSettings.setAllowedOnlineMerchants(allowedMerchants);
 
         when(cardPresenceResolverMock.isCardPresent(any())).thenReturn(false);
 

@@ -26,7 +26,7 @@ public class MerchantValidator implements AuthorisationValidator {
         }
         Map<String, Date> merchants = cardSettings == null
                 ? null
-                : cardSettings.getAllowedCardNotPresentMerchants();
+                : cardSettings.getAllowedOnlineMerchants();
         String merchantId = message.getMerchIDDE42();
         merchantId = merchantId == null
                 ? null

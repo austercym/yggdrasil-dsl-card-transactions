@@ -11,9 +11,12 @@ import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltFieldNameWrappe
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
 import com.yggdrasil.dsl.card.transactions.topology.bolts.event.KafkaEventProcessBolt;
-import com.yggdrasil.dsl.card.transactions.topology.bolts.event.PresentmentOfflineMockBolt;
-import com.yggdrasil.dsl.card.transactions.topology.bolts.event.PresentmentValidateAuthenticationBolt;
-import com.yggdrasil.dsl.card.transactions.topology.bolts.event.PresentmentScyllaCardTransactionsBolt;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.processors.FeeSchemaBolt;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.processors.LinkedAccountBolt;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.processors.presentment.PresentmentCalculateAmountsBolt;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.processors.presentment.PresentmentOfflineTransactionBolt;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.processors.presentment.PresentmentValidateAuthorisationBolt;
+import com.yggdrasil.dsl.card.transactions.topology.bolts.processors.CardTransactionsBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.Config;
@@ -49,45 +52,48 @@ public class CardPresentmentDSLTopology {
         GBolt<?> kafkaErrorProducer = new GRichBolt("kafka-error-producer", new KafkaBoltWrapper("publisher-gps-dsl-error.yaml", String.class, String.class).getKafkaBolt(), hints);
         kafkaErrorProducer.addGrouping(new ShuffleGrouping("kafka-event-error-process"));
 
-        //1.get gpd transaction link to check if there was an auth before
-        //2.get auth data from db
-        //3.process data
-        //4.publish result on new topic
-        /*
-        get msg from kafka -> get data from db
-        auth    ->	 										publish complete message
-        no auth ->   get the card in time of transaction -> publish complete message
-        (read from scylla)
 
-        get complete message -> create messages for accounting
-        get complete message -> save to hive
-        get complete message -> save to scylla
-        */
-
+        //------------------------- Processing GpsMessage ------------------------------------------------------
 
         //Get card authorisation data
-        GBolt<?> cardAuthorisationBolt = new GRichBolt("process-get-authentication", new PresentmentScyllaCardTransactionsBolt(), hints);
+        GBolt<?> cardAuthorisationBolt = new GRichBolt("process-get-authorisation", new CardTransactionsBolt(), hints);
         cardAuthorisationBolt.addGrouping(new ShuffleGrouping("kafka-event-success-process"));
 
 
-        //see if data is complete - if it is send message to kafka
-        GBolt<?> authValidationBolt = new GRichBolt("process-validate-authentication", new PresentmentValidateAuthenticationBolt(), hints);
-        authValidationBolt.addGrouping(new ShuffleGrouping("process-get-authentication"));
+        //see if this is offline presentment
+        GBolt<?> authValidationBolt = new GRichBolt("process-validate-authorisation", new PresentmentValidateAuthorisationBolt(), hints);
+        authValidationBolt.addGrouping(new ShuffleGrouping("process-get-authorisation"));
+
+        //------------------------ Offline GpsMessage Processing ---------------------------------------------------
+
+        //offline presentment - needs linked account in time of transaction
+        GBolt<?> getLinkedAccountBolt = new GRichBolt("process-get-linked-account", new LinkedAccountBolt(), hints);
+        getLinkedAccountBolt.addGrouping(new ShuffleGrouping("process-validate-authorisation", OFFLINE_PRESENTMENT_STREAM));
+
+        GBolt<?> validateLinikedAccountBolt = new GRichBolt("process-linked-account", new PresentmentOfflineTransactionBolt(), hints);
+        validateLinikedAccountBolt.addGrouping(new ShuffleGrouping("process-get-linked-account"));
+
+        //------------------------- Calculating Fees, Wirecard Amounts, Client Amounts -------------------------------
+
+        GBolt<?> getFeeSchemaBolt = new GRichBolt("process-get-fees-schema", new FeeSchemaBolt(), hints);
+        getFeeSchemaBolt.addGrouping(new ShuffleGrouping("process-linked-account"));
+        getFeeSchemaBolt.addGrouping(new ShuffleGrouping("process-validate-authorisation"));
+
+        //calculate client, wirecard, fees amounts
+        GBolt<?> calculateAmountsBolt = new GRichBolt("process-calculate-amounts", new PresentmentCalculateAmountsBolt(), hints);
+        calculateAmountsBolt.addGrouping(new ShuffleGrouping("process-get-fees-schema"));
 
 
-        GBolt<?> offlinePresentmentBolt = new GRichBolt("process-offline-presentment", new PresentmentOfflineMockBolt(), hints);
-        offlinePresentmentBolt.addGrouping(new ShuffleGrouping("process-validate-authentication", OFFLINE_PRESENTMENT_STREAM));
-
-        // Send a event with the result
+        //------------------------- Send an event with the result -------------------------------------------------------
         GBolt<?> kafkaEventSuccessProducer = new GRichBolt("kafka-event-success-producer", new KafkaBoltFieldNameWrapper("publisher-gps-dsl-presentment-msg-processed-success.yaml", String.class, String.class).getKafkaBolt(), 10);
-        kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping("process-validate-authentication"));
-        kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping("process-offline-presentment"));
+        kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping("process-calculate-amounts"));
 
 
         // Build the topology
         StormTopology topology = TopologyFactory.generateTopology(
                 kafkaEventReader,
-                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, cardAuthorisationBolt, authValidationBolt, offlinePresentmentBolt, kafkaEventSuccessProducer));
+                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, cardAuthorisationBolt, authValidationBolt,
+                        getLinkedAccountBolt, validateLinikedAccountBolt, getFeeSchemaBolt, calculateAmountsBolt, kafkaEventSuccessProducer));
         LOG.debug("Topology created");
 
         // Create the basic config and upload the topology
@@ -96,7 +102,7 @@ public class CardPresentmentDSLTopology {
         conf.setMaxTaskParallelism(30);
 
         LocalCluster cluster = new LocalCluster();
-        cluster.submitTopology("dsl-gps-presentment", conf, topology);
+        cluster.submitTopology("card-presentment-dsl", conf, topology);
 
         Thread.sleep(3000000);
         cluster.shutdown();
