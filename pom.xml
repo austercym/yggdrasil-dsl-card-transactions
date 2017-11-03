@@ -102,4 +102,25 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<!-- Development environment @ my laptop -->
+		<profile>
+			<id>development</id>
+			<properties>
+				<zookeeper.host>localhost:2181</zookeeper.host>
+				<kafka.bootstrap.host>localhost:9092,localhost:10092</kafka.bootstrap.host>
+			</properties>
+		</profile>
+		<!-- Production environment @ production server -->
+		<profile>
+			<id>production</id>
+			<properties>
+				<!--  <zookeeper.host>hdf-node1:2181,hdf-node2:2181,hdf-node3:2181</zookeeper.host> -->
+				<zookeeper.host>hdf-node1:2181,hdf-node2:2181,hdf-node3:2181</zookeeper.host>
+				<kafka.bootstrap.host>hdf-node1:6667,hdf-node4:6667,hdf-node5:6667</kafka.bootstrap.host>
+			</properties>
+		</profile>
+	</profiles>
+
 </project>
