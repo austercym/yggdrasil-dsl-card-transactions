@@ -37,9 +37,9 @@ public class MerchantValidatorTest {
 
         CardSettings cardSettings = new CardSettings();
 
-        HashMap<String, Date> allowedMerchants = new HashMap<String, Date>();
+        HashMap<String, Date> allowedMerchants = new HashMap<>();
         allowedMerchants.put("foo", new Date());
-        cardSettings.setAllowedOnlineMerchants(allowedMerchants);
+        cardSettings.setAllowedCardNotPresentMerchants(allowedMerchants);
 
         when(cardPresenceResolverMock.isCardPresent(any())).thenReturn(false);
 
@@ -60,11 +60,11 @@ public class MerchantValidatorTest {
 
         CardSettings cardSettings = new CardSettings();
 
-        HashMap<String, Date> allowedMerchants = new HashMap<String, Date>();
+        HashMap<String, Date> allowedMerchants = new HashMap<>();
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.YEAR, -1);
         allowedMerchants.put("foo", cal.getTime());
-        cardSettings.setAllowedOnlineMerchants(allowedMerchants);
+        cardSettings.setAllowedCardNotPresentMerchants(allowedMerchants);
 
         when(cardPresenceResolverMock.isCardPresent(any())).thenReturn(false);
 
@@ -85,11 +85,11 @@ public class MerchantValidatorTest {
 
         CardSettings cardSettings = new CardSettings();
 
-        HashMap<String, Date> allowedMerchants = new HashMap<String, Date>();
+        HashMap<String, Date> allowedMerchants = new HashMap<>();
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.YEAR, 1);
         allowedMerchants.put("foo", cal.getTime());
-        cardSettings.setAllowedOnlineMerchants(allowedMerchants);
+        cardSettings.setAllowedCardNotPresentMerchants(allowedMerchants);
 
         when(cardPresenceResolverMock.isCardPresent(any())).thenReturn(false);
 
@@ -110,9 +110,9 @@ public class MerchantValidatorTest {
 
         CardSettings cardSettings = new CardSettings();
 
-        HashMap<String, Date> allowedMerchants = new HashMap<String, Date>();
+        HashMap<String, Date> allowedMerchants = new HashMap<>();
         allowedMerchants.put("foo", null);
-        cardSettings.setAllowedOnlineMerchants(allowedMerchants);
+        cardSettings.setAllowedCardNotPresentMerchants(allowedMerchants);
 
         when(cardPresenceResolverMock.isCardPresent(any())).thenReturn(false);
 

@@ -5,12 +5,11 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionType;
 
 public class TransactionTypeResolver {
 
-    private static final String ATM_MCC = "6011";
     private static final String ELECTRONIC_ORDER = "5";
     private static final Integer POS_CARDHOLDER_PRESENCE_SUB_FIELD = 4;
 
     public TransactionType getType(Message message) {
-        if (ATM_MCC.equals(message.getMCCCode())) {
+        if (Mcc.ATM.equals(message.getMCCCode())) {
             return TransactionType.ATM;
         }
         if (ELECTRONIC_ORDER.equals(getPosCardholderPresence(message.getPOSDataDE61()))) {

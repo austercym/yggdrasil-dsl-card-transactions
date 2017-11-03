@@ -34,9 +34,14 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         try {
             Message event = (Message) input.getValueByField("eventData");
             String parentKey = (String) input.getValueByField("key");
-            ValidationResult statusValidationResult = (ValidationResult) input.getValueByField("statusValidationResult");
-            ValidationResult transactionTypeValidationResult = (ValidationResult) input.getValueByField("transactionTypeValidationResult");
-            ValidationResult merchantValidationResult = (ValidationResult) input.getValueByField("merchantValidationResult");
+            ValidationResult statusValidationResult =
+                    (ValidationResult) input.getValueByField("statusValidationResult");
+            ValidationResult transactionTypeValidationResult =
+                    (ValidationResult) input.getValueByField("transactionTypeValidationResult");
+            ValidationResult merchantValidationResult =
+                    (ValidationResult) input.getValueByField("merchantValidationResult");
+            ValidationResult velocityLimitsValidationResult =
+                    (ValidationResult) input.getValueByField("velocityLimitsValidationResult");
 
             String logPrefix = String.format(
                     "[TransLink: %s, TxnId: %s, DebitCardId: %s, Token: %s, Amount: %s %s] ",
@@ -46,7 +51,9 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
 
             ResponseCode responseCode = ResponseCode.DO_NOT_HONOUR;
             ResponseMsg response = new ResponseMsg();
-            if (statusValidationResult.getIsValid()
+            if (!velocityLimitsValidationResult.getIsValid()) {
+                responseCode = ResponseCode.EXCEEDS_WITHDRAWAL_AMOUNT_LIMIT;
+            } else if (statusValidationResult.getIsValid()
                     && transactionTypeValidationResult.getIsValid()
                     && merchantValidationResult.getIsValid()) {
                 responseCode = ResponseCode.ALL_GOOD;
@@ -81,7 +88,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         }
     }
 
-    private GpsMessageProcessed generateMessageProcessed(Message authorisation, ResponseMsg response){
+    private GpsMessageProcessed generateMessageProcessed(Message authorisation, ResponseMsg response) {
 
         LOG.debug("Generating gpsMessageProcessed message");
         GpsMessageProcessed gpsMessageProcessed = new GpsMessageProcessed();
