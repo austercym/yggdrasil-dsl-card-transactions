@@ -5,6 +5,7 @@ import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
 import com.yggdrasil.dsl.card.transactions.GpsMessage;
 import com.yggdrasil.dsl.card.transactions.GpsMessageException;
+import com.yggdrasil.dsl.card.transactions.topology.CardPresentmentDSLTopology;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
@@ -18,6 +19,7 @@ public class PresentmentOfflineTransactionBolt extends BasicRichBolt {
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "gpsMessage"));
+        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData"));
     }
 
     @Override
@@ -40,8 +42,8 @@ public class PresentmentOfflineTransactionBolt extends BasicRichBolt {
                     .max(Comparator.comparing(LinkedAccount::getFromTimestamp));
 
             if (!maxDateOptional.isPresent()){
-                throw new GpsMessageException(String.format("No linked accounts found for cardId: {}, transaction date time: {}. Message key: {}. processId: {}",
-                        presentment.getDebitCardId(), presentment.getTransactionTimestamp(), key, processId));
+                throw new GpsMessageException("No linked accounts found for cardId: " + presentment.getDebitCardId() + " transaction date time: " + presentment.getTransactionTimestamp()
+                        + ", Message key: " + key + ", processId: " + processId);
             }
 
             LinkedAccount linkedAccount = maxDateOptional.get();
@@ -65,7 +67,14 @@ public class PresentmentOfflineTransactionBolt extends BasicRichBolt {
 
         }catch (Exception e){
             LOG.error("Error when processing Linked Accounts. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
-            error(e, tuple);
+
+            Map<String, Object> values = new HashMap<>();
+            values.put("key", tuple.getValueByField("key"));
+            values.put("processId", tuple.getValueByField("processId"));
+            values.put("eventData", tuple.getValueByField("eventData"));
+
+            send(CardPresentmentDSLTopology.ERROR_STREAM, tuple, values);
+            LOG.info("Error when processing Linked Accounts - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
         }
 
 

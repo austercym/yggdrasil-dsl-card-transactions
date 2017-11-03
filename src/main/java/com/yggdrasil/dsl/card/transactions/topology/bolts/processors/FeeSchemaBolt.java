@@ -5,6 +5,7 @@ import com.orwellg.umbrella.commons.repositories.scylla.FeeHistoryReposotoryImpl
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.generics.scylla.ScyllaRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.FeeSchema;
 import com.yggdrasil.dsl.card.transactions.GpsMessage;
+import com.yggdrasil.dsl.card.transactions.topology.CardPresentmentDSLTopology;
 import com.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,6 +26,7 @@ public class FeeSchemaBolt extends ScyllaRichBolt<List<FeeSchema>, GpsMessage> {
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "retrieveValue", "gpsMessage"));
+        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData"));
     }
 
     @Override
@@ -49,7 +51,9 @@ public class FeeSchemaBolt extends ScyllaRichBolt<List<FeeSchema>, GpsMessage> {
 
     @Override
     public void execute(Tuple input) {
+
         try {
+
             Map<String, Object> values = new HashMap<>();
             values.put("key", input.getStringByField("key"));
             values.put("processId", input.getStringByField("processId"));
@@ -59,8 +63,16 @@ public class FeeSchemaBolt extends ScyllaRichBolt<List<FeeSchema>, GpsMessage> {
 
             send(input, values);
         } catch (Exception e) {
+
             LOG.error("Error retrieving fee schema history information. Message: {}", input, e.getMessage(), e);
-            error(e, input);
+
+            Map<String, Object> values = new HashMap<>();
+            values.put("key", input.getValueByField("key"));
+            values.put("processId", input.getValueByField("processId"));
+            values.put("eventData", input.getValueByField("eventData"));
+
+            send(CardPresentmentDSLTopology.ERROR_STREAM, input, values);
+            LOG.info("Error when processing GpsMessage - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", input, e.getMessage(), e);
         }
     }
 }

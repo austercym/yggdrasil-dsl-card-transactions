@@ -18,6 +18,10 @@ public class ParseMessageService {
     private final static Logger LOG = LogManager.getLogger(AccountingOperationsService.class);
     private TransactionTypeResolver transactionTypeResolver;
 
+    private final static String chargebackGpsMessageType = "C";
+    private final static String balanceEnquireCode = "30";
+    private final static String withdrawalCode = "01";
+
     public ParseMessageService(){
         transactionTypeResolver = new TransactionTypeResolver();
     }
@@ -51,12 +55,12 @@ public class ParseMessageService {
 
     public FeeTransactionType getTransactionType(String gpsMessageType, String transactionCountryCode, TransactionType transactionType, String procCode){
 
-        if(gpsMessageType == "C") return FeeTransactionType.ChargeBack;
+        if(gpsMessageType.equals(chargebackGpsMessageType)) return FeeTransactionType.ChargeBack;
         if(transactionType == TransactionType.ATM){
             //todo: check if EU country?
-            if (procCode == "30") return FeeTransactionType.ATMBalanceEnquiries;
-            if (procCode == "01") return FeeTransactionType.ATMWithdrawalsEU;
-            //todo: if something else?
+            if (procCode.equals(balanceEnquireCode)) return FeeTransactionType.ATMBalanceEnquiries;
+            if (procCode.equals(withdrawalCode)) return FeeTransactionType.ATMWithdrawalsEU;
+            //todo: what if something else?
         }
         if (transactionType == TransactionType.POS){
             return FeeTransactionType.POSTransactionsEU;
@@ -79,7 +83,7 @@ public class ParseMessageService {
                 gpsDateOrUtcNow = parser.parse(gpsTransactionTime);
             }
         } catch (ParseException e) {
-            LOG.error(String.format("Parsing gpsTransactionDateTime failed - using current utc time. gpsTransactionTime: {}", gpsTransactionTime),e);
+            LOG.error("Parsing gpsTransactionDateTime failed - using current utc time. gpsTransactionTime: {}. Error: {}", gpsTransactionTime, e);
         }
         return gpsDateOrUtcNow;
     }

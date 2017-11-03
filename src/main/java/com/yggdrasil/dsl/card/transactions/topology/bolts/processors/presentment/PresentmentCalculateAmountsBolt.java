@@ -14,6 +14,7 @@ import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.yggdrasil.dsl.card.transactions.GpsMessage;
 import com.yggdrasil.dsl.card.transactions.GpsMessageException;
 import com.yggdrasil.dsl.card.transactions.services.AccountingOperationsService;
+import com.yggdrasil.dsl.card.transactions.topology.CardPresentmentDSLTopology;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -37,6 +38,7 @@ public class PresentmentCalculateAmountsBolt extends BasicRichBolt {
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "message"));
+        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData"));
     }
 
     @Override
@@ -52,8 +54,8 @@ public class PresentmentCalculateAmountsBolt extends BasicRichBolt {
                     .max(Comparator.comparing(FeeSchema::getFromTimestamp));
 
             if (!maxDateOptional.isPresent()) {
-                throw new GpsMessageException(String.format("No Fee Schema found for cardId: {}, transactionTimestmap: {}",
-                        presentment.getDebitCardId(), presentment.getTransactionTimestamp()));
+                throw new GpsMessageException("No Fee Schema found for cardId: " + presentment.getDebitCardId() +
+                        ", transactionTimestmap: " + presentment.getTransactionTimestamp());
             }
 
             if (schema.size() > 0) {
@@ -77,8 +79,17 @@ public class PresentmentCalculateAmountsBolt extends BasicRichBolt {
                         eventData.getTransLink(), key, originalProcessId);
                 send(tuple, values);
             }
+
         }catch(Exception e){
-            LOG.error("Error when calculating transaction amounts. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
+            LOG.error("Error when processing Linked Accounts. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
+
+            Map<String, Object> values = new HashMap<>();
+            values.put("key", tuple.getValueByField("key"));
+            values.put("processId", tuple.getValueByField("processId"));
+            values.put("eventData", tuple.getValueByField("eventData"));
+
+            send(CardPresentmentDSLTopology.ERROR_STREAM, tuple, values);
+            LOG.info("Error when processing Linked Accounts - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
             error(e, tuple);
         }
     }
@@ -89,16 +100,18 @@ public class PresentmentCalculateAmountsBolt extends BasicRichBolt {
         LOG.debug("Generating gpsMessageProcessed message");
 
         BigDecimal feesAmount = accountingService.getFeeAmount(feeSchema, presentment.getSettlementAmount());
+        BigDecimal blockedClientAmount = presentment.getSettlementAmount().add(feesAmount).negate();
 
         GpsMessageProcessed gpsMessageProcessed = new GpsMessageProcessed();
         gpsMessageProcessed.setGpsTransactionLink(presentment.getGpsTransactionLink());
         gpsMessageProcessed.setGpsTransactionId(presentment.getGpsTransactionId());
         gpsMessageProcessed.setDebitCardId(presentment.getDebitCardId());
-        gpsMessageProcessed.setTransactionTimestamp(presentment.getTransactionTimestamp().toString());      //todo: is this a correct field?
+        gpsMessageProcessed.setTransactionTimestamp(presentment.getTransactionTimestamp().getTime() / 1000L); //todo: helper to
+        gpsMessageProcessed.setGpsTransactionTime(presentment.getGpsTrnasactionDate().getTime() / 1000L);
         gpsMessageProcessed.setInternalAccountId(presentment.getInternalAccountId());
         gpsMessageProcessed.setWirecardAmount(presentment.getSettlementAmount().doubleValue());
         gpsMessageProcessed.setWirecardCurrency(presentment.getSettlementCurrency());
-        gpsMessageProcessed.setBlockedClientAmount(presentment.getSettlementAmount().negate().doubleValue());
+        gpsMessageProcessed.setBlockedClientAmount(blockedClientAmount.doubleValue());
         gpsMessageProcessed.setBlockedClientCurrency(presentment.getSettlementCurrency());
         gpsMessageProcessed.setFeesAmount(feesAmount.doubleValue());
         gpsMessageProcessed.setFeesCurrency(presentment.getInternalAccountCurrency());

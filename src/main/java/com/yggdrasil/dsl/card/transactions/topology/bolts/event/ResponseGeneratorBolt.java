@@ -88,7 +88,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         gpsMessageProcessed.setGpsTransactionLink(authorisation.getTransLink());
         gpsMessageProcessed.setGpsTransactionId(authorisation.getTXnID());
         gpsMessageProcessed.setDebitCardId(Long.parseLong(authorisation.getCustRef()));
-        gpsMessageProcessed.setTransactionTimestamp(authorisation.getTxnGPSDate().toString());      //todo: is this a correct field?
+        //gpsMessageProcessed.setTransactionTimestamp(authorisation.getTxnGPSDate());      //todo: is this a correct field?
         gpsMessageProcessed.setEhiResponse(response);
 
         LOG.debug("Message generated. Parameters: {}", gpsMessageProcessed);
