@@ -5,11 +5,14 @@ import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessageException;
 import com.orwellg.yggdrasil.dsl.card.transactions.services.ParseMessageService;
 import com.orwellg.yggdrasil.dsl.card.transactions.topology.CardPresentmentDSLTopology;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
+
+import java.text.ParseException;
 import java.util.*;
 
 public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
@@ -21,6 +24,7 @@ public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "gpsMessage"));
         addFielsDefinition(CardPresentmentDSLTopology.OFFLINE_PRESENTMENT_STREAM, Arrays.asList("key", "processId", "eventData", "gpsMessage"));
+        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData"));
     }
 
     @Override
@@ -37,11 +41,21 @@ public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
             List<CardTransaction> cardTransactions = (List<CardTransaction>) inputValues.get(3);
 
             CardTransaction lastTransaction = null;
+
+
             Optional<CardTransaction> max = cardTransactions.stream()
                     .filter(x -> x.getGpsTransactionId() != eventData.getTXnID())
                     .max(Comparator.comparing(CardTransaction::getTransactionTimestamp));
-            if (max.isPresent()){
+
+            if (max.isPresent()) {
                 lastTransaction = max.get();
+
+                //validate the last transaction
+                List<String> validGpsMessageTypes = Arrays.asList("A", "D", "P");
+                if (!validGpsMessageTypes.contains(lastTransaction.getGpsMessageType()))
+                    throw new GpsMessageException("Error when processing presentment - invalid last transaction type: {} " + lastTransaction+ ". Valid types are: A, D, P");
+                if (lastTransaction.getGpsTransactionId().equals(eventData.getTXnID()))
+                    throw new GpsMessageException("Error when processing presentment - last processed transaction has the same transactionId: " + lastTransaction.getGpsTransactionId());
             }
 
 
@@ -78,15 +92,19 @@ public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
             }
 
         }catch (Exception e) {
-            //todo: error
             LOG.error("Error when processing GpsMessage Message. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
-            error(e, tuple);
+
+            Map<String, Object> values = new HashMap<>();
+            values.put("key", tuple.getValueByField("key"));
+            values.put("processId", tuple.getValueByField("processId"));
+            values.put("eventData", tuple.getValueByField("eventData"));
+
+            send(CardPresentmentDSLTopology.ERROR_STREAM, tuple, values);
+            LOG.info("Error when processing GpsMessage - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
         }
-
-
     }
 
-    private GpsMessage mapToPresentment(Message message, CardTransaction transaction){
+    private GpsMessage mapToPresentment(Message message, CardTransaction transaction) throws ParseException {
 
         GpsMessage presentment = parseMessageService.parse(message);
         if (transaction != null){
@@ -101,7 +119,4 @@ public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
         }
         return presentment;
     }
-
-
-
 }

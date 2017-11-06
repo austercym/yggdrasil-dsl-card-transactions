@@ -1,5 +1,8 @@
 package com.orwellg.yggdrasil.dsl.card.transactions;
 
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionType;
+
+
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -15,7 +18,8 @@ public class GpsMessage {
     private BigDecimal SettlementAmount;
     private String SettlementCurrency;
     private String GpsMessageType;
-    private String TransactionType;
+    private TransactionType TransactionType;
+    private FeeTransactionType FeeTransactionType;
     private BigDecimal AuthWirecardAmount;
     private String AuthWirecardCurrency;
     private BigDecimal AuthBlockedClientAmount;
@@ -29,6 +33,15 @@ public class GpsMessage {
 
     public void setAuthBlockedClientAmount(BigDecimal authBlockedClientAmount) {
         AuthBlockedClientAmount = authBlockedClientAmount;
+    }
+
+
+    public com.orwellg.yggdrasil.dsl.card.transactions.FeeTransactionType getFeeTransactionType() {
+        return FeeTransactionType;
+    }
+
+    public void setFeeTransactionType(com.orwellg.yggdrasil.dsl.card.transactions.FeeTransactionType feeTransactionType) {
+        FeeTransactionType = feeTransactionType;
     }
 
     public Long getInternalAccountId() {
@@ -111,11 +124,11 @@ public class GpsMessage {
         GpsMessageType = gpsMessageType;
     }
 
-    public String getTransactionType() {
+    public TransactionType getTransactionType() {
         return TransactionType;
     }
 
-    public void setTransactionType(String transactionType) {
+    public void setTransactionType(TransactionType transactionType) {
         TransactionType = transactionType;
     }
 
@@ -163,5 +176,7 @@ public class GpsMessage {
     public void setAuthFeeCurrency(String authFeeCurrency) {
         AuthFeeCurrency = authFeeCurrency;
     }
+
+
 
 }

@@ -7,10 +7,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class CardSaveGpsMessageProcessedBolt extends com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventProcessBolt {
 
@@ -32,25 +30,22 @@ public class CardSaveGpsMessageProcessedBolt extends com.orwellg.umbrella.common
             LOG.info("[Key: {}][ProcessId: {}]: Received GPS message event", key, processId);
 
             GpsMessageProcessed message = gson.fromJson(event.getEvent().getData(), GpsMessageProcessed.class);
+            BigDecimal wirecardAmount = BigDecimal.valueOf(message.getWirecardAmount());
+            BigDecimal clientAmount = BigDecimal.valueOf(message.getBlockedClientAmount());
+            BigDecimal feeAmount = BigDecimal.valueOf(message.getFeesAmount());
+            Date transactionTimestamp = new Date(message.getTransactionTimestamp()*1000);
+            Date gpsDate = new Date(message.getGpsTransactionTime()*1000);
+            //todo: avro - send date or timestamp in long?
+            //todo: avro send bigDecimal??
 
             Map<String, Object> values = new HashMap<>();
 
             values.put("gpsTransactionLink", message.getGpsTransactionLink());
             values.put("gpsTransactionId", message.getGpsTransactionId());
             values.put("debitCardId", message.getDebitCardId());
-
-            //todo: avro - send date or timestamp in long?
-            //SimpleDateFormat parser = new SimpleDateFormat("YYYY-MM-dd hh:mm:ss.SSS");
-            //String timestamp = message.getTransactionTimestamp();
-            //Date date = parser.parse(timestamp);
-            values.put("transactionTimestamp", new Date()); //todo!!
-            values.put("gpsTransactionDateTime", new Date());
-
+            values.put("transactionTimestamp", transactionTimestamp);
+            values.put("gpsTransactionDateTime", gpsDate);
             values.put("internalAccountId", message.getInternalAccountId());
-            //todo: avro send bigDecimal??
-            BigDecimal wirecardAmount = BigDecimal.valueOf(message.getWirecardAmount());
-            BigDecimal clientAmount = BigDecimal.valueOf(message.getBlockedClientAmount());
-            BigDecimal feeAmount = BigDecimal.valueOf(message.getFeesAmount());
             values.put("wirecardAmount", wirecardAmount);
             values.put("blockedClientAmount", clientAmount);
             values.put("wirecardCurrency", message.getWirecardCurrency());

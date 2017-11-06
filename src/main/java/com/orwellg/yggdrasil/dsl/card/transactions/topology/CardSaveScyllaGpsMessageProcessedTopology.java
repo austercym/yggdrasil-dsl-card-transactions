@@ -32,13 +32,19 @@ public class CardSaveScyllaGpsMessageProcessedTopology {
 
         //todo: configuration for hints
         //todo: tidy up kafka topics
-        builder.setSpout("transaction-log-event-reader",
+        builder.setSpout("presentment-event-reader",
                 new KafkaSpoutWrapper("subscriber-card-save-gps-presentment-processed.yaml", String.class, String.class).getKafkaSpout(), hints);
+        builder.setSpout("authorisation-event-reader",
+                new KafkaSpoutWrapper("subscriber-card-save-gps-authorisation-processed.yaml", String.class, String.class).getKafkaSpout(), hints);
 
         builder.setBolt("prepare-data-for-scylla",
                 new CardSaveGpsMessageProcessedBolt(),
                 hints
-        ).shuffleGrouping("transaction-log-event-reader", KafkaSpout.EVENT_SUCCESS_STREAM);
+        ).shuffleGrouping("presentment-event-reader", KafkaSpout.EVENT_SUCCESS_STREAM)
+         .shuffleGrouping("authorisation-event-reader", KafkaSpout.EVENT_SUCCESS_STREAM);
+
+        //todo: add error stream
+
 
         //save message to scylla db
         CassandraWriterBolt scyllaCardTransactionInsert = new CassandraWriterBolt(

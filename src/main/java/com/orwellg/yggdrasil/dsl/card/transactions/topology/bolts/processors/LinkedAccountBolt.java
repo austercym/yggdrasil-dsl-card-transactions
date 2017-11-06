@@ -6,6 +6,7 @@ import com.orwellg.umbrella.commons.repositories.scylla.LinkedAccountRepositoryI
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
 import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.topology.CardPresentmentDSLTopology;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.storm.task.OutputCollector;
@@ -23,6 +24,7 @@ public class LinkedAccountBolt extends BasicRichBolt {
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "retrieveValue", "gpsMessage"));
+        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData"));
     }
 
     protected void setScyllaConnectionParameters() {
@@ -51,7 +53,14 @@ public class LinkedAccountBolt extends BasicRichBolt {
             send(input, values);
         } catch (Exception e) {
             LOG.error("Error retrieving fee schema history information. Message: {}", input, e.getMessage(), e);
-            error(e, input);
+
+            Map<String, Object> values = new HashMap<>();
+            values.put("key", input.getValueByField("key"));
+            values.put("processId", input.getValueByField("processId"));
+            values.put("eventData", input.getValueByField("eventData"));
+
+            send(CardPresentmentDSLTopology.ERROR_STREAM, input, values);
+            LOG.info("Error when retrieving LinkedAccount from database - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", input, e.getMessage(), e);
         }
     }
 
