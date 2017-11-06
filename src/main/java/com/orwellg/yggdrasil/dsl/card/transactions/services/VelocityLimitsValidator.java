@@ -1,6 +1,5 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
-import com.datastax.driver.core.LocalDate;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
@@ -19,7 +18,7 @@ public class VelocityLimitsValidator {
         BigDecimal annualLimit = getLimit(settings, totalType, "Annual");
         Boolean isDailyValid = totalAmounts == null
                 ||
-                toDate(totalAmounts.getTimestamp()).before(getDatePart(new Date()))
+                getDatePart(totalAmounts.getTimestamp()).before(getDatePart(new Date()))
                 ||
                 totalAmounts.getDailyTotal().add(BigDecimal.valueOf(message.getSettleAmt())).compareTo(dailyLimit) <= 0;
         Boolean isAnnualValid = totalAmounts == null
@@ -48,22 +47,10 @@ public class VelocityLimitsValidator {
         return cal.getTime();
     }
 
-    private Date toDate(LocalDate localDate) {
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.YEAR, localDate.getYear());
-        cal.set(Calendar.MONTH, localDate.getMonth());
-        cal.set(Calendar.DAY_OF_MONTH, localDate.getDay());
-        return cal.getTime();
-    }
-
     private Integer getYearPart(Date date) {
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);
         return cal.get(Calendar.YEAR);
-    }
-
-    private Integer getYearPart(LocalDate date) {
-        return date.getYear();
     }
 
     private BigDecimal getLimit(CardSettings settings, TotalSpend totalType, String dailyAnnual) {

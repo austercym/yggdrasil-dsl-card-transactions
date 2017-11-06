@@ -150,13 +150,10 @@ public class VelocityLimitsValidatorTest {
     }
 
     private SpendingTotalAmounts getTotal(double daily, double annual, Date timestamp) {
-        final Calendar cal = Calendar.getInstance();
-        cal.setTime(timestamp);
         SpendingTotalAmounts total = new SpendingTotalAmounts();
         total.setDailyTotal(BigDecimal.valueOf(daily));
         total.setAnnualTotal(BigDecimal.valueOf(annual));
-        total.setTimestamp(LocalDate.fromYearMonthDay(
-                cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)));
+        total.setTimestamp(timestamp);
         return total;
     }
 

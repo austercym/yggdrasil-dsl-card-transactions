@@ -46,7 +46,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
             String logPrefix = String.format(
                     "[TransLink: %s, TxnId: %s, DebitCardId: %s, Token: %s, Amount: %s %s] ",
                     event.getTransLink(), event.getTXnID(),
-                    event.getToken(), event.getCustRef(), event.getTxnAmt(), event.getTxnCCy());
+                    event.getCustRef(), event.getToken(), event.getTxnAmt(), event.getTxnCCy());
             LOG.debug("{}Generating response for authorisation message...", logPrefix);
 
             ResponseCode responseCode = ResponseCode.DO_NOT_HONOUR;
