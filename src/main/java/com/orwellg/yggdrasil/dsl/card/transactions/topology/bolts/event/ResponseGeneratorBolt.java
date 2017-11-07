@@ -12,6 +12,7 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.ResponseCode;
 import com.orwellg.umbrella.commons.types.utils.avro.RawMessageUtils;
 import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.services.ValidationResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,7 +33,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         LOG.debug("Event received: {}. Starting the decode process.", input);
 
         try {
-            Message event = (Message) input.getValueByField("eventData");
+            AuthorisationMessage event = (AuthorisationMessage) input.getValueByField("eventData");
             String parentKey = (String) input.getValueByField("key");
             ValidationResult statusValidationResult =
                     (ValidationResult) input.getValueByField("statusValidationResult");
@@ -45,8 +46,9 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
 
             String logPrefix = String.format(
                     "[TransLink: %s, TxnId: %s, DebitCardId: %s, Token: %s, Amount: %s %s] ",
-                    event.getTransLink(), event.getTXnID(),
-                    event.getCustRef(), event.getToken(), event.getTxnAmt(), event.getTxnCCy());
+                    event.getGpsTransactionLink(), event.getGpsTransactionId(),
+                    event.getDebitCardId(), event.getCardToken(),
+                    event.getTransactionAmount(), event.getTransactionCurrency());
             LOG.debug("{}Generating response for authorisation message...", logPrefix);
 
             ResponseCode responseCode = ResponseCode.DO_NOT_HONOUR;
@@ -88,14 +90,14 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         }
     }
 
-    private GpsMessageProcessed generateMessageProcessed(Message authorisation, ResponseMsg response) {
+    private GpsMessageProcessed generateMessageProcessed(AuthorisationMessage authorisation, ResponseMsg response) {
 
         LOG.debug("Generating gpsMessageProcessed message");
         GpsMessageProcessed gpsMessageProcessed = new GpsMessageProcessed();
-        gpsMessageProcessed.setGpsTransactionLink(authorisation.getTransLink());
-        gpsMessageProcessed.setGpsTransactionId(authorisation.getTXnID());
-        gpsMessageProcessed.setDebitCardId(Long.parseLong(authorisation.getCustRef()));
-        gpsMessageProcessed.setTransactionTimestamp(authorisation.getTxnGPSDate().toString());      //todo: is this a correct field?
+        gpsMessageProcessed.setGpsTransactionLink(authorisation.getGpsTransactionLink());
+        gpsMessageProcessed.setGpsTransactionId(authorisation.getGpsTransactionId());
+        gpsMessageProcessed.setDebitCardId(authorisation.getDebitCardId());
+//        gpsMessageProcessed.setTransactionTimestamp(authorisation.getTxnGPSDate().toString());      //todo: is this a correct field?
         gpsMessageProcessed.setEhiResponse(response);
 
         LOG.debug("Message generated. Parameters: {}", gpsMessageProcessed);

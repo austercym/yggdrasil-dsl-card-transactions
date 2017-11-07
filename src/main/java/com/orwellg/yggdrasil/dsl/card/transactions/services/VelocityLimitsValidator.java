@@ -1,9 +1,9 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
-import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendGroup;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.TotalSpend;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 
 import java.math.BigDecimal;
 import java.util.Calendar;
@@ -11,28 +11,28 @@ import java.util.Date;
 import java.util.Map;
 
 public class VelocityLimitsValidator {
-    public ValidationResult validate(Message message, CardSettings settings, SpendingTotalAmounts totalAmounts) {
+    public ValidationResult validate(AuthorisationMessage message, CardSettings settings, SpendingTotalAmounts totalAmounts) {
 
-        TotalSpend totalType = getTotalType(message);
+        SpendGroup totalType = message.getSpendGroup();
         BigDecimal dailyLimit = getLimit(settings, totalType, "Daily");
         BigDecimal annualLimit = getLimit(settings, totalType, "Annual");
         Boolean isDailyValid = totalAmounts == null
                 ||
                 getDatePart(totalAmounts.getTimestamp()).before(getDatePart(new Date()))
                 ||
-                totalAmounts.getDailyTotal().add(BigDecimal.valueOf(message.getSettleAmt())).compareTo(dailyLimit) <= 0;
+                totalAmounts.getDailyTotal().add(message.getSettlementAmount().abs()).compareTo(dailyLimit) <= 0;
         Boolean isAnnualValid = totalAmounts == null
                 ||
                 getYearPart(totalAmounts.getTimestamp()) < getYearPart(new Date())
                 ||
-                totalAmounts.getAnnualTotal().add(BigDecimal.valueOf(message.getSettleAmt())).compareTo(annualLimit) <= 0;
+                totalAmounts.getAnnualTotal().add(message.getSettlementAmount().abs()).compareTo(annualLimit) <= 0;
         if (!isDailyValid) {
             return ValidationResult.error(String.format(
-                    "Daily limit exceeded (TotalSpend=%f, Limit=%f)", totalAmounts.getDailyTotal(), dailyLimit));
+                    "Daily limit exceeded (SpendGroup=%f, Limit=%f)", totalAmounts.getDailyTotal(), dailyLimit));
         }
         if (!isAnnualValid) {
             return ValidationResult.error(String.format(
-                    "Annual limit exceeded (TotalSpend=%f, Limit=%f)", totalAmounts.getAnnualTotal(), annualLimit));
+                    "Annual limit exceeded (SpendGroup=%f, Limit=%f)", totalAmounts.getAnnualTotal(), annualLimit));
         }
         return ValidationResult.valid();
     }
@@ -53,15 +53,9 @@ public class VelocityLimitsValidator {
         return cal.get(Calendar.YEAR);
     }
 
-    private BigDecimal getLimit(CardSettings settings, TotalSpend totalType, String dailyAnnual) {
+    private BigDecimal getLimit(CardSettings settings, SpendGroup totalType, String dailyAnnual) {
         String key = String.format("%s%s", totalType, dailyAnnual);
         Map<String, BigDecimal> limits = settings.getLimits();
         return limits.get(key);
-    }
-
-    private TotalSpend getTotalType(Message message) {
-        return Mcc.ATM.equals(message.getMCCCode())
-                ? TotalSpend.ATM
-                : TotalSpend.POS;
     }
 }

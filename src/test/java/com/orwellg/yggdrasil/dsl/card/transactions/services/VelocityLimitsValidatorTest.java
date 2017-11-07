@@ -1,9 +1,9 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
-import com.datastax.driver.core.LocalDate;
-import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendGroup;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -20,13 +20,13 @@ public class VelocityLimitsValidatorTest {
     @Test
     public void validateWhenFirstTransactionEverReturnsValid() {
         // arrange
-        Message message = new Message();
-        message.setSettleAmt(19.09);
-        message.setSettleCcy("978");
+        AuthorisationMessage message = new AuthorisationMessage();
+        message.setSettlementAmount(BigDecimal.valueOf(-19.09));
+        message.setSettlementCurrency("EUR");
+        message.setSpendGroup(SpendGroup.POS);
+
         CardSettings settings = new CardSettings();
-        HashMap<String, BigDecimal> limits = new HashMap<>();
-        limits.put("EUR", BigDecimal.valueOf(200.0));
-        settings.setLimits(limits);
+        settings.setLimits(createLimits(50.0, 200.0));
 
         // act
         ValidationResult result = validator.validate(message, settings, null);
@@ -40,9 +40,10 @@ public class VelocityLimitsValidatorTest {
     @Test
     public void validateWhenLimitsNotExceededReturnsValid() {
         // arrange
-        Message message = new Message();
-        message.setSettleAmt(19.09);
-        message.setSettleCcy("978");
+        AuthorisationMessage message = new AuthorisationMessage();
+        message.setSettlementAmount(BigDecimal.valueOf(-19.09));
+        message.setSettlementCurrency("EUR");
+        message.setSpendGroup(SpendGroup.POS);
 
         CardSettings settings = new CardSettings();
         settings.setLimits(createLimits(50.0, 200.0));
@@ -61,9 +62,10 @@ public class VelocityLimitsValidatorTest {
     @Test
     public void validateWhenDailyLimitsExpiredReturnsValid() {
         // arrange
-        Message message = new Message();
-        message.setSettleAmt(19.09);
-        message.setSettleCcy("978");
+        AuthorisationMessage message = new AuthorisationMessage();
+        message.setSettlementAmount(BigDecimal.valueOf(-19.09));
+        message.setSettlementCurrency("EUR");
+        message.setSpendGroup(SpendGroup.POS);
 
         CardSettings settings = new CardSettings();
         settings.setLimits(createLimits(50.0, 200.0));
@@ -82,9 +84,10 @@ public class VelocityLimitsValidatorTest {
     @Test
     public void validateWhenAnnualLimitsExpiredReturnsValid() {
         // arrange
-        Message message = new Message();
-        message.setSettleAmt(19.09);
-        message.setSettleCcy("978");
+        AuthorisationMessage message = new AuthorisationMessage();
+        message.setSettlementAmount(BigDecimal.valueOf(-19.09));
+        message.setSettlementCurrency("EUR");
+        message.setSpendGroup(SpendGroup.POS);
 
         CardSettings settings = new CardSettings();
         settings.setLimits(createLimits(50.0, 200.0));
@@ -103,9 +106,10 @@ public class VelocityLimitsValidatorTest {
     @Test
     public void validateWhenDailyLimitExceededReturnsInvalid() {
         // arrange
-        Message message = new Message();
-        message.setSettleAmt(19.09);
-        message.setSettleCcy("978");
+        AuthorisationMessage message = new AuthorisationMessage();
+        message.setSettlementAmount(BigDecimal.valueOf(-19.09));
+        message.setSettlementCurrency("EUR");
+        message.setSpendGroup(SpendGroup.POS);
 
         CardSettings settings = new CardSettings();
         settings.setLimits(createLimits(30.0, 200.0));
@@ -124,9 +128,10 @@ public class VelocityLimitsValidatorTest {
     @Test
     public void validateWhenAnnualLimitExceededReturnsInvalid() {
         // arrange
-        Message message = new Message();
-        message.setSettleAmt(19.09);
-        message.setSettleCcy("978");
+        AuthorisationMessage message = new AuthorisationMessage();
+        message.setSettlementAmount(BigDecimal.valueOf(-19.09));
+        message.setSettlementCurrency("EUR");
+        message.setSpendGroup(SpendGroup.POS);
 
         CardSettings settings = new CardSettings();
         settings.setLimits(createLimits(50.0, 200.0));

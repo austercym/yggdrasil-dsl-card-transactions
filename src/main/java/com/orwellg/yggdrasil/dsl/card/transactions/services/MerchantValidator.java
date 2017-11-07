@@ -1,33 +1,23 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
-import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 
 import java.util.Date;
 import java.util.Map;
 
 public class MerchantValidator implements AuthorisationValidator {
 
-    private final CardPresenceResolver cardPresenceResolver;
-
-    public MerchantValidator() {
-        this.cardPresenceResolver = new CardPresenceResolver();
-    }
-
-    public MerchantValidator(CardPresenceResolver cardPresenceResolver) {
-        this.cardPresenceResolver = cardPresenceResolver;
-    }
-
     @Override
-    public ValidationResult validate(Message message, CardSettings cardSettings) {
+    public ValidationResult validate(AuthorisationMessage message, CardSettings cardSettings) {
 
-        if (cardPresenceResolver.isCardPresent(message)) {
+        if (message.getIsCardPresent()) {
             return ValidationResult.valid();
         }
         Map<String, Date> merchants = cardSettings == null
                 ? null
                 : cardSettings.getAllowedCardNotPresentMerchants();
-        String merchantId = message.getMerchIDDE42();
+        String merchantId = message.getMerchantId();
         merchantId = merchantId == null
                 ? null
                 : merchantId.trim();
