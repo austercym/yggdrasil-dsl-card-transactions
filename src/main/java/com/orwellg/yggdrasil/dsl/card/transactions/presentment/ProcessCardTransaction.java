@@ -1,13 +1,11 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.presentment;
+package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
 
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
-import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessageException;
 import com.orwellg.yggdrasil.dsl.card.transactions.services.ParseMessageService;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.CardPresentmentDSLTopology;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
@@ -15,16 +13,16 @@ import org.apache.storm.tuple.Tuple;
 import java.text.ParseException;
 import java.util.*;
 
-public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
+public class ProcessCardTransaction extends BasicRichBolt {
 
-    private static final Logger LOG = LogManager.getLogger(PresentmentValidateAuthorisationBolt.class);
+    private static final Logger LOG = LogManager.getLogger(ProcessCardTransaction.class);
     private static final ParseMessageService parseMessageService = new ParseMessageService();
 
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "gpsMessage"));
         addFielsDefinition(CardPresentmentDSLTopology.OFFLINE_PRESENTMENT_STREAM, Arrays.asList("key", "processId", "eventData", "gpsMessage"));
-        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData"));
+        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData", "exceptionMessage", "exceptionStackTrace"));
     }
 
     @Override
@@ -98,6 +96,8 @@ public class PresentmentValidateAuthorisationBolt extends BasicRichBolt {
             values.put("key", tuple.getValueByField("key"));
             values.put("processId", tuple.getValueByField("processId"));
             values.put("eventData", tuple.getValueByField("eventData"));
+            values.put("exceptionMessage", e.getMessage());
+            values.put("exceptionStackTrace", e.getStackTrace());
 
             send(CardPresentmentDSLTopology.ERROR_STREAM, tuple, values);
             LOG.info("Error when processing GpsMessage - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);

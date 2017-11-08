@@ -1,7 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
 import com.orwellg.umbrella.avro.types.gps.Message;
-import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.presentment.GpsMessage;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionType;
 import com.orwellg.yggdrasil.dsl.card.transactions.FeeTransactionType;
 import org.apache.logging.log4j.LogManager;

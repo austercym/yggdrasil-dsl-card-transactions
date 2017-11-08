@@ -1,11 +1,9 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors;
+package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
 import com.orwellg.umbrella.commons.repositories.FeeHistoryRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.FeeHistoryReposotoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.generics.scylla.ScyllaRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.FeeSchema;
-import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessage;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.CardPresentmentDSLTopology;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,15 +16,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FeeSchemaBolt extends ScyllaRichBolt<List<FeeSchema>, GpsMessage> {
+public class GetFeeSchema extends ScyllaRichBolt<List<FeeSchema>, GpsMessage> {
 
     private FeeHistoryRepository repository;
-    private static final Logger LOG = LogManager.getLogger(FeeSchemaBolt.class);
+    private static final Logger LOG = LogManager.getLogger(GetFeeSchema.class);
 
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "retrieveValue", "gpsMessage"));
-        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData"));
+        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData", "exceptionMessage", "exceptionStackTrace"));
     }
 
     @Override
@@ -70,6 +68,8 @@ public class FeeSchemaBolt extends ScyllaRichBolt<List<FeeSchema>, GpsMessage> {
             values.put("key", input.getValueByField("key"));
             values.put("processId", input.getValueByField("processId"));
             values.put("eventData", input.getValueByField("eventData"));
+            values.put("exceptionMessage", e.getMessage());
+            values.put("exceptionStackTrace", e.getStackTrace());
 
             send(CardPresentmentDSLTopology.ERROR_STREAM, input, values);
             LOG.info("Error when processing GpsMessage - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", input, e.getMessage(), e);

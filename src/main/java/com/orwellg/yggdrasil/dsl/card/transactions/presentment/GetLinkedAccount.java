@@ -1,12 +1,10 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors;
+package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.repositories.LinkedAccountRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.LinkedAccountRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
-import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessage;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.CardPresentmentDSLTopology;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.storm.task.OutputCollector;
@@ -15,16 +13,16 @@ import org.apache.storm.tuple.Tuple;
 import java.util.*;
 import org.apache.logging.log4j.Logger;
 
-public class LinkedAccountBolt extends BasicRichBolt {
+public class GetLinkedAccount extends BasicRichBolt {
 
 
     private LinkedAccountRepository repository;
-    private Logger LOG = LogManager.getLogger(LinkedAccountBolt.class);
+    private Logger LOG = LogManager.getLogger(GetLinkedAccount.class);
 
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "retrieveValue", "gpsMessage"));
-        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData"));
+        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData", "exceptionMessage", "exceptionStackTrace"));
     }
 
     protected void setScyllaConnectionParameters() {
@@ -58,6 +56,8 @@ public class LinkedAccountBolt extends BasicRichBolt {
             values.put("key", input.getValueByField("key"));
             values.put("processId", input.getValueByField("processId"));
             values.put("eventData", input.getValueByField("eventData"));
+            values.put("exceptionMessage", e.getMessage());
+            values.put("exceptionStackTrace", e.getStackTrace());
 
             send(CardPresentmentDSLTopology.ERROR_STREAM, input, values);
             LOG.info("Error when retrieving LinkedAccount from database - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", input, e.getMessage(), e);

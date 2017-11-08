@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.presentment;
+package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
 import com.orwellg.umbrella.avro.types.event.EntityIdentifierType;
 import com.orwellg.umbrella.avro.types.event.Event;
@@ -11,10 +11,8 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.FeeSchema;
 import com.orwellg.umbrella.commons.types.utils.avro.RawMessageUtils;
 import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
-import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessageException;
 import com.orwellg.yggdrasil.dsl.card.transactions.services.AccountingOperationsService;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.CardPresentmentDSLTopology;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -24,10 +22,10 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class PresentmentCalculateAmountsBolt extends BasicRichBolt {
+public class ProcessFeeSchema extends BasicRichBolt {
 
     private AccountingOperationsService accountingService;
-    private static final Logger LOG = LogManager.getLogger(PresentmentCalculateAmountsBolt.class);
+    private static final Logger LOG = LogManager.getLogger(ProcessFeeSchema.class);
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -38,7 +36,7 @@ public class PresentmentCalculateAmountsBolt extends BasicRichBolt {
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "message"));
-        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData"));
+        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData", "exceptionMessage", "exceptionStackTrace"));
     }
 
     @Override
@@ -87,10 +85,11 @@ public class PresentmentCalculateAmountsBolt extends BasicRichBolt {
             values.put("key", tuple.getValueByField("key"));
             values.put("processId", tuple.getValueByField("processId"));
             values.put("eventData", tuple.getValueByField("eventData"));
+            values.put("exceptionMessage", e.getMessage());
+            values.put("exceptionStackTrace", e.getStackTrace());
 
             send(CardPresentmentDSLTopology.ERROR_STREAM, tuple, values);
             LOG.info("Error when processing Linked Accounts - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
-            error(e, tuple);
         }
     }
 

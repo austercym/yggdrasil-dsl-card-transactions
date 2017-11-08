@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.topology;
+package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
 import com.orwellg.umbrella.commons.storm.topology.TopologyFactory;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.EventErrorBolt;
@@ -10,14 +10,7 @@ import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltFieldNameWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
-import com.orwellg.yggdrasil.dsl.card.transactions.GpsErrorBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.event.KafkaEventProcessBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.CardTransactionsBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.FeeSchemaBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.LinkedAccountBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.presentment.PresentmentOfflineTransactionBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.presentment.PresentmentCalculateAmountsBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.presentment.PresentmentValidateAuthorisationBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.Config;
@@ -50,30 +43,30 @@ public class CardPresentmentDSLTopology {
         //------------------------- Processing GpsMessage --------------------------------------------------------------
 
         //Get card authorisation data
-        GBolt<?> cardAuthorisationBolt = new GRichBolt("process-get-authorisation", new CardTransactionsBolt(), hints);
+        GBolt<?> cardAuthorisationBolt = new GRichBolt("process-get-authorisation", new GetCardTransactions(), hints);
         cardAuthorisationBolt.addGrouping(new ShuffleGrouping("kafka-event-success-process"));
 
         //see if this is offline presentment
-        GBolt<?> authValidationBolt = new GRichBolt("process-validate-authorisation", new PresentmentValidateAuthorisationBolt(), hints);
+        GBolt<?> authValidationBolt = new GRichBolt("process-validate-authorisation", new ProcessCardTransaction(), hints);
         authValidationBolt.addGrouping(new ShuffleGrouping("process-get-authorisation"));
 
         //------------------------ Offline GpsMessage Processing -------------------------------------------------------
 
         //offline presentment - needs linked account in time of transaction
-        GBolt<?> getLinkedAccountBolt = new GRichBolt("process-get-linked-account", new LinkedAccountBolt(), hints);
+        GBolt<?> getLinkedAccountBolt = new GRichBolt("process-get-linked-account", new GetLinkedAccount(), hints);
         getLinkedAccountBolt.addGrouping(new ShuffleGrouping("process-validate-authorisation", OFFLINE_PRESENTMENT_STREAM));
 
-        GBolt<?> validateLinikedAccountBolt = new GRichBolt("process-linked-account", new PresentmentOfflineTransactionBolt(), hints);
+        GBolt<?> validateLinikedAccountBolt = new GRichBolt("process-linked-account", new ProcessOfflineTransaction(), hints);
         validateLinikedAccountBolt.addGrouping(new ShuffleGrouping("process-get-linked-account"));
 
         //------------------------- Calculating Fees, Wirecard Amounts, Client Amounts -------------------------------
 
-        GBolt<?> getFeeSchemaBolt = new GRichBolt("process-get-fees-schema", new FeeSchemaBolt(), hints);
+        GBolt<?> getFeeSchemaBolt = new GRichBolt("process-get-fees-schema", new GetFeeSchema(), hints);
         getFeeSchemaBolt.addGrouping(new ShuffleGrouping("process-linked-account"));
         getFeeSchemaBolt.addGrouping(new ShuffleGrouping("process-validate-authorisation"));
 
         //calculate client, wirecard, fees amounts
-        GBolt<?> calculateAmountsBolt = new GRichBolt("process-calculate-amounts", new PresentmentCalculateAmountsBolt(), hints);
+        GBolt<?> calculateAmountsBolt = new GRichBolt("process-calculate-amounts", new ProcessFeeSchema(), hints);
         calculateAmountsBolt.addGrouping(new ShuffleGrouping("process-get-fees-schema"));
 
         //------------------------- Send an event with the result -------------------------------------------------------
@@ -86,7 +79,7 @@ public class CardPresentmentDSLTopology {
         kafkaEventError.addGrouping(new ShuffleGrouping("kafka-event-reader", KafkaSpout.EVENT_ERROR_STREAM));
 
 
-        GBolt<?> gpsErrorBolt = new GRichBolt("gps-error-handler", new GpsErrorBolt(), hints);
+        GBolt<?> gpsErrorBolt = new GRichBolt("gps-error-handler", new ProcessExceptionBolt(), hints);
         gpsErrorBolt.addGrouping(new ShuffleGrouping("process-get-authorisation", ERROR_STREAM));
         gpsErrorBolt.addGrouping(new ShuffleGrouping("process-validate-authorisation", ERROR_STREAM));
         gpsErrorBolt.addGrouping(new ShuffleGrouping("process-get-linked-account", ERROR_STREAM));

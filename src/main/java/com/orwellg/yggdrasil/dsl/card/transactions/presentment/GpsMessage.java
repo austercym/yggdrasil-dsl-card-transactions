@@ -1,6 +1,7 @@
-package com.orwellg.yggdrasil.dsl.card.transactions;
+package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionType;
+import com.orwellg.yggdrasil.dsl.card.transactions.FeeTransactionType;
 
 
 import java.math.BigDecimal;
@@ -19,7 +20,7 @@ public class GpsMessage {
     private String SettlementCurrency;
     private String GpsMessageType;
     private TransactionType TransactionType;
-    private FeeTransactionType FeeTransactionType;
+    private com.orwellg.yggdrasil.dsl.card.transactions.FeeTransactionType FeeTransactionType;
     private BigDecimal AuthWirecardAmount;
     private String AuthWirecardCurrency;
     private BigDecimal AuthBlockedClientAmount;

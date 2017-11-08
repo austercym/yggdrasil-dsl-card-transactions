@@ -1,25 +1,23 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.presentment;
+package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
-import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessageException;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.CardPresentmentDSLTopology;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
 
 import java.util.*;
 
-public class PresentmentOfflineTransactionBolt extends BasicRichBolt {
+public class ProcessOfflineTransaction extends BasicRichBolt {
 
-    private static final Logger LOG = LogManager.getLogger(PresentmentOfflineTransactionBolt.class);
+    private static final Logger LOG = LogManager.getLogger(ProcessOfflineTransaction.class);
 
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "gpsMessage"));
-        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData"));
+        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData", "exceptionMessage", "exceptionStackTrace"));
     }
 
     @Override
@@ -72,6 +70,8 @@ public class PresentmentOfflineTransactionBolt extends BasicRichBolt {
             values.put("key", tuple.getValueByField("key"));
             values.put("processId", tuple.getValueByField("processId"));
             values.put("eventData", tuple.getValueByField("eventData"));
+            values.put("exceptionMessage", e.getMessage());
+            values.put("exceptionStackTrace", e.getStackTrace());
 
             send(CardPresentmentDSLTopology.ERROR_STREAM, tuple, values);
             LOG.info("Error when processing Linked Accounts - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
