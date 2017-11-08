@@ -22,7 +22,7 @@ public class ConfigurationParams extends ZkConfigurationParams implements Serial
     private static final long serialVersionUID = 1L;
 
 
-    public static final String DEFAULT_PROPERTIES_FILE = "yggdrasil-dsl-card-transactions2.properties";
+    public static final String DEFAULT_PROPERTIES_FILE = "yggdrasil-dsl-card-transactions.properties";
 
     public static final String DEFAULT_SUB_BRANCH        = "/yggdrasil/card/transactions/dsl";
     public static final String DEFAULT_SCYLLA_SUB_BRANCH = DEFAULT_SUB_BRANCH + "/scylla";
@@ -74,9 +74,9 @@ public class ConfigurationParams extends ZkConfigurationParams implements Serial
     @Override
     public void start() throws Exception {
         LOG.info("Starting configuration params.");
+        super.start();
         scyllaConfig.start();
         networkConfig.start();
-        super.start();
         LOG.info("Configuration params started.");
     }
 
@@ -96,5 +96,4 @@ public class ConfigurationParams extends ZkConfigurationParams implements Serial
         super.setApplicationRootConfig(ZK_SUB_BRANCH_KEY, DEFAULT_SUB_BRANCH);
         LOG.info("Configuration params loaded.");
     }
-
 }

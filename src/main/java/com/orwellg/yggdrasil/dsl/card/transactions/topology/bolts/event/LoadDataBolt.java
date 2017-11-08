@@ -1,6 +1,5 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.event;
 
-import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.repositories.CardSettingsRepository;
 import com.orwellg.umbrella.commons.repositories.SpendingTotalAmountsRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.CardSettingsRepositoryImpl;
@@ -8,9 +7,9 @@ import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepo
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendGroup;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.TotalSpend;
-import com.orwellg.yggdrasil.dsl.card.transactions.services.Mcc;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,7 +20,7 @@ import org.apache.storm.tuple.Tuple;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-public class LoadDataBolt extends JoinFutureBolt<Message> {
+public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
 
     private static final long serialVersionUID = 1L;
 
@@ -62,15 +61,15 @@ public class LoadDataBolt extends JoinFutureBolt<Message> {
     }
 
     @Override
-    protected void join(Tuple input, String key, String processId, Message eventData) {
+    protected void join(Tuple input, String key, String processId, AuthorisationMessage eventData) {
 
         String logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
         LOG.info("{}Previous starting processing the join data load for key {}", logPrefix, key);
 
         try {
-            long cardId = Long.parseLong(eventData.getCustRef());
-            TotalSpend totalType = getTotalType(eventData);
+            long cardId = eventData.getDebitCardId();
+            SpendGroup totalType = eventData.getSpendGroup();
 
             CompletableFuture<CardSettings> settingsFuture = retrieveCardSettings(cardId, logPrefix);
             CompletableFuture<SpendingTotalAmounts> totalFuture =
@@ -91,12 +90,6 @@ public class LoadDataBolt extends JoinFutureBolt<Message> {
         }
     }
 
-    private TotalSpend getTotalType(Message message) {
-        return Mcc.ATM.equals(message.getMCCCode())
-                ? TotalSpend.ATM
-                : TotalSpend.POS;
-    }
-
     private CompletableFuture<CardSettings> retrieveCardSettings(Long cardId, String logPrefix) {
         return CompletableFuture.supplyAsync(
                 () -> {
@@ -107,7 +100,7 @@ public class LoadDataBolt extends JoinFutureBolt<Message> {
                 });
     }
 
-    private CompletableFuture<SpendingTotalAmounts> retrieveTotalAmounts(long cardId, TotalSpend totalType, Date date, String logPrefix) {
+    private CompletableFuture<SpendingTotalAmounts> retrieveTotalAmounts(long cardId, SpendGroup totalType, Date date, String logPrefix) {
         return CompletableFuture.supplyAsync(
                 () -> {
                     LOG.info(
