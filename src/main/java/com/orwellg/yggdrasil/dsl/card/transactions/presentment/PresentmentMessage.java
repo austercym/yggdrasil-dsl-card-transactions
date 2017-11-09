@@ -7,7 +7,7 @@ import com.orwellg.yggdrasil.dsl.card.transactions.FeeTransactionType;
 import java.math.BigDecimal;
 import java.util.Date;
 
-public class GpsMessage {
+public class PresentmentMessage {
 
     private Long InternalAccountId;
     private String InternalAccountCurrency;

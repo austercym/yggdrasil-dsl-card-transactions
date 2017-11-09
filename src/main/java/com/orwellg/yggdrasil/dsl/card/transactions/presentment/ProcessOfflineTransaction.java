@@ -29,7 +29,7 @@ public class ProcessOfflineTransaction extends BasicRichBolt {
             String key = tuple.getStringByField("key");
             String processId = tuple.getStringByField("processId");
             Message eventData = (Message) tuple.getValueByField("eventData");
-            GpsMessage presentment = (GpsMessage) tuple.getValueByField("gpsMessage");
+            PresentmentMessage presentment = (PresentmentMessage) tuple.getValueByField("gpsMessage");
             List<LinkedAccount> linkedAccounts = (List<LinkedAccount>) tuple.getValueByField("retrieveValue");
 
             LOG.info("Processing linked accounts for message with key: {}, processId: {}, cardTransactionId: {}, transaction date: {}", key, processId,

@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class GetFeeSchema extends ScyllaRichBolt<List<FeeSchema>, GpsMessage> {
+public class GetFeeSchema extends ScyllaRichBolt<List<FeeSchema>, PresentmentMessage> {
 
     private FeeHistoryRepository repository;
     private static final Logger LOG = LogManager.getLogger(GetFeeSchema.class);
@@ -34,7 +34,7 @@ public class GetFeeSchema extends ScyllaRichBolt<List<FeeSchema>, GpsMessage> {
     }
 
     @Override
-    protected List<FeeSchema> retrieve(GpsMessage presentment) {
+    protected List<FeeSchema> retrieve(PresentmentMessage presentment) {
         List<FeeSchema> cardSettings =
                 repository.getFeeHistory(presentment.getDebitCardId(), presentment.getTransactionTimestamp(),presentment.getFeeTransactionType().toString());
         return cardSettings;
@@ -57,7 +57,7 @@ public class GetFeeSchema extends ScyllaRichBolt<List<FeeSchema>, GpsMessage> {
             values.put("processId", input.getStringByField("processId"));
             values.put("eventData", input.getValueByField("eventData"));
             values.put("gpsMessage", input.getValueByField("gpsMessage"));
-            values.put("retrieveValue", retrieve((GpsMessage) input.getValueByField("gpsMessage")));
+            values.put("retrieveValue", retrieve((PresentmentMessage) input.getValueByField("gpsMessage")));
 
             send(input, values);
         } catch (Exception e) {
@@ -72,7 +72,7 @@ public class GetFeeSchema extends ScyllaRichBolt<List<FeeSchema>, GpsMessage> {
             values.put("exceptionStackTrace", e.getStackTrace());
 
             send(CardPresentmentDSLTopology.ERROR_STREAM, input, values);
-            LOG.info("Error when processing GpsMessage - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", input, e.getMessage(), e);
+            LOG.info("Error when processing PresentmentMessage - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", input, e.getMessage(), e);
         }
     }
 }

@@ -30,7 +30,7 @@ public class GetLinkedAccount extends BasicRichBolt {
         setScyllaKeyspace(ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getKeyspace());
     }
 
-    protected List<LinkedAccount> retrieve(Message message, GpsMessage presentment) {
+    protected List<LinkedAccount> retrieve(Message message, PresentmentMessage presentment) {
         long cardTransactionId = Long.parseLong(message.getCustRef());
         List<LinkedAccount> linkedAccount = repository.getLinkedAccountByDate(cardTransactionId,
                     presentment.getTransactionTimestamp());
@@ -46,7 +46,7 @@ public class GetLinkedAccount extends BasicRichBolt {
             values.put("processId", input.getStringByField("processId"));
             values.put("eventData", input.getValueByField("eventData"));
             values.put("gpsMessage", input.getValueByField("gpsMessage"));
-            values.put("retrieveValue", retrieve((Message)input.getValueByField("eventData"),(GpsMessage) input.getValueByField("gpsMessage")));
+            values.put("retrieveValue", retrieve((Message)input.getValueByField("eventData"),(PresentmentMessage) input.getValueByField("gpsMessage")));
 
             send(input, values);
         } catch (Exception e) {

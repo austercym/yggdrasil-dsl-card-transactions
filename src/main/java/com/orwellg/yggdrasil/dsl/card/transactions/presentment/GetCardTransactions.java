@@ -56,6 +56,7 @@ public class GetCardTransactions extends ScyllaRichBolt<List<CardTransaction>, M
             values.put("key", input.getStringByField("key"));
             values.put("processId", input.getStringByField("processId"));
             values.put("eventData", input.getValueByField("eventData"));
+            values.put("gpsMessage", input.getValueByField("gpsMessage"));
             values.put("retrieveValue", retrieve((Message) input.getValueByField("eventData")));
 
             send(input, values);

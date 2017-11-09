@@ -1,9 +1,11 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.services;
+package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
 import com.orwellg.umbrella.avro.types.gps.Message;
-import com.orwellg.yggdrasil.dsl.card.transactions.presentment.GpsMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.presentment.PresentmentMessage;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionType;
 import com.orwellg.yggdrasil.dsl.card.transactions.FeeTransactionType;
+import com.orwellg.yggdrasil.dsl.card.transactions.services.AccountingOperationsService;
+import com.orwellg.yggdrasil.dsl.card.transactions.services.TransactionTypeResolver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,7 +15,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-public class ParseMessageService {
+public class PresentmentMessageMapper {
 
     private final static Logger LOG = LogManager.getLogger(AccountingOperationsService.class);
     private TransactionTypeResolver transactionTypeResolver;
@@ -22,11 +24,11 @@ public class ParseMessageService {
     private final static String balanceEnquireCode = "30";
     private final static String withdrawalCode = "01";
 
-    public ParseMessageService(){
+    public PresentmentMessageMapper(){
         transactionTypeResolver = new TransactionTypeResolver();
     }
 
-    public GpsMessage parse(Message message) throws ParseException {
+    public PresentmentMessage map(Message message) throws ParseException {
 
         LOG.info("parsing message: {}", message);
 
@@ -36,7 +38,7 @@ public class ParseMessageService {
         Date transactionTimestamp = getTransactionTimestamp(message.getPOSTimeDE12(), message.getTxnCtry(), message.getTXNTimeDE07(), gpsTransactionDateOrUtcNow);
         BigDecimal settlementAmount = BigDecimal.valueOf(message.getSettleAmt()).negate();
 
-        GpsMessage transaction = new GpsMessage();
+        PresentmentMessage transaction = new PresentmentMessage();
         transaction.setDebitCardId(Long.parseLong(message.getCustRef()));
         transaction.setGpsTransactionId(message.getTXnID());
         transaction.setGpsTransactionLink(message.getTransLink());
