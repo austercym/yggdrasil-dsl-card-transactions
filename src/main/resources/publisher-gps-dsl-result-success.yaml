@@ -4,7 +4,7 @@ bootstrap:
    host: localhost:9092,localhost:10092
 topic:
     name: 
-       - com.orwellg.gps.response
+       - com.orwellg.gps.authorisation.response.1
     commitInterval: 3                         
 application:
     id: gps-dsl-result-success-publisher

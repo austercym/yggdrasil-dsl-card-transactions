@@ -4,7 +4,7 @@ bootstrap:
    host: localhost:9092,localhost:10092
 topic:
    name: 
-      - com.orwellg.gps.authorisation.request
+      - com.orwellg.gps.authorisation.request.1
    commitInterval: 3         
 application:
    id: gps-dsl-topic-subscriber

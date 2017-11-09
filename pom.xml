@@ -135,7 +135,7 @@
 			<id>production</id>
 			<properties>
 				<zookeeper.host>hdf-node1:2181,hdf-node2:2181,hdf-node3:2181</zookeeper.host>
-				<kafka.bootstrap.host>hdf-node1:6667,hdf-node4:6667,hdf-node5:6667</kafka.bootstrap.host>
+				<kafka.bootstrap.host>confluent-node1:9092,confluent-node2:9092,confluent-node3:9092,confluent-node4:9092,confluent-node5:9092,confluent-node6:9092</kafka.bootstrap.host>
 			</properties>
 
 			<dependencies>

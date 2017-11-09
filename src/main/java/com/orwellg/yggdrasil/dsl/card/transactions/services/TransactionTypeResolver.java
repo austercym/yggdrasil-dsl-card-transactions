@@ -9,7 +9,7 @@ public class TransactionTypeResolver {
     private static final Integer POS_CARDHOLDER_PRESENCE_SUB_FIELD = 4;
 
     public TransactionType getType(Message message) {
-        if (Mcc.ATM.equals(message.getMCCCode())) {
+        if (MerchantCategoryCode.ATM.equals(message.getMCCCode())) {
             return TransactionType.ATM;
         }
         if (ELECTRONIC_ORDER.equals(getPosCardholderPresence(message.getPOSDataDE61()))) {
