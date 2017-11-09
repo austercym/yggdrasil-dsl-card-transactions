@@ -29,7 +29,7 @@ public class GpsMessageMapper {
         Currency.getAvailableCurrencies().forEach(c -> {
             String num = Integer.toString(c.getNumericCode());
             if (!historicalCurrencyNumericCodes.contains(c.getNumericCode())) {
-                map.put(num, c.getSymbol());
+                map.put(num, c.getCurrencyCode());
             }
         });
         return map;
