@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.event;
+package com.orwellg.yggdrasil.dsl.card.transactions.saveToScylla;
 
 import com.orwellg.umbrella.avro.types.event.Event;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
@@ -7,7 +7,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
 
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class CardSaveGpsMessageProcessedBolt extends com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventProcessBolt {
@@ -30,9 +29,9 @@ public class CardSaveGpsMessageProcessedBolt extends com.orwellg.umbrella.common
             LOG.info("[Key: {}][ProcessId: {}]: Received GPS message event", key, processId);
 
             GpsMessageProcessed message = gson.fromJson(event.getEvent().getData(), GpsMessageProcessed.class);
-            BigDecimal wirecardAmount = BigDecimal.valueOf(message.getWirecardAmount());
-            BigDecimal clientAmount = BigDecimal.valueOf(message.getBlockedClientAmount());
-            BigDecimal feeAmount = BigDecimal.valueOf(message.getFeesAmount());
+            BigDecimal wirecardAmount = message.getWirecardAmount().getValue();
+            BigDecimal clientAmount = message.getBlockedClientAmount().getValue();
+            BigDecimal feeAmount = message.getFeesAmount().getValue();
             Date transactionTimestamp = new Date(message.getTransactionTimestamp()*1000);
             Date gpsDate = new Date(message.getGpsTransactionTime()*1000);
             //todo: avro - send date or timestamp in long?

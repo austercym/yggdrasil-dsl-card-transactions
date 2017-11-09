@@ -99,45 +99,6 @@ public class AccountingBolt extends BasicRichBolt {
         AccountingInfo accountingInfo = new AccountingInfo();
         TransactionAccountingInfo transactionAccountingInfo = new TransactionAccountingInfo();
 
-        //just
-        if (gpsMessageProcessed.getWirecardAmount() == 0){
-
-            if (gpsMessageProcessed.getAppliedWirecardAmount() == 0){
-                //todo: ??
-            }
-
-            //credit wirecard available and debit the client total
-            if (gpsMessageProcessed.getAppliedWirecardAmount() > 0){
-                accountingInfo.setDebitAccount(clientAccount);
-                accountingInfo.setCreditAccount(wirecardAccount);
-
-                //todo: need to set the amount here - same as for authorisation
-                //transactionAccountingInfo.setAmount(); //todo: ??
-
-                accountingInfo.setCreditBalanceUpdate(BalanceUpdateType.AVAILABLE);
-                accountingInfo.setDebitBalanceUpdate(BalanceUpdateType.LEDGER);
-            }
-
-            if (gpsMessageProcessed.getAppliedWirecardAmount() < 0){
-
-                accountingInfo.setDebitAccount(wirecardAccount);
-                accountingInfo.setCreditAccount(clientAccount);
-
-                accountingInfo.setCreditBalanceUpdate(BalanceUpdateType.AVAILABLE);
-                accountingInfo.setDebitBalanceUpdate(BalanceUpdateType.LEDGER);
-
-            }
-        }
-
-        if (gpsMessageProcessed.getWirecardAmount() > 0){
-
-            //offline transaction
-            if (gpsMessageProcessed.getAppliedWirecardAmount() == 0){
-
-            }
-
-            //...
-        }
     }
 
 
