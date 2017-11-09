@@ -8,10 +8,10 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.HashSet;
 
-import static junit.framework.Assert.assertNotNull;
 import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertNull;
+import static junit.framework.TestCase.assertNull;
 
 public class TransactionTypeValidatorTest {
 

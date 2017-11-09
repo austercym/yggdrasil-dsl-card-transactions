@@ -76,7 +76,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
             values.put("key", input.getStringByField("key"));
             values.put("message", RawMessageUtils.encodeToString(Event.SCHEMA$, responseEvent));
             // TODO: get response topic from input event
-            values.put("topic", "com.orwellg.gps.response");
+            values.put("topic", "com.orwellg.gps.authorisation.response.1");
 
             send(input, values);
 
