@@ -18,10 +18,12 @@ import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.Lin
 import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.presentment.PresentmentOfflineTransactionBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.presentment.PresentmentCalculateAmountsBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.presentment.PresentmentValidateAuthorisationBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
+import org.apache.storm.StormSubmitter;
 import org.apache.storm.generated.StormTopology;
 
 import java.util.Arrays;
@@ -35,6 +37,15 @@ public class CardPresentmentDSLTopology {
 
     public static void main(String[] args) throws Exception {
 
+        boolean local = false;
+        if (args.length >= 1 && args[0].equals("local")) {
+            local = true;
+        }
+
+        loadTopologyInStorm(local);
+    }
+
+    private static void loadTopologyInStorm(boolean local) throws Exception {
         LOG.debug("Creating Card Presentments processing topology");
 
         Integer hints = 1;
@@ -113,11 +124,15 @@ public class CardPresentmentDSLTopology {
         conf.setDebug(false);
         conf.setMaxTaskParallelism(30);
 
-        LocalCluster cluster = new LocalCluster();
-        cluster.submitTopology("card-presentment-dsl", conf, topology);
+        if (local) {
+            LocalCluster cluster = new LocalCluster();
+            cluster.submitTopology("card-presentment-dsl", conf, topology);
 
-        Thread.sleep(3000000);
-        cluster.shutdown();
-
+            Thread.sleep(3000000);
+            cluster.shutdown();
+            ComponentFactory.getConfigurationParams().close();
+        } else {
+            StormSubmitter.submitTopology("card-presentment-dsl", conf, topology);
+        }
     }
 }
