@@ -19,6 +19,9 @@
 		<junit.version>4.12</junit.version>
 
 		<storm.topology>com.orwellg.yggdrasil.dsl.card.transactions.topology.AuthorisationDSLTopology</storm.topology>
+
+		<zookeeper.host>localhost:2181</zookeeper.host>
+		<kafka.bootstrap.host>localhost:9092,localhost:10092</kafka.bootstrap.host>
 	</properties>
 
 	<dependencies>
@@ -132,7 +135,7 @@
 	<profiles>
 		<!-- Development environment @ my laptop -->
 		<profile>
-			<id>development</id>
+			<id>dev</id>
 			<properties>
 				<zookeeper.host>localhost:2181</zookeeper.host>
 				<kafka.bootstrap.host>localhost:9092,localhost:10092</kafka.bootstrap.host>
