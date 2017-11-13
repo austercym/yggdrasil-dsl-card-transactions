@@ -43,7 +43,7 @@ public class AuthorisationDSLTopology {
     }
 
     private static void loadTopologyInStorm(boolean local) throws Exception {
-        LOG.debug("Creating GPS message processing topology");
+        LOG.info("Creating GPS authorisation message processing topology");
 
         // Read configuration params from authorisation-topology.properties and zookeeper
         TopologyConfig config = TopologyConfigFactory.getTopologyConfig(PROPERTIES_FILE);

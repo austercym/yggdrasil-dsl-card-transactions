@@ -50,6 +50,7 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
         super.prepare(stormConf, context, collector);
         String nodeList = ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getNodeList();
         String keyspace = ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getKeyspace();
+        LOG.info("Repository configuration - NodeList={}, KeySpace={}", nodeList, keyspace);
         cardSettingsRepository = new CardSettingsRepositoryImpl(nodeList, keyspace);
         totalAmountsRepository = new SpendingTotalAmountsRepositoryImpl(nodeList, keyspace);
     }
