@@ -1,10 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.bean.config;
 
-import com.netflix.config.DynamicPropertyFactory;
 import com.orwellg.umbrella.commons.beans.config.zookeeper.ZkConfigurationParams;
 import com.orwellg.umbrella.commons.config.ScyllaConfig;
-import com.orwellg.umbrella.commons.storm.config.params.TopologyParams;
-import com.orwellg.umbrella.commons.utils.config.ZookeeperUtils;
 import com.orwellg.yggdrasil.commons.config.NetworkConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,7 +20,6 @@ public class ConfigurationParams extends ZkConfigurationParams implements Serial
      */
     private static final long serialVersionUID = 1L;
     public NetworkConfig networkConfig;
-    private TopologyParams topologyParams;
     private ScyllaConfig scyllaConfig;
 
     public ConfigurationParams() {
@@ -34,14 +30,6 @@ public class ConfigurationParams extends ZkConfigurationParams implements Serial
         super.setPropertiesFile(DEFAULT_PROPERTIES_FILE);
         super.setApplicationRootConfig(ZK_SUB_BRANCH_KEY, DEFAULT_SUB_BRANCH);
         LOG.info("Configuration params loaded.");
-    }
-
-    public TopologyParams getTopologyParams() {
-        return topologyParams;
-    }
-
-    public void setTopologyParams(TopologyParams topologyParams) {
-        this.topologyParams = topologyParams;
     }
 
     public ScyllaConfig getScyllaConfig() {
@@ -59,17 +47,6 @@ public class ConfigurationParams extends ZkConfigurationParams implements Serial
     @Override
     protected void loadParameters() {
 
-        DynamicPropertyFactory dynamicPropertyFactory = null;
-        try {
-            dynamicPropertyFactory = ZookeeperUtils.getDynamicPropertyFactory();
-        } catch (Exception e) {
-            LOG.error("Error when try get the dynamic property factory from Zookeeper. Message: {}", e.getMessage(), e);
-        }
-
-        if (dynamicPropertyFactory != null) {
-            topologyParams = new TopologyParams();
-            topologyParams.setHints(dynamicPropertyFactory.getIntProperty("storm.topology.hints", TopologyParams.DEFAULT_PARARELL_INST_HINTS));
-        }
     }
 
     @Override

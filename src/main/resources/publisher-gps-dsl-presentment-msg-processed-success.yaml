@@ -1,10 +1,10 @@
 zookeeper:
-   host: localhost:2181
+   host: ${zookeeper.host}
 bootstrap:
-   host: localhost:9092,localhost:10092
+   host: ${kafka.bootstrap.host}
 topic:
     name:
-       - com.orwellg.gps.presentment.response
+       - com.orwellg.gps.presentment.response.1
     commitInterval: 3
 application:
     id: gps-dsl-presentment-msg-processed-publisher
