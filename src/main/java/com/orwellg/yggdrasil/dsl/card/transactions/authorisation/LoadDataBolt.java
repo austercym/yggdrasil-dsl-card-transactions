@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.authorisation;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisation;
 
 import com.orwellg.umbrella.commons.repositories.CardSettingsRepository;
 import com.orwellg.umbrella.commons.repositories.SpendingTotalAmountsRepository;
