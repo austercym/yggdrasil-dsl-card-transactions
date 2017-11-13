@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.presentment;
+package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
 import com.orwellg.umbrella.avro.types.event.EntityIdentifierType;
 import com.orwellg.umbrella.avro.types.event.Event;
@@ -8,13 +8,12 @@ import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.FeeSchema;
+import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.types.utils.avro.RawMessageUtils;
 import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
-import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessageException;
 import com.orwellg.yggdrasil.dsl.card.transactions.services.AccountingOperationsService;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.CardPresentmentDSLTopology;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -24,10 +23,10 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class PresentmentCalculateAmountsBolt extends BasicRichBolt {
+public class ProcessFeeSchema extends BasicRichBolt {
 
     private AccountingOperationsService accountingService;
-    private static final Logger LOG = LogManager.getLogger(PresentmentCalculateAmountsBolt.class);
+    private static final Logger LOG = LogManager.getLogger(ProcessFeeSchema.class);
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -38,7 +37,7 @@ public class PresentmentCalculateAmountsBolt extends BasicRichBolt {
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "message"));
-        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData"));
+        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData", "exceptionMessage", "exceptionStackTrace"));
     }
 
     @Override
@@ -47,7 +46,7 @@ public class PresentmentCalculateAmountsBolt extends BasicRichBolt {
             String key = (String) tuple.getValueByField("key");
             String originalProcessId = (String) tuple.getValueByField("processId");
             Message eventData = (Message) tuple.getValueByField("eventData");
-            GpsMessage presentment = (GpsMessage) tuple.getValueByField("gpsMessage");
+            PresentmentMessage presentment = (PresentmentMessage) tuple.getValueByField("gpsMessage");
             List<FeeSchema> schema = (List<FeeSchema>) tuple.getValueByField("retrieveValue");
 
             Optional<FeeSchema> maxDateOptional = schema.stream()
@@ -87,15 +86,16 @@ public class PresentmentCalculateAmountsBolt extends BasicRichBolt {
             values.put("key", tuple.getValueByField("key"));
             values.put("processId", tuple.getValueByField("processId"));
             values.put("eventData", tuple.getValueByField("eventData"));
+            values.put("exceptionMessage", e.getMessage());
+            values.put("exceptionStackTrace", e.getStackTrace());
 
             send(CardPresentmentDSLTopology.ERROR_STREAM, tuple, values);
             LOG.info("Error when processing Linked Accounts - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
-            error(e, tuple);
         }
     }
 
 
-    private GpsMessageProcessed generateMessageProcessed(GpsMessage presentment, FeeSchema feeSchema){
+    private GpsMessageProcessed generateMessageProcessed(PresentmentMessage presentment, FeeSchema feeSchema){
 
         LOG.debug("Generating gpsMessageProcessed message");
 
@@ -109,23 +109,23 @@ public class PresentmentCalculateAmountsBolt extends BasicRichBolt {
         gpsMessageProcessed.setTransactionTimestamp(presentment.getTransactionTimestamp().getTime() / 1000L); //todo: helper to
         gpsMessageProcessed.setGpsTransactionTime(presentment.getGpsTrnasactionDate().getTime() / 1000L);
         gpsMessageProcessed.setInternalAccountId(presentment.getInternalAccountId());
-        gpsMessageProcessed.setWirecardAmount(presentment.getSettlementAmount().doubleValue());
+        gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(presentment.getSettlementAmount()));
         gpsMessageProcessed.setWirecardCurrency(presentment.getSettlementCurrency());
-        gpsMessageProcessed.setBlockedClientAmount(blockedClientAmount.doubleValue());
+        gpsMessageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(blockedClientAmount.doubleValue()));
         gpsMessageProcessed.setBlockedClientCurrency(presentment.getSettlementCurrency());
-        gpsMessageProcessed.setFeesAmount(feesAmount.doubleValue());
+        gpsMessageProcessed.setFeesAmount(DecimalTypeUtils.toDecimal(feesAmount.doubleValue()));
         gpsMessageProcessed.setFeesCurrency(presentment.getInternalAccountCurrency());
         gpsMessageProcessed.setGpsMessageType(presentment.getGpsMessageType());
         gpsMessageProcessed.setInternalAccountCurrency(presentment.getInternalAccountCurrency());
 
         double authBlockedAmount = presentment.getAuthBlockedClientAmount() == null ? 0.0 : presentment.getAuthBlockedClientAmount().doubleValue();
-        gpsMessageProcessed.setAppliedBlockedClientAmount(authBlockedAmount);
+        gpsMessageProcessed.setAppliedBlockedClientAmount(DecimalTypeUtils.toDecimal(authBlockedAmount));
         gpsMessageProcessed.setAppliedBlockedClientCurrency(presentment.getAuthBlockedClientCurrency());
         double authWirecardAmount = presentment.getAuthWirecardAmount() == null ? 0.0 : presentment.getAuthWirecardAmount().doubleValue();
-        gpsMessageProcessed.setAppliedWirecardAmount(authWirecardAmount);
+        gpsMessageProcessed.setAppliedWirecardAmount(DecimalTypeUtils.toDecimal(authWirecardAmount));
         gpsMessageProcessed.setAppliedWirecardCurrency(presentment.getAuthWirecardCurrency());
         double authFeeAmount = presentment.getAuthFeeAmount() == null ? 0.0 : presentment.getAuthFeeAmount().doubleValue();
-        gpsMessageProcessed.setAppliedFeesAmount(authFeeAmount);
+        gpsMessageProcessed.setAppliedFeesAmount(DecimalTypeUtils.toDecimal(authFeeAmount));
         gpsMessageProcessed.setAppliedFeesCurrency(presentment.getAuthFeeCurrency());
 
         LOG.debug("Message generated. Parameters: {}", gpsMessageProcessed);

@@ -1,8 +1,7 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.topology;
+package com.orwellg.yggdrasil.dsl.card.transactions.saveToScylla;
 
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.event.CardSaveGpsMessageProcessedBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
