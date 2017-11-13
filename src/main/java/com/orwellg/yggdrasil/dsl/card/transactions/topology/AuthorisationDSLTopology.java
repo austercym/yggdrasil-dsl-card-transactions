@@ -9,13 +9,12 @@ import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GBolt;
 import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GRichBolt;
 import com.orwellg.umbrella.commons.storm.topology.generic.grouping.ShuffleGrouping;
 import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
-import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltFieldNameWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.event.KafkaEventProcessBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.event.ProcessJoinValidatorBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.event.ResponseGeneratorBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.event.LoadDataBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.authorisation.ProcessJoinValidatorBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.authorisation.ResponseGeneratorBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.authorisation.LoadDataBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.event.EventToAuthorisationMessageBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -52,7 +51,7 @@ public class AuthorisationDSLTopology {
         GSpout kafkaEventReader = new GSpout("kafka-event-reader", new KafkaSpoutWrapper(config.getKafkaSubscriberSpoutConfig(), String.class, String.class).getKafkaSpout(), config.getKafkaSpoutHints());
 
         // Parse the events and we send it to the rest of the topology
-        GBolt<?> kafkaEventProcess = new GRichBolt("kafka-event-success-process", new KafkaEventProcessBolt(), config.getEventProcessHints());
+        GBolt<?> kafkaEventProcess = new GRichBolt("kafka-event-success-process", new EventToAuthorisationMessageBolt(), config.getEventProcessHints());
         kafkaEventProcess.addGrouping(new ShuffleGrouping("kafka-event-reader", KafkaSpout.EVENT_SUCCESS_STREAM));
 
         // GBolt for work with the errors
