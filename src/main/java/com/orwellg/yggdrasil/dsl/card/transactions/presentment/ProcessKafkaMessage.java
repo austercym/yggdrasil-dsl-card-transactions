@@ -33,9 +33,10 @@ public class ProcessKafkaMessage extends com.orwellg.umbrella.commons.storm.topo
     @Override
     public void sendNextStep(Tuple input, Event event) {
 
+        String key = event.getEvent().getKey();
+        String processId = event.getProcessIdentifier().getUuid();
+
         try {
-            String key = event.getEvent().getKey();
-            String processId = event.getProcessIdentifier().getUuid();
 
             LOG.info("[Key: {}][ProcessId: {}]: Received GPS message event", key, processId);
 
@@ -53,7 +54,14 @@ public class ProcessKafkaMessage extends com.orwellg.umbrella.commons.storm.topo
 
             LOG.info("[Key: {}][ProcessId: {}]: GPS message event sent.", key, processId);
         }catch (Exception e){
-            //todo: exception stream
+            LOG.error("[Key: {}][ProcessId: {}]: Error occurred when processing message from Kafka. Error: {}, Event: {}", key, processId, e, event);
+
+            Map<String, Object> values = new HashMap<>();
+            values.put("key", key);
+            values.put("processId", processId);
+            values.put("eventData", event);
+            values.put("exceptionMessage", e.getMessage());
+            values.put("exceptionStackTrace", e.getStackTrace());
         }
     }
 

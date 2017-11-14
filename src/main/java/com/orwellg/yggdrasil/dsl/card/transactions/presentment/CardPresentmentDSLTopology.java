@@ -1,5 +1,9 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
+import com.orwellg.umbrella.commons.beans.config.kafka.PublisherKafkaConfiguration;
+import com.orwellg.umbrella.commons.beans.config.kafka.SubscriberKafkaConfiguration;
+import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
+import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
 import com.orwellg.umbrella.commons.storm.topology.TopologyFactory;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.EventErrorBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
@@ -29,12 +33,15 @@ public class CardPresentmentDSLTopology {
 
     public static void main(String[] args) throws Exception {
 
+        TopologyConfig topologyConfig = TopologyConfigFactory.getTopologyConfig("presentment.topology.properties");
+        Integer hints = topologyConfig.getActionBoltHints();
+        Integer errorHints = topologyConfig.getEventErrorHints();
+
         LOG.debug("Creating Card Presentments processing topology");
 
-        Integer hints = 1;
-
         // Create the spout that read the events from Kafka
-        GSpout kafkaEventReader = new GSpout("kafka-event-reader", new KafkaSpoutWrapper("subscriber-gps-presentment-dsl-topic.yaml", String.class, String.class).getKafkaSpout(), hints);
+        GSpout kafkaEventReader = new GSpout("kafka-event-reader",
+                new KafkaSpoutWrapper( topologyConfig.getKafkaSubscriberSpoutConfig(), String.class, String.class).getKafkaSpout(), hints);
 
         // Parse the events and we send it to the rest of the topology
         GBolt<?> kafkaEventProcess = new GRichBolt("process-kafka-message", new ProcessKafkaMessage(), hints);
@@ -71,7 +78,8 @@ public class CardPresentmentDSLTopology {
         calculateAmountsBolt.addGrouping(new ShuffleGrouping("get-fees-schema"));
 
         //------------------------- Send an event with the result -------------------------------------------------------
-        GBolt<?> kafkaEventSuccessProducer = new GRichBolt("kafka-event-success-producer", new KafkaBoltFieldNameWrapper("publisher-gps-dsl-presentment-msg-processed-success.yaml", String.class, String.class).getKafkaBolt(), 10);
+        //GBolt<?> kafkaEventSuccessProducer = new GRichBolt("kafka-event-success-producer", new KafkaBoltFieldNameWrapper(topologyConfig.getKafkaPublisherBoltConfig(), String.class, String.class).getKafkaBolt(), 10);
+        GBolt<?> kafkaEventSuccessProducer = new GRichBolt("kafka-error-producer", new KafkaBoltWrapper(topologyConfig.getKafkaPublisherBoltConfig(), String.class, String.class).getKafkaBolt(), hints);
         kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping("process-fee-schema"));
 
         //-------------------------------- Error Handling --------------------------------------------------------------
@@ -91,7 +99,7 @@ public class CardPresentmentDSLTopology {
 
 
         // GBolt for send errors of events to kafka
-        GBolt<?> kafkaErrorProducer = new GRichBolt("kafka-error-producer", new KafkaBoltWrapper("publisher-gps-dsl-error.yaml", String.class, String.class).getKafkaBolt(), hints);
+        GBolt<?> kafkaErrorProducer = new GRichBolt("kafka-error-producer", new KafkaBoltWrapper(topologyConfig.getKafkaPublisherErrorBoltConfig(), String.class, String.class).getKafkaBolt(), errorHints);
         kafkaErrorProducer.addGrouping(new ShuffleGrouping("kafka-event-error-process"));
         kafkaErrorProducer.addGrouping(new ShuffleGrouping("gps-error-handler"));
 
@@ -101,10 +109,6 @@ public class CardPresentmentDSLTopology {
                 kafkaEventReader,
                 Arrays.asList(kafkaEventProcess, cardAuthorisationBolt, authValidationBolt,
                         getLinkedAccountBolt, validateLinikedAccountBolt, getFeeSchemaBolt, calculateAmountsBolt, kafkaEventSuccessProducer, kafkaEventError, gpsErrorBolt, kafkaErrorProducer));
-        //StormTopology topology = TopologyFactory.generateTopology(
-        //        kafkaEventReader,
-        //        Arrays.asList(kafkaEventProcess, cardAuthorisationBolt, authValidationBolt, getLinkedAccountBolt, validateLinikedAccountBolt));
-
         LOG.debug("Topology created");
 
         // Create the basic config and upload the topology
