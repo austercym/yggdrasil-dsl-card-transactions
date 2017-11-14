@@ -5,11 +5,15 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendGroup;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Currency;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class GpsMessageMapper {
 
-    private final List<Integer> historicalCurrencyNumericCodes = Arrays.asList(0, 642, 891);
+    private List<String> historicalCurrencyCurrencyCodes = Arrays.asList("YUM", "ROL", "CSD", "XFU", "XFO");
     private final CardPresenceResolver cardPresenceResolver;
     private final TransactionTypeResolver transactionTypeResolver;
     private final Map<String, String> availableCurrencies;
@@ -17,22 +21,9 @@ public class GpsMessageMapper {
     public GpsMessageMapper() {
         cardPresenceResolver = new CardPresenceResolver();
         transactionTypeResolver = new TransactionTypeResolver();
-        availableCurrencies = createAvailableCurrencies();
-//        availableCurrencies = Currency.getAvailableCurrencies().stream()
-//                .filter(c -> !historicalCurrencyNumericCodes.contains(c.getNumericCode()))
-//                .collect(Collectors.toMap(c -> Integer.toString(c.getNumericCode()), Currency::getCurrencyCode));
-    }
-
-    private Map<String, String> createAvailableCurrencies() {
-        // TODO: What with duplicated numeric codes? E.g. RON 946
-        HashMap<String, String> map = new HashMap<>();
-        Currency.getAvailableCurrencies().forEach(c -> {
-            String num = Integer.toString(c.getNumericCode());
-            if (!historicalCurrencyNumericCodes.contains(c.getNumericCode())) {
-                map.put(num, c.getCurrencyCode());
-            }
-        });
-        return map;
+        availableCurrencies = Currency.getAvailableCurrencies().stream()
+                .filter(c -> !historicalCurrencyCurrencyCodes.contains(c.getCurrencyCode()))
+                .collect(Collectors.toMap(c -> Integer.toString(c.getNumericCode()), Currency::getCurrencyCode));
     }
 
     public AuthorisationMessage map(Message message) {
