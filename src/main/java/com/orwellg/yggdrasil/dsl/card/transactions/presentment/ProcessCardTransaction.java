@@ -2,7 +2,6 @@ package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
 
 import com.orwellg.umbrella.avro.types.gps.Message;
-import com.orwellg.umbrella.commons.repositories.scylla.FeeHistoryReposotoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessageException;
@@ -12,7 +11,6 @@ import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.tuple.Tuple;
 
-import java.text.ParseException;
 import java.util.*;
 
 public class ProcessCardTransaction extends BasicRichBolt {

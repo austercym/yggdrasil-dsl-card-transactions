@@ -1,8 +1,8 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
 import com.orwellg.umbrella.avro.types.gps.Message;
-import com.orwellg.umbrella.commons.repositories.LinkedAccountRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.LinkedAccountRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.LinkedAccountRepository;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.LinkedAccountRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
@@ -26,8 +26,8 @@ public class GetLinkedAccount extends BasicRichBolt {
     }
 
     protected void setScyllaConnectionParameters() {
-        setScyllaNodes(ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getNodeList());
-        setScyllaKeyspace(ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getKeyspace());
+        setScyllaNodes(ComponentFactory.getConfigurationParams().getCardsScyllaParams().getNodeList());
+        setScyllaKeyspace(ComponentFactory.getConfigurationParams().getCardsScyllaParams().getKeyspace());
     }
 
     protected List<LinkedAccount> retrieve(Message message, PresentmentMessage presentment) {
