@@ -5,10 +5,14 @@ import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 
 public class BalanceValidator {
     public ValidationResult validate(AuthorisationMessage message, AccountTransactionLog accountTransactionLog) {
+        if (accountTransactionLog == null)
+            return ValidationResult.error("Account balance not available");
+
         if (message.getSettlementAmount().compareTo(accountTransactionLog.getActualBalance()) > 0)
             return ValidationResult.error(String.format(
                     "Settlement amount exceeds actual balance (SettlementAmount=%f, ActualBalance=%f)",
                     message.getSettlementAmount(), accountTransactionLog.getActualBalance()));
+
         return ValidationResult.valid();
     }
 }
