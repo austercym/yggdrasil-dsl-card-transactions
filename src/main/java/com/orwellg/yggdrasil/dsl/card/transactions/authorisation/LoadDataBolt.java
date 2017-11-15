@@ -81,7 +81,7 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList(
-                "key", "processId", "eventData", "cardSettings", "transactionLog", "spendingTotals"));
+                Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.CARD_SETTINGS, Fields.TRANSACTION_LOG, Fields.SPENDING_TOTALS));
     }
 
     @Override
@@ -102,12 +102,12 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
                     retrieveTotalAmounts(cardId, totalType, new Date(), logPrefix);
 
             Map<String, Object> values = new HashMap<>();
-            values.put("key", key);
-            values.put("processId", processId);
-            values.put("eventData", eventData);
-            values.put("cardSettings", settingsFuture.get());
-            values.put("transactionLog", accountTransactionLogFuture.get());
-            values.put("spendingTotals", totalFuture.get());
+            values.put(Fields.KEY, key);
+            values.put(Fields.PROCESS_ID, processId);
+            values.put(Fields.EVENT_DATA, eventData);
+            values.put(Fields.CARD_SETTINGS, settingsFuture.get());
+            values.put(Fields.TRANSACTION_LOG, accountTransactionLogFuture.get());
+            values.put(Fields.SPENDING_TOTALS, totalFuture.get());
 
             send(input, values);
 

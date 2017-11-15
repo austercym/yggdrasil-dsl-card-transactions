@@ -42,9 +42,9 @@ public class EventToAuthorisationMessageBolt extends KafkaEventProcessBolt {
 		AuthorisationMessage message = mapper.map(eventData);
 
 		Map<String, Object> values = new HashMap<>();
-		values.put("key", key);
-		values.put("processId", processId);
-		values.put("eventData", message);
+		values.put(Fields.KEY, key);
+		values.put(Fields.PROCESS_ID, processId);
+		values.put(Fields.EVENT_DATA, message);
 
 		send(input, values);
 
@@ -53,6 +53,6 @@ public class EventToAuthorisationMessageBolt extends KafkaEventProcessBolt {
 
 	@Override
 	public void declareFieldsDefinition() {
-		addFielsDefinition(Arrays.asList("key", "processId", "eventData"));
+		addFielsDefinition(Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA));
 	}
 }

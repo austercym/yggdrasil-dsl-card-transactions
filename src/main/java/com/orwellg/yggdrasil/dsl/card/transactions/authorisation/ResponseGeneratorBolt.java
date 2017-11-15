@@ -34,20 +34,20 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         LOG.debug("Event received: {}. Starting the decode process.", input);
 
         try {
-            AuthorisationMessage event = (AuthorisationMessage) input.getValueByField("eventData");
-            String parentKey = (String) input.getValueByField("key");
+            AuthorisationMessage event = (AuthorisationMessage) input.getValueByField(Fields.EVENT_DATA);
+            String parentKey = (String) input.getValueByField(Fields.KEY);
             AccountTransactionLog accountTransactionLog =
-                    (AccountTransactionLog) input.getValueByField("transactionLog");
+                    (AccountTransactionLog) input.getValueByField(Fields.TRANSACTION_LOG);
             ValidationResult statusValidationResult =
-                    (ValidationResult) input.getValueByField("statusValidationResult");
+                    (ValidationResult) input.getValueByField(Fields.STATUS_VALIDATION_RESULT);
             ValidationResult transactionTypeValidationResult =
-                    (ValidationResult) input.getValueByField("transactionTypeValidationResult");
+                    (ValidationResult) input.getValueByField(Fields.TRANSACTION_TYPE_VALIDATION_RESULT);
             ValidationResult merchantValidationResult =
-                    (ValidationResult) input.getValueByField("merchantValidationResult");
+                    (ValidationResult) input.getValueByField(Fields.MERCHANT_VALIDATION_RESULT);
             ValidationResult velocityLimitsValidationResult =
-                    (ValidationResult) input.getValueByField("velocityLimitsValidationResult");
+                    (ValidationResult) input.getValueByField(Fields.VELOCITY_LIMITS_VALIDATION_RESULT);
             ValidationResult balanceValidationResult =
-                    (ValidationResult) input.getValueByField("balanceValidationResult");
+                    (ValidationResult) input.getValueByField(Fields.BALANCE_VALIDATION_RESULT);
 
             String logPrefix = String.format(
                     "[TransLink: %s, TxnId: %s, DebitCardId: %s, Token: %s, Amount: %s %s] ",
@@ -82,10 +82,10 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
                     parentKey);
 
             Map<String, Object> values = new HashMap<>();
-            values.put("key", input.getStringByField("key"));
-            values.put("message", RawMessageUtils.encodeToString(Event.SCHEMA$, responseEvent));
+            values.put(Fields.KEY, input.getStringByField(Fields.KEY));
+            values.put(Fields.MESSAGE, RawMessageUtils.encodeToString(Event.SCHEMA$, responseEvent));
             // TODO: get response topic from input event
-            values.put("topic", "com.orwellg.gps.authorisation.response.1");
+            values.put(Fields.TOPIC, "com.orwellg.gps.authorisation.response.1");
 
             send(input, values);
 
@@ -152,6 +152,6 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
 
     @Override
     public void declareFieldsDefinition() {
-        addFielsDefinition(Arrays.asList("key", "processId", "message", "topic"));
+        addFielsDefinition(Arrays.asList(Fields.KEY, Fields.PROCESS_ID, "message", "topic"));
     }
 }
