@@ -3,6 +3,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.services;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendGroup;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.CreditDebit;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -13,10 +14,10 @@ import java.util.stream.Collectors;
 
 public class GpsMessageMapper {
 
-    private List<String> historicalCurrencyCurrencyCodes = Arrays.asList("YUM", "ROL", "CSD", "XFU", "XFO");
     private final CardPresenceResolver cardPresenceResolver;
     private final TransactionTypeResolver transactionTypeResolver;
     private final Map<String, String> availableCurrencies;
+    private List<String> historicalCurrencyCurrencyCodes = Arrays.asList("YUM", "ROL", "CSD", "XFU", "XFO");
 
     public GpsMessageMapper() {
         cardPresenceResolver = new CardPresenceResolver();
@@ -32,8 +33,14 @@ public class GpsMessageMapper {
         if (message.getCustRef() != null && !message.getCustRef().isEmpty())
             model.setDebitCardId(Long.parseLong(message.getCustRef()));
         model.setSpendGroup(getSpendGroup(message));
-        if (message.getSettleAmt() != null)
-            model.setSettlementAmount(BigDecimal.valueOf(message.getSettleAmt()));  // TODO: abs and add a credit/debit field
+        Double settlementBillingAmount = message.getBillAmt();
+        if (settlementBillingAmount != null) {
+            model.setSettlementAmount(BigDecimal.valueOf(settlementBillingAmount).abs());
+            if (settlementBillingAmount > 0)
+                model.setCreditDebit(CreditDebit.CREDIT);
+            else if (settlementBillingAmount < 0)
+                model.setCreditDebit(CreditDebit.DEBIT);
+        }
         model.setSettlementCurrency(currencyFromNumericCode(message.getSettleCcy()));
         model.setIsCardPresent(cardPresenceResolver.isCardPresent(message));
         if (message.getMerchIDDE42() != null)

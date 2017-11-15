@@ -7,6 +7,7 @@ import com.orwellg.umbrella.avro.types.event.ProcessIdentifierType;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.ResponseMsg;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
+import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTransactionLog;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.ResponseCode;
 import com.orwellg.umbrella.commons.types.utils.avro.RawMessageUtils;
 import com.orwellg.umbrella.commons.utils.constants.Constants;
@@ -17,6 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -34,6 +36,8 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         try {
             AuthorisationMessage event = (AuthorisationMessage) input.getValueByField("eventData");
             String parentKey = (String) input.getValueByField("key");
+            AccountTransactionLog accountTransactionLog =
+                    (AccountTransactionLog) input.getValueByField("transactionLog");
             ValidationResult statusValidationResult =
                     (ValidationResult) input.getValueByField("statusValidationResult");
             ValidationResult transactionTypeValidationResult =
@@ -42,6 +46,8 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
                     (ValidationResult) input.getValueByField("merchantValidationResult");
             ValidationResult velocityLimitsValidationResult =
                     (ValidationResult) input.getValueByField("velocityLimitsValidationResult");
+            ValidationResult balanceValidationResult =
+                    (ValidationResult) input.getValueByField("balanceValidationResult");
 
             String logPrefix = String.format(
                     "[TransLink: %s, TxnId: %s, DebitCardId: %s, Token: %s, Amount: %s %s] ",
@@ -52,14 +58,18 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
 
             ResponseCode responseCode = ResponseCode.DO_NOT_HONOUR;
             ResponseMsg response = new ResponseMsg();
-            if (!velocityLimitsValidationResult.getIsValid()) {
+            if (!balanceValidationResult.getIsValid()) {
+                responseCode = ResponseCode.INSUFFICIENT_FUNDS;
+            } else if (!velocityLimitsValidationResult.getIsValid()) {
                 responseCode = ResponseCode.EXCEEDS_WITHDRAWAL_AMOUNT_LIMIT;
             } else if (statusValidationResult.getIsValid()
                     && transactionTypeValidationResult.getIsValid()
                     && merchantValidationResult.getIsValid()) {
                 responseCode = ResponseCode.ALL_GOOD;
-                response.setAvlBalance(19.09);
-                response.setCurBalance(20.15);
+                BigDecimal availableBalance =
+                        accountTransactionLog.getActualBalance().subtract(event.getSettlementAmount());
+                response.setAvlBalance(availableBalance.doubleValue());
+                response.setCurBalance(accountTransactionLog.getLedgerBalance().doubleValue());
             }
 
             response.setAcknowledgement("1");

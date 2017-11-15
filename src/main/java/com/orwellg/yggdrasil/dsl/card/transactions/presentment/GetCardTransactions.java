@@ -1,8 +1,8 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
 import com.orwellg.umbrella.avro.types.gps.Message;
-import com.orwellg.umbrella.commons.repositories.CardTransactionRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.generics.scylla.ScyllaRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
@@ -32,8 +32,8 @@ public class GetCardTransactions extends ScyllaRichBolt<List<CardTransaction>, M
 
     @Override
     protected void setScyllaConnectionParameters() {
-        setScyllaNodes(ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getNodeList());
-        setScyllaKeyspace(ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getKeyspace());
+        setScyllaNodes(ComponentFactory.getConfigurationParams().getCardsScyllaParams().getNodeList());
+        setScyllaKeyspace(ComponentFactory.getConfigurationParams().getCardsScyllaParams().getKeyspace());
     }
 
     @Override

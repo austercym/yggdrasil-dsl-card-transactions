@@ -69,8 +69,8 @@ public class CardSaveScyllaGpsMessageProcessedTopology {
         Config conf = new Config();
         conf.setDebug(false);
         conf.setMaxTaskParallelism(30);
-        String keyspace = ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getKeyspace();
-        String hostList = ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getHostList();
+        String keyspace = ComponentFactory.getConfigurationParams().getCardsScyllaParams().getKeyspace();
+        String hostList = ComponentFactory.getConfigurationParams().getCardsScyllaParams().getHostList();
         //todo: add params in zookeeper for cassandra bolt ?
         conf.put("cassandra.nodes", hostList);
         conf.put("cassandra.keyspace", keyspace);
