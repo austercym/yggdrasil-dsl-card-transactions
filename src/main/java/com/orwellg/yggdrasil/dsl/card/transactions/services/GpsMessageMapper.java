@@ -1,7 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
+import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.avro.types.gps.Message;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendGroup;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.CreditDebit;
 

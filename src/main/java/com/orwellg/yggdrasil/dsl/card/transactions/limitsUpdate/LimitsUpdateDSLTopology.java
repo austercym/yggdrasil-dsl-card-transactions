@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.authorisation;
+package com.orwellg.yggdrasil.dsl.card.transactions.limitsUpdate;
 
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
@@ -21,19 +21,18 @@ import org.apache.storm.generated.StormTopology;
 
 import java.util.Arrays;
 
-public class AuthorisationDSLTopology {
+public class LimitsUpdateDSLTopology {
 
-    private final static Logger LOG = LogManager.getLogger(AuthorisationDSLTopology.class);
+    private final static Logger LOG = LogManager.getLogger(LimitsUpdateDSLTopology.class);
 
-    private static final String TOPOLOGY_NAME = "dsl-gps-authorisation";
-    private static final String PROPERTIES_FILE = "authorisation-topology.properties";
+    private static final String TOPOLOGY_NAME = "card-limits-update-dsl";
+    private static final String PROPERTIES_FILE = "limits-update-topology.properties";
     private static final String KAFKA_EVENT_READER = "kafka-event-reader";
     private static final String KAFKA_EVENT_SUCCESS_PROCESS = "kafka-event-success-process";
     private static final String KAFKA_EVENT_ERROR_PROCESS = "kafka-event-error-process";
-    private static final String GET_DATA = "get-data";
-    private static final String PROCESS_VALIDATION = "process-validation";
-    private static final String RESPONSE_GENERATOR = "response-generator";
-    private static final String KAFKA_EVENT_SUCCESS_PRODUCER = "kafka-event-success-producer";
+    private static final String READ_DATA = "read-data";
+    private static final String RECALCULATE_SPEND_AMOUNTS = "recalculate-spend-amounts";
+    private static final String SAVE_SPEND_AMOUNTS = "save-spend-amounts";
 
     public static void main(String[] args) throws Exception {
 
@@ -46,17 +45,33 @@ public class AuthorisationDSLTopology {
     }
 
     private static void loadTopologyInStorm(boolean local) throws Exception {
-        LOG.info("Creating GPS authorisation message processing topology");
+        LOG.info("Creating card limits update topology");
 
-        // Read configuration params from authorisation-topology.properties and zookeeper
+        // Read configuration params from properties file and zookeeper
         TopologyConfig config = TopologyConfigFactory.getTopologyConfig(PROPERTIES_FILE);
 
-        // Create the spout that read the events from Kafka
+        // Create the spout that reads events from Kafka
         GSpout kafkaEventReader = new GSpout(KAFKA_EVENT_READER, new KafkaSpoutWrapper(config.getKafkaSubscriberSpoutConfig(), String.class, String.class).getKafkaSpout(), config.getKafkaSpoutHints());
 
         // Parse the events and we send it to the rest of the topology
-        GBolt<?> kafkaEventProcess = new GRichBolt(KAFKA_EVENT_SUCCESS_PROCESS, new EventToAuthorisationMessageBolt(), config.getEventProcessHints());
+        GBolt<?> kafkaEventProcess = new GRichBolt(KAFKA_EVENT_SUCCESS_PROCESS, new ResponseEventProcessBolt(), config.getEventProcessHints());
         kafkaEventProcess.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER, KafkaSpout.EVENT_SUCCESS_STREAM));
+
+        // Read last total spend amounts from DB
+        GBolt<?> readDataBolt = new GRichBolt(READ_DATA, new ReadLastSpendingTotalsBolt(), config.getActionBoltHints());
+        readDataBolt.addGrouping(new ShuffleGrouping(KAFKA_EVENT_SUCCESS_PROCESS));
+
+        // Recalculate total spend amounts
+        GBolt<?> recalculateBolt = new GRichBolt(RECALCULATE_SPEND_AMOUNTS, new RecalculateTotalSpendAmountsBolt(), config.getActionBoltHints());
+        recalculateBolt.addGrouping(new ShuffleGrouping(READ_DATA));
+
+        // Save new total spend amounts
+        GBolt<?> saveBolt = new GRichBolt(SAVE_SPEND_AMOUNTS, new SaveTotalSpendAmountsBolt(), config.getActionBoltHints());
+        saveBolt.addGrouping(new ShuffleGrouping(RECALCULATE_SPEND_AMOUNTS));
+
+        //
+        // Error stream
+        //
 
         // GBolt for work with the errors
         GBolt<?> kafkaEventError = new GRichBolt(KAFKA_EVENT_ERROR_PROCESS, new EventErrorBolt(), config.getEventErrorHints());
@@ -66,26 +81,10 @@ public class AuthorisationDSLTopology {
         GBolt<?> kafkaErrorProducer = new GRichBolt("kafka-error-producer", new KafkaBoltWrapper(config.getKafkaPublisherErrorBoltConfig(), String.class, String.class).getKafkaBolt(), config.getEventErrorHints());
         kafkaErrorProducer.addGrouping(new ShuffleGrouping(KAFKA_EVENT_ERROR_PROCESS));
 
-        // Get data from DB
-        GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadDataBolt(GET_DATA), config.getActionBoltHints());
-        getDataBolt.addGrouping(new ShuffleGrouping(KAFKA_EVENT_SUCCESS_PROCESS));
-
-        // Validation bolt
-        GBolt<?> processValidationBolt = new GRichBolt(PROCESS_VALIDATION, new ProcessJoinValidatorBolt(PROCESS_VALIDATION), config.getActionBoltHints());
-        processValidationBolt.addGrouping(new ShuffleGrouping(GET_DATA));
-
-        // Response generation bolt
-        GBolt<?> responseGeneratorBolt = new GRichBolt(RESPONSE_GENERATOR, new ResponseGeneratorBolt(), config.getActionBoltHints());
-        responseGeneratorBolt.addGrouping(new ShuffleGrouping(PROCESS_VALIDATION));
-
-        // Send a event with the result
-        GBolt<?> kafkaEventSuccessProducer = new GRichBolt(KAFKA_EVENT_SUCCESS_PRODUCER, new KafkaBoltWrapper(config.getKafkaPublisherBoltConfig(), String.class, String.class).getKafkaBolt(), config.getEventResponseHints());
-        kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping(RESPONSE_GENERATOR));
-
         // Build the topology
         StormTopology topology = TopologyFactory.generateTopology(
                 kafkaEventReader,
-                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, getDataBolt, processValidationBolt, responseGeneratorBolt, kafkaEventSuccessProducer));
+                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, readDataBolt, recalculateBolt, saveBolt));
         LOG.debug("Topology created");
 
         // Create the basic config and upload the topology

@@ -1,16 +1,18 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
+import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendGroup;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 
 import java.math.BigDecimal;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
 
 public class VelocityLimitsValidator {
+
+    private static final DateTimeService dateService = new DateTimeService();
+
     public ValidationResult validate(AuthorisationMessage message, CardSettings settings, SpendingTotalAmounts totalAmounts) {
 
         SpendGroup totalType = message.getSpendGroup();
@@ -18,12 +20,12 @@ public class VelocityLimitsValidator {
         BigDecimal annualLimit = getLimit(settings, totalType, "Annual");
         Boolean isDailyValid = totalAmounts == null
                 ||
-                getDatePart(totalAmounts.getTimestamp()).before(getDatePart(new Date()))
+                dateService.getDatePart(totalAmounts.getTimestamp()).before(dateService.getDatePart(new Date()))
                 ||
                 totalAmounts.getDailyTotal().add(message.getSettlementAmount()).compareTo(dailyLimit) <= 0;
         Boolean isAnnualValid = totalAmounts == null
                 ||
-                getYearPart(totalAmounts.getTimestamp()) < getYearPart(new Date())
+                dateService.getYearPart(totalAmounts.getTimestamp()) < dateService.getYearPart(new Date())
                 ||
                 totalAmounts.getAnnualTotal().add(message.getSettlementAmount()).compareTo(annualLimit) <= 0;
         if (!isDailyValid) {
@@ -35,22 +37,6 @@ public class VelocityLimitsValidator {
                     "Annual limit exceeded (SpendGroup=%f, Limit=%f)", totalAmounts.getAnnualTotal(), annualLimit));
         }
         return ValidationResult.valid();
-    }
-
-    private Date getDatePart(Date dateTime) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(dateTime);
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        return cal.getTime();
-    }
-
-    private Integer getYearPart(Date date) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(date);
-        return cal.get(Calendar.YEAR);
     }
 
     private BigDecimal getLimit(CardSettings settings, SpendGroup totalType, String dailyAnnual) {

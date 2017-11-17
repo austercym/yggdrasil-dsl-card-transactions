@@ -1,17 +1,17 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisation;
 
+import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.commons.config.params.ScyllaParams;
 import com.orwellg.umbrella.commons.repositories.scylla.AccountTransactionLogRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.CardSettingsRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.impl.CardSettingsRepositoryImpl;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.AccountTransactionLogRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.CardSettingsRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTransactionLog;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendGroup;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
@@ -143,7 +143,7 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
                     LOG.info(
                             "{}{} Retrieving total transaction amounts for debitCardId={}, totalType={} ...",
                             logPrefix, cardId, totalType);
-                    SpendingTotalAmounts totalAmounts = totalAmountsRepository.getTotalAmounts(cardId, totalType, date);
+                    SpendingTotalAmounts totalAmounts = totalAmountsRepository.getTotalAmounts(cardId, totalType);
                     LOG.info("{}{} Total transaction amounts retrieved for debitCardId={}, totalType={}: {}",
                             logPrefix, cardId, totalType, totalAmounts);
                     return totalAmounts;
