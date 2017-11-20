@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.limitsUpdate;
+package com.orwellg.yggdrasil.dsl.card.transactions.totalSpendUpdate;
 
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
@@ -21,12 +21,12 @@ import org.apache.storm.generated.StormTopology;
 
 import java.util.Arrays;
 
-public class LimitsUpdateDSLTopology {
+public class TotalSpendUpdateDSLTopology {
 
-    private final static Logger LOG = LogManager.getLogger(LimitsUpdateDSLTopology.class);
+    private final static Logger LOG = LogManager.getLogger(TotalSpendUpdateDSLTopology.class);
 
-    private static final String TOPOLOGY_NAME = "card-limits-update-dsl";
-    private static final String PROPERTIES_FILE = "limits-update-topology.properties";
+    private static final String TOPOLOGY_NAME = "card-total-spend-update-dsl";
+    private static final String PROPERTIES_FILE = "total-spend-update-topology.properties";
     private static final String KAFKA_EVENT_READER = "kafka-event-reader";
     private static final String KAFKA_EVENT_SUCCESS_PROCESS = "kafka-event-success-process";
     private static final String KAFKA_EVENT_ERROR_PROCESS = "kafka-event-error-process";
@@ -45,7 +45,7 @@ public class LimitsUpdateDSLTopology {
     }
 
     private static void loadTopologyInStorm(boolean local) throws Exception {
-        LOG.info("Creating card limits update topology");
+        LOG.info("Creating card total spend update topology");
 
         // Read configuration params from properties file and zookeeper
         TopologyConfig config = TopologyConfigFactory.getTopologyConfig(PROPERTIES_FILE);

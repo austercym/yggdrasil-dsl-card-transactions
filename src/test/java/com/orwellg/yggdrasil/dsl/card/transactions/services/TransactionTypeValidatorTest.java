@@ -6,6 +6,7 @@ import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 
 import static junit.framework.TestCase.assertFalse;
@@ -22,8 +23,10 @@ public class TransactionTypeValidatorTest {
         // arrange
         AuthorisationMessage message = new AuthorisationMessage();
         message.setTransactionType(TransactionType.ONLINE);
+        message.setSettlementCurrency("ZLT");
         CardSettings cardSettings = new CardSettings();
-        cardSettings.setAllowedTransactionTypes(new HashSet<>(Arrays.asList(TransactionType.ONLINE)));
+        cardSettings.setAllowedTransactionTypes(new HashSet<>(Collections.singletonList(TransactionType.ONLINE)));
+        cardSettings.setLinkedAccountCurrency("ZLT");
 
         // act
         ValidationResult result = validator.validate(message, cardSettings);
@@ -39,8 +42,10 @@ public class TransactionTypeValidatorTest {
         // arrange
         AuthorisationMessage message = new AuthorisationMessage();
         message.setTransactionType(TransactionType.POS);
+        message.setSettlementCurrency("ZLT");
         CardSettings cardSettings = new CardSettings();
-        cardSettings.setAllowedTransactionTypes(new HashSet<>(Arrays.asList(TransactionType.ONLINE)));
+        cardSettings.setAllowedTransactionTypes(new HashSet<>(Collections.singletonList(TransactionType.ONLINE)));
+        cardSettings.setLinkedAccountCurrency("ZLT");
 
         // act
         ValidationResult result = validator.validate(message, cardSettings);

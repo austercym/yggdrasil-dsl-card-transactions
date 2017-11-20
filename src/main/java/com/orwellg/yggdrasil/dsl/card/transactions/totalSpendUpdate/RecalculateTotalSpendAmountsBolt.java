@@ -1,13 +1,9 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.limitsUpdate;
+package com.orwellg.yggdrasil.dsl.card.transactions.totalSpendUpdate;
 
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
-import com.orwellg.umbrella.commons.config.params.ScyllaParams;
-import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
 import com.orwellg.yggdrasil.dsl.card.transactions.services.TotalSpendAmountsCalculator;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -18,21 +14,16 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
+public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
 
-    private static final Logger LOG = LogManager.getLogger(SaveTotalSpendAmountsBolt.class);
+    private static final Logger LOG = LogManager.getLogger(RecalculateTotalSpendAmountsBolt.class);
 
-    private SpendingTotalAmountsRepository repository;
+    private TotalSpendAmountsCalculator calculator;
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
-        setScyllaConnectionParameters();
-    }
-
-    protected void setScyllaConnectionParameters() {
-        ScyllaParams scyllaParams = ComponentFactory.getConfigurationParams().getCardsScyllaParams();
-        repository = new SpendingTotalAmountsRepositoryImpl(scyllaParams.getNodeList(), scyllaParams.getKeyspace());
+        calculator = new TotalSpendAmountsCalculator();
     }
 
     @Override
@@ -47,16 +38,15 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
         String processId = input.getStringByField(Fields.PROCESS_ID);
         String logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
-        LOG.info("{}Saving total spend amounts", logPrefix);
+        LOG.info("[Key: {}][ProcessId: {}]: Recalculating total spend amounts", key, processId);
 
         try {
             GpsMessageProcessed eventData = (GpsMessageProcessed) input.getValueByField(Fields.EVENT_DATA);
-            SpendingTotalAmounts newSpendAmounts = (SpendingTotalAmounts) input.getValueByField(Fields.NEW_TOTAL_SPEND_AMOUNTS);
+            SpendingTotalAmounts spendAmounts = (SpendingTotalAmounts) input.getValueByField(Fields.RETRIEVE_VALUE);
+            SpendingTotalAmounts newSpendAmounts = null;
 
-            if (newSpendAmounts == null)
-                LOG.info("{}No new spend amounts to save", logPrefix);
-            else
-                repository.addTotalAmounts(newSpendAmounts);
+            if (calculator.isRequired(eventData))
+                newSpendAmounts = calculator.recalculate(eventData, spendAmounts);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
@@ -65,7 +55,7 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
             values.put(Fields.NEW_TOTAL_SPEND_AMOUNTS, newSpendAmounts);
             send(input, values);
         } catch (Exception e) {
-            LOG.error("{}Error saving total spend amounts. Message: {},", logPrefix, e.getMessage(), e);
+            LOG.error("{}Error recalculating total spend amounts. Message: {},", logPrefix, e.getMessage(), e);
             error(e, input);
         }
     }
