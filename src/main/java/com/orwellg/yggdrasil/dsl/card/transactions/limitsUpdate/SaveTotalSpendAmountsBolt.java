@@ -54,7 +54,7 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
             SpendingTotalAmounts newSpendAmounts = (SpendingTotalAmounts) input.getValueByField(Fields.NEW_TOTAL_SPEND_AMOUNTS);
 
             if (newSpendAmounts == null)
-                LOG.warn("{}No new spend amounts to save", logPrefix);
+                LOG.info("{}No new spend amounts to save", logPrefix);
             else
                 repository.addTotalAmounts(newSpendAmounts);
 

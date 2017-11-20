@@ -43,8 +43,10 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
         try {
             GpsMessageProcessed eventData = (GpsMessageProcessed) input.getValueByField(Fields.EVENT_DATA);
             SpendingTotalAmounts spendAmounts = (SpendingTotalAmounts) input.getValueByField(Fields.RETRIEVE_VALUE);
+            SpendingTotalAmounts newSpendAmounts = null;
 
-            SpendingTotalAmounts newSpendAmounts = calculator.recalculate(eventData, spendAmounts);
+            if (calculator.isRequired(eventData))
+                newSpendAmounts = calculator.recalculate(eventData, spendAmounts);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);

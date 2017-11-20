@@ -1,5 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
+import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.avro.types.event.EntityIdentifierType;
 import com.orwellg.umbrella.avro.types.event.Event;
 import com.orwellg.umbrella.avro.types.event.EventType;
@@ -8,12 +9,14 @@ import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.FeeSchema;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionType;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.types.utils.avro.RawMessageUtils;
 import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessageException;
 import com.orwellg.yggdrasil.dsl.card.transactions.services.AccountingOperationsService;
+import com.orwellg.yggdrasil.dsl.card.transactions.services.MerchantCategoryCode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -106,7 +109,7 @@ public class ProcessFeeSchema extends BasicRichBolt {
         gpsMessageProcessed.setGpsTransactionLink(presentment.getGpsTransactionLink());
         gpsMessageProcessed.setGpsTransactionId(presentment.getGpsTransactionId());
         gpsMessageProcessed.setDebitCardId(presentment.getDebitCardId());
-        gpsMessageProcessed.setTransactionTimestamp(presentment.getTransactionTimestamp().getTime() / 1000L); //todo: helper to
+        gpsMessageProcessed.setTransactionTimestamp(presentment.getTransactionTimestamp().getTime()); //todo: helper to
         gpsMessageProcessed.setGpsTransactionTime(presentment.getGpsTrnasactionDate().getTime() / 1000L);
         gpsMessageProcessed.setInternalAccountId(presentment.getInternalAccountId());
         gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(presentment.getSettlementAmount()));
@@ -117,6 +120,9 @@ public class ProcessFeeSchema extends BasicRichBolt {
         gpsMessageProcessed.setFeesCurrency(presentment.getInternalAccountCurrency());
         gpsMessageProcessed.setGpsMessageType(presentment.getGpsMessageType());
         gpsMessageProcessed.setInternalAccountCurrency(presentment.getInternalAccountCurrency());
+        gpsMessageProcessed.setSpendGroup(presentment.getTransactionType() == TransactionType.ATM
+                ? SpendGroup.ATM
+                : SpendGroup.POS);
 
         double authBlockedAmount = presentment.getAuthBlockedClientAmount() == null ? 0.0 : presentment.getAuthBlockedClientAmount().doubleValue();
         gpsMessageProcessed.setAppliedBlockedClientAmount(DecimalTypeUtils.toDecimal(authBlockedAmount));

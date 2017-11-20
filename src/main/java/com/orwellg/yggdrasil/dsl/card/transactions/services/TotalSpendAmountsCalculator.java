@@ -33,10 +33,10 @@ public class TotalSpendAmountsCalculator {
                 BigDecimal.ZERO;
 
         if (isSameDay(messageProcessed.getTransactionTimestamp(), now))
-            daily = daily.add(messageProcessed.getBlockedClientAmount().getValue());
+            daily = daily.add(messageProcessed.getBlockedClientAmount().getValue().abs());
 
         if (isSameYear(messageProcessed.getTransactionTimestamp(), now))
-            annual = annual.add(messageProcessed.getBlockedClientAmount().getValue());
+            annual = annual.add(messageProcessed.getBlockedClientAmount().getValue().abs());
 
         SpendingTotalAmounts result = new SpendingTotalAmounts();
         result.setAnnualTotal(annual);
@@ -48,7 +48,7 @@ public class TotalSpendAmountsCalculator {
     }
 
     private boolean isSameDay(Long timestamp, Date now) {
-        return isSameDay(new Date(timestamp), now);
+         return isSameDay(new Date(timestamp), now);
     }
 
     private boolean isSameDay(Date timestamp, Date now) {
@@ -65,5 +65,9 @@ public class TotalSpendAmountsCalculator {
         return timestamp != null && now != null
                 &&
                 dateTimeService.getYearPart(timestamp).equals(dateTimeService.getYearPart(now));
+    }
+
+    public boolean isRequired(GpsMessageProcessed message) {
+        return !"A".equals(message.getGpsMessageType()) || "00".equals(message.getEhiResponse().getResponsestatus());
     }
 }
