@@ -6,26 +6,31 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmo
 import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Map;
 
 public class VelocityLimitsValidator {
 
-    private static final DateTimeService dateService = new DateTimeService();
-
     public ValidationResult validate(AuthorisationMessage message, CardSettings settings, SpendingTotalAmounts totalAmounts) {
 
+        if (settings == null) {
+            return ValidationResult.error("Card settings not present");
+        }
         SpendGroup totalType = message.getSpendGroup();
         BigDecimal dailyLimit = getLimit(settings, totalType, "Daily");
         BigDecimal annualLimit = getLimit(settings, totalType, "Annual");
-        Boolean isDailyValid = totalAmounts == null
+        LocalDate lastUpdateDate = totalAmounts == null
+                ? null
+                : totalAmounts.getTimestamp().atZone(ZoneId.of("UTC")).toLocalDate();
+        Boolean isDailyValid = lastUpdateDate == null
                 ||
-                dateService.getDatePart(totalAmounts.getTimestamp()).before(dateService.getDatePart(new Date()))
+                lastUpdateDate.isBefore(LocalDate.now())
                 ||
                 totalAmounts.getDailyTotal().add(message.getSettlementAmount()).compareTo(dailyLimit) <= 0;
-        Boolean isAnnualValid = totalAmounts == null
+        Boolean isAnnualValid = lastUpdateDate == null
                 ||
-                dateService.getYearPart(totalAmounts.getTimestamp()) < dateService.getYearPart(new Date())
+                lastUpdateDate.getYear() < LocalDate.now().getYear()
                 ||
                 totalAmounts.getAnnualTotal().add(message.getSettlementAmount()).compareTo(annualLimit) <= 0;
         if (!isDailyValid) {

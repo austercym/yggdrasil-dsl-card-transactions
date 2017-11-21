@@ -112,7 +112,7 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
             send(input, values);
 
         } catch (Exception e) {
-            LOG.error("{} Error processing the authorisation data load. Message: {},", logPrefix, e.getMessage(), e);
+            LOG.error("{}Error processing the authorisation data load. Message: {},", logPrefix, e.getMessage(), e);
             error(e, input);
         }
     }
@@ -120,19 +120,23 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
     private CompletableFuture<CardSettings> retrieveCardSettings(Long cardId, String logPrefix) {
         return CompletableFuture.supplyAsync(
                 () -> {
-                    LOG.info("{}{} Retrieving card settings for debitCardId={} ...", logPrefix, cardId);
+                    LOG.info("{}Retrieving card settings for debitCardId={} ...", logPrefix, cardId);
                     CardSettings cardSettings = cardSettingsRepository.getCardSettings(cardId);
-                    LOG.info("{}{} Card settings retrieved for debitCardId={}: {}", logPrefix, cardId, cardSettings);
+                    LOG.info("{}Card settings retrieved for debitCardId={}: {}", logPrefix, cardId, cardSettings);
                     return cardSettings;
                 });
     }
 
     private CompletableFuture<AccountTransactionLog> retrieveAccountTransactionLog(CompletableFuture<CardSettings> settingsFuture, String logPrefix) {
         return settingsFuture.thenApply(settings -> {
+            if (settings == null){
+                LOG.info("{}No card settings - cannot retrieve linked account transaction log", logPrefix);
+                return null;
+            }
             Long linkedAccountId = settings.getLinkedAccountId();
-            LOG.info("{}{} Retrieving account transaction log for account id {} ...", logPrefix, linkedAccountId);
+            LOG.info("{}Retrieving account transaction log for account id {} ...", logPrefix, linkedAccountId);
             AccountTransactionLog transactionLog = accountTransactionLogRepository.getLastByAccountId(linkedAccountId.toString());
-            LOG.info("{}{} Account transaction log retrieved for account id {}: {}", logPrefix, linkedAccountId, transactionLog);
+            LOG.info("{}Account transaction log retrieved for account id {}: {}", logPrefix, linkedAccountId, transactionLog);
             return transactionLog;
         });
     }
@@ -141,10 +145,10 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
         return CompletableFuture.supplyAsync(
                 () -> {
                     LOG.info(
-                            "{}{} Retrieving total transaction amounts for debitCardId={}, totalType={} ...",
+                            "{}Retrieving total transaction amounts for debitCardId={}, totalType={} ...",
                             logPrefix, cardId, totalType);
                     SpendingTotalAmounts totalAmounts = totalAmountsRepository.getTotalAmounts(cardId, totalType);
-                    LOG.info("{}{} Total transaction amounts retrieved for debitCardId={}, totalType={}: {}",
+                    LOG.info("{}Total transaction amounts retrieved for debitCardId={}, totalType={}: {}",
                             logPrefix, cardId, totalType, totalAmounts);
                     return totalAmounts;
                 });

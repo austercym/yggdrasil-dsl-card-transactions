@@ -4,7 +4,10 @@ import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 public class TotalSpendAmountsCalculator {
 
@@ -20,22 +23,28 @@ public class TotalSpendAmountsCalculator {
 
     public SpendingTotalAmounts recalculate(GpsMessageProcessed messageProcessed, SpendingTotalAmounts lastSpendingTotalAmounts) {
 
-        Date now = dateTimeService.now();
-        BigDecimal daily = lastSpendingTotalAmounts != null
+        Instant now = dateTimeService.now();
+        LocalDate today = now.atZone(ZoneId.of("UTC")).toLocalDate();
+        LocalDateTime transactionTimestamp = LocalDateTime.from(
+                Instant.ofEpochMilli(messageProcessed.getTransactionTimestamp()).atZone(ZoneId.of("UTC")));
+        LocalDate lastUpdateDate = lastSpendingTotalAmounts == null || lastSpendingTotalAmounts.getTimestamp() == null
+                ? null
+                : lastSpendingTotalAmounts.getTimestamp().atZone(ZoneId.of("UTC")).toLocalDate();
+        BigDecimal daily = lastUpdateDate != null
                 &&
-                isSameDay(lastSpendingTotalAmounts.getTimestamp(), now) ?
+                lastUpdateDate.equals(today) ?
                 lastSpendingTotalAmounts.getDailyTotal() :
                 BigDecimal.ZERO;
-        BigDecimal annual = lastSpendingTotalAmounts != null
+        BigDecimal annual = lastUpdateDate != null
                 &&
-                isSameYear(lastSpendingTotalAmounts.getTimestamp(), now) ?
+                lastUpdateDate.getYear() == today.getYear() ?
                 lastSpendingTotalAmounts.getAnnualTotal() :
                 BigDecimal.ZERO;
 
-        if (isSameDay(messageProcessed.getTransactionTimestamp(), now))
+        if (transactionTimestamp.toLocalDate().equals(today))
             daily = daily.add(messageProcessed.getBlockedClientAmount().getValue().abs());
 
-        if (isSameYear(messageProcessed.getTransactionTimestamp(), now))
+        if (transactionTimestamp.getYear() == today.getYear())
             annual = annual.add(messageProcessed.getBlockedClientAmount().getValue().abs());
 
         SpendingTotalAmounts result = new SpendingTotalAmounts();
@@ -45,26 +54,6 @@ public class TotalSpendAmountsCalculator {
         result.setDebitCardId(messageProcessed.getDebitCardId());
         result.setTotalType(messageProcessed.getSpendGroup());
         return result;
-    }
-
-    private boolean isSameDay(Long timestamp, Date now) {
-         return isSameDay(new Date(timestamp), now);
-    }
-
-    private boolean isSameDay(Date timestamp, Date now) {
-        return timestamp != null && now != null
-                &&
-                dateTimeService.getDatePart(timestamp).equals(dateTimeService.getDatePart(now));
-    }
-
-    private boolean isSameYear(Long timestamp, Date now) {
-        return isSameYear(new Date(timestamp), now);
-    }
-
-    private boolean isSameYear(Date timestamp, Date now) {
-        return timestamp != null && now != null
-                &&
-                dateTimeService.getYearPart(timestamp).equals(dateTimeService.getYearPart(now));
     }
 
     public boolean isRequired(GpsMessageProcessed message) {

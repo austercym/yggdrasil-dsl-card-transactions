@@ -41,7 +41,7 @@ public class GpsMessageMapper {
             else if (settlementBillingAmount < 0)
                 model.setCreditDebit(CreditDebit.DEBIT);
         }
-        model.setSettlementCurrency(currencyFromNumericCode(message.getSettleCcy()));
+        model.setSettlementCurrency(currencyFromNumericCode(message.getBillCcy()));
         model.setIsCardPresent(cardPresenceResolver.isCardPresent(message));
         if (message.getMerchIDDE42() != null)
             model.setMerchantId(message.getMerchIDDE42().trim());

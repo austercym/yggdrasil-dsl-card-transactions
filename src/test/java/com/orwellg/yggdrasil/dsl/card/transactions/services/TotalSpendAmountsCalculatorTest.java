@@ -12,10 +12,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.Instant;
 
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -31,9 +30,6 @@ public class TotalSpendAmountsCalculatorTest {
     @Before
     public void setUp() {
         calculator = new TotalSpendAmountsCalculator(dateTimeServiceMock);
-
-        when(dateTimeServiceMock.getDatePart(any())).thenCallRealMethod();
-        when(dateTimeServiceMock.getYearPart(any())).thenCallRealMethod();
     }
 
     @Test
@@ -45,11 +41,11 @@ public class TotalSpendAmountsCalculatorTest {
         messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
-        lastSpendingTotalAmounts.setTimestamp(sdf.parse("2015-09-19 07:55:42"));
+        lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-19T07:55:42Z"));
         lastSpendingTotalAmounts.setDailyTotal(BigDecimal.valueOf(19));
         lastSpendingTotalAmounts.setAnnualTotal(BigDecimal.valueOf(2015));
 
-        Date mockedNow = sdf.parse("2015-09-19 21:15:20");
+        Instant mockedNow = Instant.parse("2015-09-19t21:15:20Z");
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
 
         // act
@@ -71,11 +67,11 @@ public class TotalSpendAmountsCalculatorTest {
         messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
-        lastSpendingTotalAmounts.setTimestamp(sdf.parse("2015-09-18 21:20:42"));
+        lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-18T21:20:42Z"));
         lastSpendingTotalAmounts.setDailyTotal(BigDecimal.valueOf(19));
         lastSpendingTotalAmounts.setAnnualTotal(BigDecimal.valueOf(2015));
 
-        Date mockedNow = sdf.parse("2015-09-19 21:15:20");
+        Instant mockedNow = Instant.parse("2015-09-19T21:15:20Z");
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
 
         // act
@@ -97,11 +93,11 @@ public class TotalSpendAmountsCalculatorTest {
         messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
-        lastSpendingTotalAmounts.setTimestamp(sdf.parse("2014-09-18 21:20:42"));
+        lastSpendingTotalAmounts.setTimestamp(Instant.parse("2014-09-18T21:20:42Z"));
         lastSpendingTotalAmounts.setDailyTotal(BigDecimal.valueOf(19));
         lastSpendingTotalAmounts.setAnnualTotal(BigDecimal.valueOf(2015));
 
-        Date mockedNow = sdf.parse("2015-09-19 21:15:20");
+        Instant mockedNow = Instant.parse("2015-09-19T21:15:20Z");
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
 
         // act
@@ -122,7 +118,7 @@ public class TotalSpendAmountsCalculatorTest {
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
         messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
 
-        Date mockedNow = sdf.parse("2015-09-19 21:15:20");
+        Instant mockedNow = Instant.parse("2015-09-19T21:15:20Z");
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
 
         // act
@@ -144,11 +140,11 @@ public class TotalSpendAmountsCalculatorTest {
         messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
-        lastSpendingTotalAmounts.setTimestamp(sdf.parse("2015-09-19 07:55:42"));
+        lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-19T07:55:42Z"));
         lastSpendingTotalAmounts.setDailyTotal(BigDecimal.valueOf(19));
         lastSpendingTotalAmounts.setAnnualTotal(BigDecimal.valueOf(2015));
 
-        Date mockedNow = sdf.parse("2015-09-19 21:15:20");
+        Instant mockedNow = Instant.parse("2015-09-19T21:15:20Z");
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
 
         // act
@@ -170,11 +166,11 @@ public class TotalSpendAmountsCalculatorTest {
         messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
-        lastSpendingTotalAmounts.setTimestamp(sdf.parse("2015-09-19 07:55:42"));
+        lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-19T07:55:42Z"));
         lastSpendingTotalAmounts.setDailyTotal(BigDecimal.valueOf(19));
         lastSpendingTotalAmounts.setAnnualTotal(BigDecimal.valueOf(2015));
 
-        Date mockedNow = sdf.parse("2015-09-19 21:15:20");
+        Instant mockedNow = Instant.parse("2015-09-19T21:15:20Z");
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
 
         // act
@@ -196,11 +192,11 @@ public class TotalSpendAmountsCalculatorTest {
         messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
-        lastSpendingTotalAmounts.setTimestamp(sdf.parse("2015-09-18 07:55:42"));
+        lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-18T07:55:42Z"));
         lastSpendingTotalAmounts.setDailyTotal(BigDecimal.valueOf(19));
         lastSpendingTotalAmounts.setAnnualTotal(BigDecimal.valueOf(2015));
 
-        Date mockedNow = sdf.parse("2015-09-19 21:15:20");
+        Instant mockedNow = Instant.parse("2015-09-19T21:15:20Z");
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
 
         // act
@@ -222,11 +218,11 @@ public class TotalSpendAmountsCalculatorTest {
         messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
-        lastSpendingTotalAmounts.setTimestamp(sdf.parse("2014-09-19 07:55:42"));
+        lastSpendingTotalAmounts.setTimestamp(Instant.parse("2014-09-19T07:55:42Z"));
         lastSpendingTotalAmounts.setDailyTotal(BigDecimal.valueOf(19));
         lastSpendingTotalAmounts.setAnnualTotal(BigDecimal.valueOf(2015));
 
-        Date mockedNow = sdf.parse("2015-09-19 21:15:20");
+        Instant mockedNow = Instant.parse("2015-09-19T21:15:20Z");
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
 
         // act
