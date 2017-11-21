@@ -6,6 +6,7 @@ import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepositor
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.generics.scylla.ScyllaRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -68,8 +69,8 @@ public class GetCardTransactions extends ScyllaRichBolt<List<CardTransaction>, M
             values.put("key", input.getValueByField("key"));
             values.put("processId", input.getValueByField("processId"));
             values.put("eventData", input.getValueByField("eventData"));
-            values.put("exceptionMessage", e.getMessage());
-            values.put("exceptionStackTrace", e.getStackTrace());
+            values.put("exceptionMessage", ExceptionUtils.getMessage(e));
+            values.put("exceptionStackTrace", ExceptionUtils.getStackTrace(e));
 
             send(CardPresentmentDSLTopology.ERROR_STREAM, input, values);
             LOG.info("Error when retrieving CardTransactions from database - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", input, e.getMessage(), e);

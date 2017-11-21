@@ -1,6 +1,5 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.event;
+package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.authorisation;
 
-import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;

@@ -1,5 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.topology;
 
+import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
+import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
 import com.orwellg.umbrella.commons.storm.topology.TopologyFactory;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.EventErrorBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
@@ -30,6 +32,7 @@ public class CardPresentmentAccountingTopology {
     public static void main(String[] args) throws Exception {
 
         LOG.debug("Creating Card Presentments processing topology");
+
 
         Integer hints = 1;
 

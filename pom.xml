@@ -19,6 +19,9 @@
 		<junit.version>4.12</junit.version>
 
 		<storm.topology>com.orwellg.yggdrasil.dsl.card.transactions.topology.AuthorisationDSLTopology</storm.topology>
+
+		<zookeeper.host>localhost:2181</zookeeper.host>
+		<kafka.bootstrap.host>localhost:9092,localhost:10092</kafka.bootstrap.host>
 	</properties>
 
 	<dependencies>
@@ -119,12 +122,20 @@
 				</executions>
 			</plugin>
 		</plugins>
+
+		<!-- Instructing the resources plugin to filter certain directories -->
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
 	</build>
 
 	<profiles>
 		<!-- Development environment @ my laptop -->
 		<profile>
-			<id>development</id>
+			<id>dev</id>
 			<properties>
 				<zookeeper.host>localhost:2181</zookeeper.host>
 				<kafka.bootstrap.host>localhost:9092,localhost:10092</kafka.bootstrap.host>
@@ -135,7 +146,7 @@
 			<id>production</id>
 			<properties>
 				<zookeeper.host>hdf-node1:2181,hdf-node2:2181,hdf-node3:2181</zookeeper.host>
-				<kafka.bootstrap.host>hdf-node1:6667,hdf-node4:6667,hdf-node5:6667</kafka.bootstrap.host>
+				<kafka.bootstrap.host>confluent-node1:9092,confluent-node2:9092,confluent-node3:9092,confluent-node4:9092,confluent-node5:9092,confluent-node6:9092</kafka.bootstrap.host>
 			</properties>
 
 			<dependencies>

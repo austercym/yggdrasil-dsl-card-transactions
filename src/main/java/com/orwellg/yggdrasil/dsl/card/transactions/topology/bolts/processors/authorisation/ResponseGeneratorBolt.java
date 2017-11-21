@@ -1,11 +1,10 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.event;
+package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.authorisation;
 
 import com.orwellg.umbrella.avro.types.event.EntityIdentifierType;
 import com.orwellg.umbrella.avro.types.event.Event;
 import com.orwellg.umbrella.avro.types.event.EventType;
 import com.orwellg.umbrella.avro.types.event.ProcessIdentifierType;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
-import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.avro.types.gps.ResponseMsg;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.ResponseCode;
@@ -76,7 +75,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
             values.put("key", input.getStringByField("key"));
             values.put("message", RawMessageUtils.encodeToString(Event.SCHEMA$, responseEvent));
             // TODO: get response topic from input event
-            values.put("topic", "com.orwellg.gps.response");
+            values.put("topic", "com.orwellg.gps.authorisation.response.1");
 
             send(input, values);
 

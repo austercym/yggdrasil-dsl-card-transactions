@@ -14,6 +14,7 @@ import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.dsl.card.transactions.GpsMessageException;
 import com.orwellg.yggdrasil.dsl.card.transactions.services.AccountingOperationsService;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -86,8 +87,8 @@ public class ProcessFeeSchema extends BasicRichBolt {
             values.put("key", tuple.getValueByField("key"));
             values.put("processId", tuple.getValueByField("processId"));
             values.put("eventData", tuple.getValueByField("eventData"));
-            values.put("exceptionMessage", e.getMessage());
-            values.put("exceptionStackTrace", e.getStackTrace());
+            values.put("exceptionMessage", ExceptionUtils.getMessage(e));
+            values.put("exceptionStackTrace", ExceptionUtils.getStackTrace(e));
 
             send(CardPresentmentDSLTopology.ERROR_STREAM, tuple, values);
             LOG.info("Error when processing Linked Accounts - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);

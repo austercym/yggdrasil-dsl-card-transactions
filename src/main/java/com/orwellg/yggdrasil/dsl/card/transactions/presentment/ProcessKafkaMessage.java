@@ -3,6 +3,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 import com.orwellg.umbrella.avro.types.event.Event;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.event.KafkaEventProcessBolt;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -60,8 +61,8 @@ public class ProcessKafkaMessage extends com.orwellg.umbrella.commons.storm.topo
             values.put("key", key);
             values.put("processId", processId);
             values.put("eventData", event);
-            values.put("exceptionMessage", e.getMessage());
-            values.put("exceptionStackTrace", e.getStackTrace());
+            values.put("exceptionMessage", ExceptionUtils.getMessage(e));
+            values.put("exceptionStackTrace", ExceptionUtils.getStackTrace(e));
         }
     }
 

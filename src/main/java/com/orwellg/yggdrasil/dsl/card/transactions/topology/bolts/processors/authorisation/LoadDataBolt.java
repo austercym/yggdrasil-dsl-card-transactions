@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.event;
+package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.authorisation;
 
 import com.orwellg.umbrella.commons.repositories.CardSettingsRepository;
 import com.orwellg.umbrella.commons.repositories.SpendingTotalAmountsRepository;
@@ -50,6 +50,7 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
         super.prepare(stormConf, context, collector);
         String nodeList = ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getNodeList();
         String keyspace = ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getKeyspace();
+        LOG.info("Repository configuration - NodeList={}, KeySpace={}", nodeList, keyspace);
         cardSettingsRepository = new CardSettingsRepositoryImpl(nodeList, keyspace);
         totalAmountsRepository = new SpendingTotalAmountsRepositoryImpl(nodeList, keyspace);
     }
