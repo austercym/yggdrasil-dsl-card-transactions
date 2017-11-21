@@ -51,4 +51,20 @@ public class BalanceValidatorTest {
         assertFalse(result.getIsValid());
         assertNotNull(result.getMessage());
     }
+
+    @Test
+    public void validateWhenNoBalanceInformationShouldReturnInvalid() {
+        // arrange
+        AuthorisationMessage message = new AuthorisationMessage();
+        message.setSettlementAmount(BigDecimal.valueOf(19.09));
+        message.setSettlementCurrency("EUR");
+
+        // act
+        ValidationResult result = validator.validate(message, null);
+
+        // assert
+        assertNotNull(result);
+        assertFalse(result.getIsValid());
+        assertNotNull(result.getMessage());
+    }
 }

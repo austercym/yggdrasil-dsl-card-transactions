@@ -1,14 +1,14 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
+import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendGroup;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 import org.junit.Test;
 
 import java.math.BigDecimal;
-import java.util.Calendar;
-import java.util.Date;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 
 import static org.junit.Assert.*;
@@ -48,7 +48,7 @@ public class VelocityLimitsValidatorTest {
         CardSettings settings = new CardSettings();
         settings.setLimits(createLimits(50.0, 200.0));
 
-        SpendingTotalAmounts totalAmounts = getTotal(10, 100, new Date());
+        SpendingTotalAmounts totalAmounts = getTotal(10, 100, Instant.now());
 
         // act
         ValidationResult result = validator.validate(message, settings, totalAmounts);
@@ -70,7 +70,7 @@ public class VelocityLimitsValidatorTest {
         CardSettings settings = new CardSettings();
         settings.setLimits(createLimits(50.0, 200.0));
 
-        SpendingTotalAmounts totalAmounts = getTotal(50, 100, yesterday());
+        SpendingTotalAmounts totalAmounts = getTotal(50, 100, Instant.now().minus(1, ChronoUnit.DAYS));
 
         // act
         ValidationResult result = validator.validate(message, settings, totalAmounts);
@@ -92,7 +92,7 @@ public class VelocityLimitsValidatorTest {
         CardSettings settings = new CardSettings();
         settings.setLimits(createLimits(50.0, 200.0));
 
-        SpendingTotalAmounts totalAmounts = getTotal(10, 200, lastYear());
+        SpendingTotalAmounts totalAmounts = getTotal(10, 200, Instant.now().minus(365, ChronoUnit.DAYS));
 
         // act
         ValidationResult result = validator.validate(message, settings, totalAmounts);
@@ -114,7 +114,7 @@ public class VelocityLimitsValidatorTest {
         CardSettings settings = new CardSettings();
         settings.setLimits(createLimits(30.0, 200.0));
 
-        SpendingTotalAmounts totalAmounts = getTotal(20, 20, new Date());
+        SpendingTotalAmounts totalAmounts = getTotal(20, 20, Instant.now());
 
         // act
         ValidationResult result = validator.validate(message, settings, totalAmounts);
@@ -136,7 +136,7 @@ public class VelocityLimitsValidatorTest {
         CardSettings settings = new CardSettings();
         settings.setLimits(createLimits(50.0, 200.0));
 
-        SpendingTotalAmounts totalAmounts = getTotal(0, 190, new Date());
+        SpendingTotalAmounts totalAmounts = getTotal(0, 190, Instant.now());
 
         // act
         ValidationResult result = validator.validate(message, settings, totalAmounts);
@@ -154,23 +154,11 @@ public class VelocityLimitsValidatorTest {
         return limits;
     }
 
-    private SpendingTotalAmounts getTotal(double daily, double annual, Date timestamp) {
+    private SpendingTotalAmounts getTotal(double daily, double annual, Instant timestamp) {
         SpendingTotalAmounts total = new SpendingTotalAmounts();
         total.setDailyTotal(BigDecimal.valueOf(daily));
         total.setAnnualTotal(BigDecimal.valueOf(annual));
         total.setTimestamp(timestamp);
         return total;
-    }
-
-    private Date yesterday() {
-        final Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, -1);
-        return cal.getTime();
-    }
-
-    private Date lastYear() {
-        final Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.YEAR, -1);
-        return cal.getTime();
     }
 }

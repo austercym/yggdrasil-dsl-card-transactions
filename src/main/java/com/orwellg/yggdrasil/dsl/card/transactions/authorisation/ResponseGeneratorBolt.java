@@ -103,11 +103,15 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
 
         LOG.debug("Generating gpsMessageProcessed message");
         GpsMessageProcessed gpsMessageProcessed = new GpsMessageProcessed();
+        gpsMessageProcessed.setGpsMessageType(authorisation.getOriginalMessage().getTxnType());
         gpsMessageProcessed.setGpsTransactionLink(authorisation.getGpsTransactionLink());
         gpsMessageProcessed.setGpsTransactionId(authorisation.getGpsTransactionId());
         gpsMessageProcessed.setDebitCardId(authorisation.getDebitCardId());
-//        gpsMessageProcessed.setTransactionTimestamp(authorisation.getTxnGPSDate().toString());      //todo: is this a correct field?
         gpsMessageProcessed.setEhiResponse(response);
+        gpsMessageProcessed.setSpendGroup(authorisation.getSpendGroup());
+        gpsMessageProcessed.setTransactionTimestamp(new Date().getTime());
+
+        // TODO: Where should be set amount to increase spend amount?
 
         LOG.debug("Message generated. Parameters: {}", gpsMessageProcessed);
 

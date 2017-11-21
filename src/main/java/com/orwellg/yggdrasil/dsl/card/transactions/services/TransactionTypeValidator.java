@@ -13,6 +13,13 @@ public class TransactionTypeValidator implements AuthorisationValidator {
         Set<TransactionType> allowedTransactionTypes = cardSettings == null
                 ? null
                 : cardSettings.getAllowedTransactionTypes();
+
+        // Temp currency check
+        if (message.getSettlementCurrency() == null
+                ||
+                !message.getSettlementCurrency().equals(cardSettings.getLinkedAccountCurrency()))
+            return ValidationResult.error("Transaction currency must match linked account currency");
+
         return allowedTransactionTypes == null || !allowedTransactionTypes.contains(transactionType)
                 ? ValidationResult.error(String.format("%s transaction type is not allowed", transactionType))
                 : ValidationResult.valid();

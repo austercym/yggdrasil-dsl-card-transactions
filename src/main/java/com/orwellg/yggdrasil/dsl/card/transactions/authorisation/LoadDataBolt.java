@@ -1,17 +1,17 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisation;
 
+import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.commons.config.params.ScyllaParams;
 import com.orwellg.umbrella.commons.repositories.scylla.AccountTransactionLogRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.CardSettingsRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.impl.CardSettingsRepositoryImpl;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.AccountTransactionLogRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.CardSettingsRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTransactionLog;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendGroup;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
@@ -112,7 +112,7 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
             send(input, values);
 
         } catch (Exception e) {
-            LOG.error("{} Error processing the authorisation data load. Message: {},", logPrefix, e.getMessage(), e);
+            LOG.error("{}Error processing the authorisation data load. Message: {},", logPrefix, e.getMessage(), e);
             error(e, input);
         }
     }
@@ -120,19 +120,23 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
     private CompletableFuture<CardSettings> retrieveCardSettings(Long cardId, String logPrefix) {
         return CompletableFuture.supplyAsync(
                 () -> {
-                    LOG.info("{}{} Retrieving card settings for debitCardId={} ...", logPrefix, cardId);
+                    LOG.info("{}Retrieving card settings for debitCardId={} ...", logPrefix, cardId);
                     CardSettings cardSettings = cardSettingsRepository.getCardSettings(cardId);
-                    LOG.info("{}{} Card settings retrieved for debitCardId={}: {}", logPrefix, cardId, cardSettings);
+                    LOG.info("{}Card settings retrieved for debitCardId={}: {}", logPrefix, cardId, cardSettings);
                     return cardSettings;
                 });
     }
 
     private CompletableFuture<AccountTransactionLog> retrieveAccountTransactionLog(CompletableFuture<CardSettings> settingsFuture, String logPrefix) {
         return settingsFuture.thenApply(settings -> {
+            if (settings == null){
+                LOG.info("{}No card settings - cannot retrieve linked account transaction log", logPrefix);
+                return null;
+            }
             Long linkedAccountId = settings.getLinkedAccountId();
-            LOG.info("{}{} Retrieving account transaction log for account id {} ...", logPrefix, linkedAccountId);
+            LOG.info("{}Retrieving account transaction log for account id {} ...", logPrefix, linkedAccountId);
             AccountTransactionLog transactionLog = accountTransactionLogRepository.getLastByAccountId(linkedAccountId.toString());
-            LOG.info("{}{} Account transaction log retrieved for account id {}: {}", logPrefix, linkedAccountId, transactionLog);
+            LOG.info("{}Account transaction log retrieved for account id {}: {}", logPrefix, linkedAccountId, transactionLog);
             return transactionLog;
         });
     }
@@ -141,10 +145,10 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
         return CompletableFuture.supplyAsync(
                 () -> {
                     LOG.info(
-                            "{}{} Retrieving total transaction amounts for debitCardId={}, totalType={} ...",
+                            "{}Retrieving total transaction amounts for debitCardId={}, totalType={} ...",
                             logPrefix, cardId, totalType);
-                    SpendingTotalAmounts totalAmounts = totalAmountsRepository.getTotalAmounts(cardId, totalType, date);
-                    LOG.info("{}{} Total transaction amounts retrieved for debitCardId={}, totalType={}: {}",
+                    SpendingTotalAmounts totalAmounts = totalAmountsRepository.getTotalAmounts(cardId, totalType);
+                    LOG.info("{}Total transaction amounts retrieved for debitCardId={}, totalType={}: {}",
                             logPrefix, cardId, totalType, totalAmounts);
                     return totalAmounts;
                 });
