@@ -77,7 +77,7 @@ public class CardSaveScyllaGpsMessageProcessedTopology {
         conf.put("cassandra.port", 9042);
 
         LocalCluster cluster = new LocalCluster();
-        cluster.submitTopology("card-save-scylla-gps-message-processed", conf, topology);
+        cluster.submitTopology("dsl-card-save-scylla-gps-message-processed", conf, topology);
 
         Thread.sleep(3000000);
         cluster.shutdown();

@@ -41,10 +41,10 @@ public class TotalSpendAmountsCalculator {
                 lastSpendingTotalAmounts.getAnnualTotal() :
                 BigDecimal.ZERO;
 
-        if (transactionTimestamp.toLocalDate().equals(today))
+        if (transactionTimestamp.toLocalDate().equals(today) && messageProcessed.getBlockedClientAmount() != null)
             daily = daily.add(messageProcessed.getBlockedClientAmount().getValue().abs());
 
-        if (transactionTimestamp.getYear() == today.getYear())
+        if (transactionTimestamp.getYear() == today.getYear() && messageProcessed.getBlockedClientAmount() != null)
             annual = annual.add(messageProcessed.getBlockedClientAmount().getValue().abs());
 
         SpendingTotalAmounts result = new SpendingTotalAmounts();
