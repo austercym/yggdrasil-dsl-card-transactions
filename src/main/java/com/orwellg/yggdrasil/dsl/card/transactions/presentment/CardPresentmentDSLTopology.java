@@ -26,7 +26,7 @@ public class CardPresentmentDSLTopology {
   
     public final static String OFFLINE_PRESENTMENT_STREAM = "offline-presentment-stream";
     public final static String ERROR_STREAM = "error-stream";
-    public static final String TOPOLOGY_NAME = "card-presentment-dsl";
+    public static final String TOPOLOGY_NAME = "dsl-card-presentment";
 
 
     public static void main(String[] args) throws Exception {

@@ -25,7 +25,7 @@ public class TotalSpendUpdateDSLTopology {
 
     private final static Logger LOG = LogManager.getLogger(TotalSpendUpdateDSLTopology.class);
 
-    private static final String TOPOLOGY_NAME = "card-total-spend-update-dsl";
+    private static final String TOPOLOGY_NAME = "dsl-card-total-spend-update";
     private static final String PROPERTIES_FILE = "total-spend-update-topology.properties";
     private static final String KAFKA_EVENT_READER = "kafka-event-reader";
     private static final String KAFKA_EVENT_SUCCESS_PROCESS = "kafka-event-success-process";
@@ -51,6 +51,7 @@ public class TotalSpendUpdateDSLTopology {
         TopologyConfig config = TopologyConfigFactory.getTopologyConfig(PROPERTIES_FILE);
 
         // Create the spout that reads events from Kafka
+        // TODO: add a spout for each topic (authorisation, presentment, etc)
         GSpout kafkaEventReader = new GSpout(KAFKA_EVENT_READER, new KafkaSpoutWrapper(config.getKafkaSubscriberSpoutConfig(), String.class, String.class).getKafkaSpout(), config.getKafkaSpoutHints());
 
         // Parse the events and we send it to the rest of the topology

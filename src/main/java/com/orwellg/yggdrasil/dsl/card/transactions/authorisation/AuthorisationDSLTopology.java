@@ -25,7 +25,7 @@ public class AuthorisationDSLTopology {
 
     private final static Logger LOG = LogManager.getLogger(AuthorisationDSLTopology.class);
 
-    private static final String TOPOLOGY_NAME = "dsl-gps-authorisation";
+    private static final String TOPOLOGY_NAME = "dsl-card-authorisation";
     private static final String PROPERTIES_FILE = "authorisation-topology.properties";
     private static final String KAFKA_EVENT_READER = "kafka-event-reader";
     private static final String KAFKA_EVENT_SUCCESS_PROCESS = "kafka-event-success-process";
