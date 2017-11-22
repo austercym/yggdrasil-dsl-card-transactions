@@ -1,7 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
-import com.orwellg.umbrella.commons.repositories.FeeHistoryRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.FeeHistoryReposotoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.FeeHistoryRepository;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.FeeHistoryReposotoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.generics.scylla.ScyllaRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.FeeSchema;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
@@ -30,8 +30,8 @@ public class GetFeeSchema extends ScyllaRichBolt<List<FeeSchema>, PresentmentMes
 
     @Override
     protected void setScyllaConnectionParameters() {
-        setScyllaNodes(ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getNodeList());
-        setScyllaKeyspace(ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getKeyspace());
+        setScyllaNodes(ComponentFactory.getConfigurationParams().getCardsScyllaParams().getNodeList());
+        setScyllaKeyspace(ComponentFactory.getConfigurationParams().getCardsScyllaParams().getKeyspace());
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.authorisation;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisation;
 
 import com.orwellg.umbrella.avro.types.event.EntityIdentifierType;
 import com.orwellg.umbrella.avro.types.event.Event;
@@ -7,7 +7,9 @@ import com.orwellg.umbrella.avro.types.event.ProcessIdentifierType;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.ResponseMsg;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
+import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTransactionLog;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.ResponseCode;
+import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.types.utils.avro.RawMessageUtils;
 import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
@@ -17,6 +19,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
 
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -32,16 +36,20 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         LOG.debug("Event received: {}. Starting the decode process.", input);
 
         try {
-            AuthorisationMessage event = (AuthorisationMessage) input.getValueByField("eventData");
-            String parentKey = (String) input.getValueByField("key");
+            AuthorisationMessage event = (AuthorisationMessage) input.getValueByField(Fields.EVENT_DATA);
+            String parentKey = (String) input.getValueByField(Fields.KEY);
+            AccountTransactionLog accountTransactionLog =
+                    (AccountTransactionLog) input.getValueByField(Fields.TRANSACTION_LOG);
             ValidationResult statusValidationResult =
-                    (ValidationResult) input.getValueByField("statusValidationResult");
+                    (ValidationResult) input.getValueByField(Fields.STATUS_VALIDATION_RESULT);
             ValidationResult transactionTypeValidationResult =
-                    (ValidationResult) input.getValueByField("transactionTypeValidationResult");
+                    (ValidationResult) input.getValueByField(Fields.TRANSACTION_TYPE_VALIDATION_RESULT);
             ValidationResult merchantValidationResult =
-                    (ValidationResult) input.getValueByField("merchantValidationResult");
+                    (ValidationResult) input.getValueByField(Fields.MERCHANT_VALIDATION_RESULT);
             ValidationResult velocityLimitsValidationResult =
-                    (ValidationResult) input.getValueByField("velocityLimitsValidationResult");
+                    (ValidationResult) input.getValueByField(Fields.VELOCITY_LIMITS_VALIDATION_RESULT);
+            ValidationResult balanceValidationResult =
+                    (ValidationResult) input.getValueByField(Fields.BALANCE_VALIDATION_RESULT);
 
             String logPrefix = String.format(
                     "[TransLink: %s, TxnId: %s, DebitCardId: %s, Token: %s, Amount: %s %s] ",
@@ -52,14 +60,18 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
 
             ResponseCode responseCode = ResponseCode.DO_NOT_HONOUR;
             ResponseMsg response = new ResponseMsg();
-            if (!velocityLimitsValidationResult.getIsValid()) {
+            if (!balanceValidationResult.getIsValid()) {
+                responseCode = ResponseCode.INSUFFICIENT_FUNDS;
+            } else if (!velocityLimitsValidationResult.getIsValid()) {
                 responseCode = ResponseCode.EXCEEDS_WITHDRAWAL_AMOUNT_LIMIT;
             } else if (statusValidationResult.getIsValid()
                     && transactionTypeValidationResult.getIsValid()
                     && merchantValidationResult.getIsValid()) {
                 responseCode = ResponseCode.ALL_GOOD;
-                response.setAvlBalance(19.09);
-                response.setCurBalance(20.15);
+                BigDecimal availableBalance =
+                        accountTransactionLog.getActualBalance().subtract(event.getSettlementAmount());
+                response.setAvlBalance(availableBalance.doubleValue());
+                response.setCurBalance(accountTransactionLog.getLedgerBalance().doubleValue());
             }
 
             response.setAcknowledgement("1");
@@ -72,10 +84,10 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
                     parentKey);
 
             Map<String, Object> values = new HashMap<>();
-            values.put("key", input.getStringByField("key"));
-            values.put("message", RawMessageUtils.encodeToString(Event.SCHEMA$, responseEvent));
+            values.put(Fields.KEY, input.getStringByField(Fields.KEY));
+            values.put(Fields.MESSAGE, RawMessageUtils.encodeToString(Event.SCHEMA$, responseEvent));
             // TODO: get response topic from input event
-            values.put("topic", "com.orwellg.gps.authorisation.response.1");
+            values.put(Fields.TOPIC, "com.orwellg.gps.authorisation.response.1");
 
             send(input, values);
 
@@ -96,7 +108,12 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         gpsMessageProcessed.setGpsTransactionLink(authorisation.getGpsTransactionLink());
         gpsMessageProcessed.setGpsTransactionId(authorisation.getGpsTransactionId());
         gpsMessageProcessed.setDebitCardId(authorisation.getDebitCardId());
-//        gpsMessageProcessed.setTransactionTimestamp(authorisation.getTxnGPSDate().toString());      //todo: is this a correct field?
+
+        //mocked data!
+        gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(1));
+        gpsMessageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(1));
+        gpsMessageProcessed.setFeesAmount(DecimalTypeUtils.toDecimal(0));
+        //gpsMessageProcessed.setTransactionTimestamp(authorisation.getTxnGPSDate().toString());      //todo: is this a correct field?
         gpsMessageProcessed.setEhiResponse(response);
 
         LOG.debug("Message generated. Parameters: {}", gpsMessageProcessed);
@@ -142,6 +159,6 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
 
     @Override
     public void declareFieldsDefinition() {
-        addFielsDefinition(Arrays.asList("key", "processId", "message", "topic"));
+        addFielsDefinition(Arrays.asList(Fields.KEY, Fields.PROCESS_ID, "message", "topic"));
     }
 }

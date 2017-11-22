@@ -18,7 +18,11 @@
 		<yggdrasil.version>0.0.1</yggdrasil.version>
 		<junit.version>4.12</junit.version>
 
-		<storm.topology>com.orwellg.yggdrasil.dsl.card.transactions.topology.AuthorisationDSLTopology</storm.topology>
+		<cassandra.version>3.11.0</cassandra.version>
+		<cassandra.mapping.version>3.2.0</cassandra.mapping.version>
+		<storm.cassandra.version>1.1.1</storm.cassandra.version>
+
+		<storm.topology>com.orwellg.yggdrasil.dsl.card.transactions.authorisation.AuthorisationDSLTopology</storm.topology>
 
 		<zookeeper.host>localhost:2181</zookeeper.host>
 		<kafka.bootstrap.host>localhost:9092,localhost:10092</kafka.bootstrap.host>
@@ -51,6 +55,8 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+
+
 
 		<!-- junit -->
 		<dependency>
@@ -121,6 +127,38 @@
 					</execution>
 				</executions>
 			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.2.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<executable>java</executable>
+					<includeProjectDependencies>true</includeProjectDependencies>
+					<includePluginDependencies>false</includePluginDependencies>
+					<classpathScope>compile</classpathScope>
+					<mainClass>${storm.topology}</mainClass>
+				</configuration>
+			</plugin>
+			<!-- Enabling and configuring regular resources filtering. See also section
+				"resources" below -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>2.3</version>
+				<configuration>
+					<!-- specify UTF-8, ISO-8859-1 or any other file encoding -->
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+
 		</plugins>
 
 		<!-- Instructing the resources plugin to filter certain directories -->
@@ -170,7 +208,7 @@
 					<groupId>org.apache.storm</groupId>
 					<artifactId>storm-cassandra</artifactId>
 					<version>${storm.version}</version>
-					<scope>provided</scope>
+					<scope>compile</scope>
 				</dependency>
 			</dependencies>
 		</profile>

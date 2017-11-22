@@ -22,6 +22,6 @@ public class GpsMessageMapperTest {
 
         // assert
         assertNotNull(result);
-        //assertEquals("RON", result.getTransactionCurrency());
+        assertEquals("RON", result.getTransactionCurrency());
     }
 }

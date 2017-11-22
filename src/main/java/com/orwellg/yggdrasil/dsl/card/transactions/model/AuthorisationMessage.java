@@ -21,6 +21,7 @@ public class AuthorisationMessage implements Serializable {
     private String cardToken;
     private BigDecimal transactionAmount;
     private String transactionCurrency;
+    private CreditDebit creditDebit;
 
     public Message getOriginalMessage() {
         return originalMessage;
@@ -124,5 +125,13 @@ public class AuthorisationMessage implements Serializable {
 
     public String getTransactionCurrency() {
         return transactionCurrency;
+    }
+
+    public CreditDebit getCreditDebit() {
+        return creditDebit;
+    }
+
+    public void setCreditDebit(CreditDebit creditDebit) {
+        this.creditDebit = creditDebit;
     }
 }

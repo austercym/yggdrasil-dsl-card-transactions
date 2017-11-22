@@ -3,36 +3,28 @@ package com.orwellg.yggdrasil.dsl.card.transactions.services;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendGroup;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.CreditDebit;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Currency;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class GpsMessageMapper {
 
-    private final List<Integer> historicalCurrencyNumericCodes = Arrays.asList(0, 642, 891);
     private final CardPresenceResolver cardPresenceResolver;
     private final TransactionTypeResolver transactionTypeResolver;
     private final Map<String, String> availableCurrencies;
+    private List<String> historicalCurrencyCurrencyCodes = Arrays.asList("YUM", "ROL", "CSD", "XFU", "XFO");
 
     public GpsMessageMapper() {
         cardPresenceResolver = new CardPresenceResolver();
         transactionTypeResolver = new TransactionTypeResolver();
-        availableCurrencies = createAvailableCurrencies();
-//        availableCurrencies = Currency.getAvailableCurrencies().stream()
-//                .filter(c -> !historicalCurrencyNumericCodes.contains(c.getNumericCode()))
-//                .collect(Collectors.toMap(c -> Integer.toString(c.getNumericCode()), Currency::getCurrencyCode));
-    }
-
-    private Map<String, String> createAvailableCurrencies() {
-        // TODO: What with duplicated numeric codes? E.g. RON 946
-        HashMap<String, String> map = new HashMap<>();
-        Currency.getAvailableCurrencies().forEach(c -> {
-            String num = Integer.toString(c.getNumericCode());
-            if (!historicalCurrencyNumericCodes.contains(c.getNumericCode())) {
-                map.put(num, c.getCurrencyCode());
-            }
-        });
-        return map;
+        availableCurrencies = Currency.getAvailableCurrencies().stream()
+                .filter(c -> !historicalCurrencyCurrencyCodes.contains(c.getCurrencyCode()))
+                .collect(Collectors.toMap(c -> Integer.toString(c.getNumericCode()), Currency::getCurrencyCode));
     }
 
     public AuthorisationMessage map(Message message) {
@@ -41,8 +33,14 @@ public class GpsMessageMapper {
         if (message.getCustRef() != null && !message.getCustRef().isEmpty())
             model.setDebitCardId(Long.parseLong(message.getCustRef()));
         model.setSpendGroup(getSpendGroup(message));
-        if (message.getSettleAmt() != null)
-            model.setSettlementAmount(BigDecimal.valueOf(message.getSettleAmt()));  // TODO: abs and add a credit/debit field
+        Double settlementBillingAmount = message.getBillAmt();
+        if (settlementBillingAmount != null) {
+            model.setSettlementAmount(BigDecimal.valueOf(settlementBillingAmount).abs());
+            if (settlementBillingAmount > 0)
+                model.setCreditDebit(CreditDebit.CREDIT);
+            else if (settlementBillingAmount < 0)
+                model.setCreditDebit(CreditDebit.DEBIT);
+        }
         model.setSettlementCurrency(currencyFromNumericCode(message.getSettleCcy()));
         model.setIsCardPresent(cardPresenceResolver.isCardPresent(message));
         if (message.getMerchIDDE42() != null)

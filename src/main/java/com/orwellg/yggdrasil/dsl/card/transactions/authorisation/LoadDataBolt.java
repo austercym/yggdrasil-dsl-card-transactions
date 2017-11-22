@@ -1,11 +1,15 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.processors.authorisation;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisation;
 
-import com.orwellg.umbrella.commons.repositories.CardSettingsRepository;
-import com.orwellg.umbrella.commons.repositories.SpendingTotalAmountsRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.CardSettingsRepositoryImpl;
-import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepositoryImpl;
+import com.orwellg.umbrella.commons.config.params.ScyllaParams;
+import com.orwellg.umbrella.commons.repositories.scylla.AccountTransactionLogRepository;
+import com.orwellg.umbrella.commons.repositories.scylla.CardSettingsRepository;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.CardSettingsRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.AccountTransactionLogRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
+import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTransactionLog;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendGroup;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
@@ -17,7 +21,10 @@ import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.tuple.Tuple;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
@@ -29,6 +36,9 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
     private CardSettingsRepository cardSettingsRepository;
 
     private SpendingTotalAmountsRepository totalAmountsRepository;
+
+    private AccountTransactionLogRepository accountTransactionLogRepository;
+
 
     public LoadDataBolt(String joinId) {
         super(joinId);
@@ -48,17 +58,30 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
-        String nodeList = ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getNodeList();
-        String keyspace = ComponentFactory.getConfigurationParams().getScyllaConfig().getScyllaParams().getKeyspace();
-        LOG.info("Repository configuration - NodeList={}, KeySpace={}", nodeList, keyspace);
+
+        initializeCardRepositories();
+        initializeTransactionRepositories();
+    }
+
+    private void initializeCardRepositories() {
+        ScyllaParams scyllaParams = ComponentFactory.getConfigurationParams().getCardsScyllaParams();
+        String nodeList = scyllaParams.getNodeList();
+        String keyspace = scyllaParams.getKeyspace();
         cardSettingsRepository = new CardSettingsRepositoryImpl(nodeList, keyspace);
         totalAmountsRepository = new SpendingTotalAmountsRepositoryImpl(nodeList, keyspace);
+    }
+
+    private void initializeTransactionRepositories() {
+        ScyllaParams scyllaParams = ComponentFactory.getConfigurationParams().getTransactionLogScyllaParams();
+        String nodeList = scyllaParams.getNodeList();
+        String keyspace = scyllaParams.getKeyspace();
+        accountTransactionLogRepository = new AccountTransactionLogRepositoryImpl(nodeList, keyspace);
     }
 
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList(
-                "key", "processId", "eventData", "cardSettings", "spendingTotals"));
+                Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.CARD_SETTINGS, Fields.TRANSACTION_LOG, Fields.SPENDING_TOTALS));
     }
 
     @Override
@@ -73,15 +96,18 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
             SpendGroup totalType = eventData.getSpendGroup();
 
             CompletableFuture<CardSettings> settingsFuture = retrieveCardSettings(cardId, logPrefix);
+            CompletableFuture<AccountTransactionLog> accountTransactionLogFuture =
+                    retrieveAccountTransactionLog(settingsFuture, logPrefix);
             CompletableFuture<SpendingTotalAmounts> totalFuture =
                     retrieveTotalAmounts(cardId, totalType, new Date(), logPrefix);
 
             Map<String, Object> values = new HashMap<>();
-            values.put("key", key);
-            values.put("processId", processId);
-            values.put("eventData", eventData);
-            values.put("cardSettings", settingsFuture.get());
-            values.put("spendingTotals", totalFuture.get());
+            values.put(Fields.KEY, key);
+            values.put(Fields.PROCESS_ID, processId);
+            values.put(Fields.EVENT_DATA, eventData);
+            values.put(Fields.CARD_SETTINGS, settingsFuture.get());
+            values.put(Fields.TRANSACTION_LOG, accountTransactionLogFuture.get());
+            values.put(Fields.SPENDING_TOTALS, totalFuture.get());
 
             send(input, values);
 
@@ -99,6 +125,16 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
                     LOG.info("{}{} Card settings retrieved for debitCardId={}: {}", logPrefix, cardId, cardSettings);
                     return cardSettings;
                 });
+    }
+
+    private CompletableFuture<AccountTransactionLog> retrieveAccountTransactionLog(CompletableFuture<CardSettings> settingsFuture, String logPrefix) {
+        return settingsFuture.thenApply(settings -> {
+            Long linkedAccountId = settings.getLinkedAccountId();
+            LOG.info("{}{} Retrieving account transaction log for account id {} ...", logPrefix, linkedAccountId);
+            AccountTransactionLog transactionLog = accountTransactionLogRepository.getLastByAccountId(linkedAccountId.toString());
+            LOG.info("{}{} Account transaction log retrieved for account id {}: {}", logPrefix, linkedAccountId, transactionLog);
+            return transactionLog;
+        });
     }
 
     private CompletableFuture<SpendingTotalAmounts> retrieveTotalAmounts(long cardId, SpendGroup totalType, Date date, String logPrefix) {

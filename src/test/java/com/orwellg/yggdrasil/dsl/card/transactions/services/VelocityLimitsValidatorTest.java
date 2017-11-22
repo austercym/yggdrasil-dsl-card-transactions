@@ -21,7 +21,7 @@ public class VelocityLimitsValidatorTest {
     public void validateWhenFirstTransactionEverReturnsValid() {
         // arrange
         AuthorisationMessage message = new AuthorisationMessage();
-        message.setSettlementAmount(BigDecimal.valueOf(-19.09));
+        message.setSettlementAmount(BigDecimal.valueOf(19.09));
         message.setSettlementCurrency("EUR");
         message.setSpendGroup(SpendGroup.POS);
 
@@ -41,7 +41,7 @@ public class VelocityLimitsValidatorTest {
     public void validateWhenLimitsNotExceededReturnsValid() {
         // arrange
         AuthorisationMessage message = new AuthorisationMessage();
-        message.setSettlementAmount(BigDecimal.valueOf(-19.09));
+        message.setSettlementAmount(BigDecimal.valueOf(19.09));
         message.setSettlementCurrency("EUR");
         message.setSpendGroup(SpendGroup.POS);
 
@@ -63,7 +63,7 @@ public class VelocityLimitsValidatorTest {
     public void validateWhenDailyLimitsExpiredReturnsValid() {
         // arrange
         AuthorisationMessage message = new AuthorisationMessage();
-        message.setSettlementAmount(BigDecimal.valueOf(-19.09));
+        message.setSettlementAmount(BigDecimal.valueOf(19.09));
         message.setSettlementCurrency("EUR");
         message.setSpendGroup(SpendGroup.POS);
 
@@ -85,7 +85,7 @@ public class VelocityLimitsValidatorTest {
     public void validateWhenAnnualLimitsExpiredReturnsValid() {
         // arrange
         AuthorisationMessage message = new AuthorisationMessage();
-        message.setSettlementAmount(BigDecimal.valueOf(-19.09));
+        message.setSettlementAmount(BigDecimal.valueOf(19.09));
         message.setSettlementCurrency("EUR");
         message.setSpendGroup(SpendGroup.POS);
 
@@ -107,7 +107,7 @@ public class VelocityLimitsValidatorTest {
     public void validateWhenDailyLimitExceededReturnsInvalid() {
         // arrange
         AuthorisationMessage message = new AuthorisationMessage();
-        message.setSettlementAmount(BigDecimal.valueOf(-19.09));
+        message.setSettlementAmount(BigDecimal.valueOf(19.09));
         message.setSettlementCurrency("EUR");
         message.setSpendGroup(SpendGroup.POS);
 
@@ -129,7 +129,7 @@ public class VelocityLimitsValidatorTest {
     public void validateWhenAnnualLimitExceededReturnsInvalid() {
         // arrange
         AuthorisationMessage message = new AuthorisationMessage();
-        message.setSettlementAmount(BigDecimal.valueOf(-19.09));
+        message.setSettlementAmount(BigDecimal.valueOf(19.09));
         message.setSettlementCurrency("EUR");
         message.setSpendGroup(SpendGroup.POS);
 

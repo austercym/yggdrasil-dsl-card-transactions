@@ -1,7 +1,9 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.saveToScylla;
 
+import com.orwellg.umbrella.avro.types.commons.Decimal;
 import com.orwellg.umbrella.avro.types.event.Event;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import org.apache.avro.LogicalTypes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
@@ -29,9 +31,10 @@ public class CardSaveGpsMessageProcessedBolt extends com.orwellg.umbrella.common
             LOG.info("[Key: {}][ProcessId: {}]: Received GPS message event", key, processId);
 
             GpsMessageProcessed message = gson.fromJson(event.getEvent().getData(), GpsMessageProcessed.class);
-            BigDecimal wirecardAmount = message.getWirecardAmount().getValue();
-            BigDecimal clientAmount = message.getBlockedClientAmount().getValue();
-            BigDecimal feeAmount = message.getFeesAmount().getValue();
+            Decimal wirecardAmount =  message.getWirecardAmount();
+            Decimal clientAmount = message.getBlockedClientAmount();
+            Decimal feeAmount = message.getFeesAmount();
+
             Date transactionTimestamp = new Date(message.getTransactionTimestamp()*1000);
             Date gpsDate = new Date(message.getGpsTransactionTime()*1000);
             //todo: avro - send date or timestamp in long?
@@ -45,11 +48,11 @@ public class CardSaveGpsMessageProcessedBolt extends com.orwellg.umbrella.common
             values.put("transactionTimestamp", transactionTimestamp);
             values.put("gpsTransactionDateTime", gpsDate);
             values.put("internalAccountId", message.getInternalAccountId());
-            values.put("wirecardAmount", wirecardAmount);
-            values.put("blockedClientAmount", clientAmount);
+            values.put("wirecardAmount", (wirecardAmount == null) ? 0 : wirecardAmount.getValue());
+            values.put("blockedClientAmount", (clientAmount == null) ? 0 : clientAmount.getValue());
             values.put("wirecardCurrency", message.getWirecardCurrency());
             values.put("blockedClientCurrency", message.getBlockedClientCurrency());
-            values.put("feeAmount", feeAmount);
+            values.put("feeAmount", (feeAmount == null) ? 0 : feeAmount.getValue());
             values.put("feeCurrency", message.getFeesCurrency());
             values.put("gpsMessageType", message.getGpsMessageType());
             values.put("internalAccountCurrency", message.getInternalAccountCurrency());
