@@ -5,7 +5,9 @@ import com.orwellg.umbrella.commons.repositories.scylla.LinkedAccountRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.LinkedAccountRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.PresentmentMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -56,8 +58,8 @@ public class GetLinkedAccount extends BasicRichBolt {
             values.put("key", input.getValueByField("key"));
             values.put("processId", input.getValueByField("processId"));
             values.put("eventData", input.getValueByField("eventData"));
-            values.put("exceptionMessage", e.getMessage());
-            values.put("exceptionStackTrace", e.getStackTrace());
+            values.put("exceptionMessage", ExceptionUtils.getMessage(e));
+            values.put("exceptionStackTrace", ExceptionUtils.getStackTrace(e));
 
             send(CardPresentmentDSLTopology.ERROR_STREAM, input, values);
             LOG.info("Error when retrieving LinkedAccount from database - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", input, e.getMessage(), e);

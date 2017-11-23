@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions;
+package com.orwellg.yggdrasil.dsl.card.transactions.model;
 
 public enum FeeTransactionType {
     ATMBalanceEnquiries,
