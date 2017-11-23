@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.bean.config;
+package com.orwellg.yggdrasil.dsl.card.transactions.config;
 
 import com.netflix.config.DynamicPropertyFactory;
 import com.orwellg.umbrella.commons.beans.config.zookeeper.ZkConfigurationParams;
