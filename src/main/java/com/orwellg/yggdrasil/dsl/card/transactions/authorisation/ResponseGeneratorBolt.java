@@ -21,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -113,6 +114,12 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         gpsMessageProcessed.setGpsTransactionLink(authorisation.getGpsTransactionLink());
         gpsMessageProcessed.setGpsTransactionId(authorisation.getGpsTransactionId());
         gpsMessageProcessed.setDebitCardId(authorisation.getDebitCardId());
+
+        //mocked data!
+        gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(0));
+        gpsMessageProcessed.setFeesAmount(DecimalTypeUtils.toDecimal(0));
+
+        //gpsMessageProcessed.setTransactionTimestamp(authorisation.getTxnGPSDate().toString());      //todo: is this a correct field?
         gpsMessageProcessed.setEhiResponse(response);
         gpsMessageProcessed.setSpendGroup(authorisation.getSpendGroup());
         gpsMessageProcessed.setTransactionTimestamp(new Date().getTime());

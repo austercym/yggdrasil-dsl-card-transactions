@@ -30,7 +30,8 @@ public class ProcessExceptionBolt extends BasicRichBolt {
             String processId =  tuple.getStringByField("processId");
             Message message = (Message) tuple.getValueByField("eventData");
             String exceptionMessage = tuple.getStringByField("exceptionMessage");
-            String exceptionStackTrace = tuple.getStringByField("exceptionStackTrace");
+            String exceptionStackTrace =  tuple.getStringByField("exceptionStackTrace");
+
 
             StringBuilder builder = new StringBuilder();
             builder.append("[processId: ");
