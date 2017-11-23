@@ -1,11 +1,9 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
+package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
 import com.orwellg.umbrella.avro.types.gps.Message;
-import com.orwellg.yggdrasil.dsl.card.transactions.presentment.PresentmentMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.PresentmentMessage;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionType;
-import com.orwellg.yggdrasil.dsl.card.transactions.FeeTransactionType;
-import com.orwellg.yggdrasil.dsl.card.transactions.services.AccountingOperationsService;
-import com.orwellg.yggdrasil.dsl.card.transactions.services.TransactionTypeResolver;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.FeeTransactionType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

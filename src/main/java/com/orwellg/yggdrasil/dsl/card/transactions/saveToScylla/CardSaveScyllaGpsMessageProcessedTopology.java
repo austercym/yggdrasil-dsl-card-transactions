@@ -24,7 +24,7 @@ import static org.apache.storm.cassandra.DynamicStatementBuilder.simpleQuery;
 public class CardSaveScyllaGpsMessageProcessedTopology {
 
     private final static Logger LOG = LogManager.getLogger(CardSaveScyllaGpsMessageProcessedTopology.class);
-    public static final String TOPOLOGY_NAME = "dsl-gps-card-transactions-scylla";
+    public static final String TOPOLOGY_NAME = "dsl-card-transactions-scylla";
     public static final String PRESENTMENT_SPOUT_NAME = "presentment-event-reader";
     public static final String AUTHORISATION_SPOUT_NAME = "authorisation-event-reader";
     public static final String SCYLLA_PREPARE_NAME = "prepare-data-for-scylla";

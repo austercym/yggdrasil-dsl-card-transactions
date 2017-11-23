@@ -5,6 +5,7 @@ import com.orwellg.umbrella.commons.repositories.scylla.LinkedAccountRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.LinkedAccountRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.PresentmentMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;

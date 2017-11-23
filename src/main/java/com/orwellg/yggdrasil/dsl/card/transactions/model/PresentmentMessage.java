@@ -1,7 +1,7 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
+package com.orwellg.yggdrasil.dsl.card.transactions.model;
 
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionType;
-import com.orwellg.yggdrasil.dsl.card.transactions.FeeTransactionType;
 
 
 import java.math.BigDecimal;
@@ -20,13 +20,58 @@ public class PresentmentMessage {
     private String SettlementCurrency;
     private String GpsMessageType;
     private TransactionType TransactionType;
-    private com.orwellg.yggdrasil.dsl.card.transactions.FeeTransactionType FeeTransactionType;
+    private com.orwellg.yggdrasil.dsl.card.transactions.model.FeeTransactionType FeeTransactionType;
     private BigDecimal AuthWirecardAmount;
     private String AuthWirecardCurrency;
     private BigDecimal AuthBlockedClientAmount;
     private String AuthBlockedClientCurrency;
     private BigDecimal AuthFeeAmount;
     private String AuthFeeCurrency;
+    private BigDecimal BlockedClientAmount;
+    private String BlockedClientCurrency;
+    private BigDecimal FeeAmount;
+    private String FeeCurrency;
+
+
+    public PresentmentMessage UpdateWithAuthorisationData(CardTransaction lastTransaction){
+
+        if (lastTransaction != null){
+            this.setAuthBlockedClientAmaount(lastTransaction.getBlockedClientAmount());
+            this.setAuthBlockedClientCurrency(lastTransaction.getBlockedClientCurrency());
+            this.setAuthWirecardAmount(lastTransaction.getWirecardAmount());
+            this.setAuthWirecardCurrency(lastTransaction.getWirecardCurrency());
+            this.setInternalAccountId(lastTransaction.getInternalAccountId());
+            this.setInternalAccountCurrency(lastTransaction.getInternalAccountCurrency()); //todo:??
+            this.setAuthFeeAmount(lastTransaction.getFeeAmount());
+            this.setAuthFeeCurrency(lastTransaction.getInternalAccountCurrency()); //todo: what currency should we get fees?
+        }
+        return this;
+    }
+
+    public BigDecimal getFeeAmount() {
+        return FeeAmount;
+    }
+
+    public void setFeeAmount(BigDecimal feeAmount) {
+        FeeAmount = feeAmount;
+    }
+
+    public String getFeeCurrency() {
+        return FeeCurrency;
+    }
+
+    public void setFeeCurrency(String feeCurrency) {
+        FeeCurrency = feeCurrency;
+    }
+
+    public BigDecimal getBlockedClientAmount() {
+        return BlockedClientAmount;
+    }
+
+    public void setBlockedClientAmount(BigDecimal blockedClientAmount) {
+        BlockedClientAmount = blockedClientAmount;
+    }
+
 
     public BigDecimal getAuthBlockedClientAmount() {
         return AuthBlockedClientAmount;
@@ -36,12 +81,19 @@ public class PresentmentMessage {
         AuthBlockedClientAmount = authBlockedClientAmount;
     }
 
+    public String getBlockedClientCurrency() {
+        return BlockedClientCurrency;
+    }
 
-    public com.orwellg.yggdrasil.dsl.card.transactions.FeeTransactionType getFeeTransactionType() {
+    public void setBlockedClientCurrency(String blockedClientCurrency) {
+        BlockedClientCurrency = blockedClientCurrency;
+    }
+
+    public com.orwellg.yggdrasil.dsl.card.transactions.model.FeeTransactionType getFeeTransactionType() {
         return FeeTransactionType;
     }
 
-    public void setFeeTransactionType(com.orwellg.yggdrasil.dsl.card.transactions.FeeTransactionType feeTransactionType) {
+    public void setFeeTransactionType(com.orwellg.yggdrasil.dsl.card.transactions.model.FeeTransactionType feeTransactionType) {
         FeeTransactionType = feeTransactionType;
     }
 

@@ -4,6 +4,7 @@ import com.orwellg.umbrella.commons.repositories.scylla.FeeHistoryRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.FeeHistoryReposotoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.generics.scylla.ScyllaRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.FeeSchema;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.PresentmentMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;

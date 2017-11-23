@@ -2,6 +2,8 @@ package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
 import com.orwellg.umbrella.avro.types.event.Event;
 import com.orwellg.umbrella.avro.types.gps.Message;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.PresentmentMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.services.PresentmentMessageMapper;
 import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.event.KafkaEventProcessBolt;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
@@ -14,7 +16,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ProcessKafkaMessage extends com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventProcessBolt {
+public class EventToPresentmentBolt extends com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventProcessBolt {
 
     /**
      *
@@ -39,7 +41,7 @@ public class ProcessKafkaMessage extends com.orwellg.umbrella.commons.storm.topo
 
         try {
 
-            LOG.info("[Key: {}][ProcessId: {}]: Received GPS message event", key, processId);
+            LOG.info("Key: {} | ProcessId: {} | Received GPS message event", key, processId);
 
             // Get the JSON message with the data
             Message eventData = gson.fromJson(event.getEvent().getData(), Message.class);
@@ -53,9 +55,9 @@ public class ProcessKafkaMessage extends com.orwellg.umbrella.commons.storm.topo
 
             send(input, values);
 
-            LOG.info("[Key: {}][ProcessId: {}]: GPS message event sent.", key, processId);
+            LOG.info("| Key: {} | ProcessId: {}| GPS message event sent.", key, processId);
         }catch (Exception e){
-            LOG.error("[Key: {}][ProcessId: {}]: Error occurred when processing message from Kafka. Error: {}, Event: {}", key, processId, e, event);
+            LOG.error("| Key: {} | ProcessId: {} | Error occurred when processing message from Kafka. Error: {}, Event: {}", key, processId, e, event);
 
             Map<String, Object> values = new HashMap<>();
             values.put("key", key);

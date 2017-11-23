@@ -1,7 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
+import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.avro.types.gps.Message;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendGroup;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.CreditDebit;
 
@@ -41,7 +41,7 @@ public class GpsMessageMapper {
             else if (settlementBillingAmount < 0)
                 model.setCreditDebit(CreditDebit.DEBIT);
         }
-        model.setSettlementCurrency(currencyFromNumericCode(message.getSettleCcy()));
+        model.setSettlementCurrency(currencyFromNumericCode(message.getBillCcy()));
         model.setIsCardPresent(cardPresenceResolver.isCardPresent(message));
         if (message.getMerchIDDE42() != null)
             model.setMerchantId(message.getMerchIDDE42().trim());

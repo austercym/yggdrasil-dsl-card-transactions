@@ -28,7 +28,7 @@ public class CardSaveGpsMessageProcessedBolt extends com.orwellg.umbrella.common
             String key = event.getEvent().getKey();
             String processId = event.getProcessIdentifier().getUuid();
 
-            LOG.info("[Key: {}][ProcessId: {}]: Received GPS message event", key, processId);
+            LOG.info("Key: {} | ProcessId: {} | Received GPS message event", key, processId);
 
             GpsMessageProcessed message = gson.fromJson(event.getEvent().getData(), GpsMessageProcessed.class);
             Decimal wirecardAmount =  message.getWirecardAmount();
@@ -48,11 +48,11 @@ public class CardSaveGpsMessageProcessedBolt extends com.orwellg.umbrella.common
             values.put("transactionTimestamp", transactionTimestamp);
             values.put("gpsTransactionDateTime", gpsDate);
             values.put("internalAccountId", message.getInternalAccountId());
-            values.put("wirecardAmount", (wirecardAmount == null) ? 0 : wirecardAmount.getValue());
-            values.put("blockedClientAmount", (clientAmount == null) ? 0 : clientAmount.getValue());
+            values.put("wirecardAmount", (wirecardAmount == null) ? null : wirecardAmount.getValue());
+            values.put("blockedClientAmount", (clientAmount == null) ? null : clientAmount.getValue());
             values.put("wirecardCurrency", message.getWirecardCurrency());
             values.put("blockedClientCurrency", message.getBlockedClientCurrency());
-            values.put("feeAmount", (feeAmount == null) ? 0 : feeAmount.getValue());
+            values.put("feeAmount", (feeAmount == null) ? null : feeAmount.getValue());
             values.put("feeCurrency", message.getFeesCurrency());
             values.put("gpsMessageType", message.getGpsMessageType());
             values.put("internalAccountCurrency", message.getInternalAccountCurrency());

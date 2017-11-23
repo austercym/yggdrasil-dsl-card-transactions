@@ -1,5 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisation;
 
+import com.orwellg.umbrella.avro.types.commons.Decimal;
 import com.orwellg.umbrella.avro.types.event.EntityIdentifierType;
 import com.orwellg.umbrella.avro.types.event.Event;
 import com.orwellg.umbrella.avro.types.event.EventType;
@@ -60,6 +61,8 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
 
             ResponseCode responseCode = ResponseCode.DO_NOT_HONOUR;
             ResponseMsg response = new ResponseMsg();
+            BigDecimal earmarkAmount = BigDecimal.ZERO;
+            String earmarkCurrency = null;
             if (!balanceValidationResult.getIsValid()) {
                 responseCode = ResponseCode.INSUFFICIENT_FUNDS;
             } else if (!velocityLimitsValidationResult.getIsValid()) {
@@ -68,6 +71,8 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
                     && transactionTypeValidationResult.getIsValid()
                     && merchantValidationResult.getIsValid()) {
                 responseCode = ResponseCode.ALL_GOOD;
+                earmarkAmount = event.getSettlementAmount();
+                earmarkCurrency = event.getSettlementCurrency();
                 BigDecimal availableBalance =
                         accountTransactionLog.getActualBalance().subtract(event.getSettlementAmount());
                 response.setAvlBalance(availableBalance.doubleValue());
@@ -77,7 +82,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
             response.setAcknowledgement("1");
             response.setResponsestatus(responseCode.getCode());
 
-            GpsMessageProcessed processedMessage = generateMessageProcessed(event, response);
+            GpsMessageProcessed processedMessage = generateMessageProcessed(event, response, earmarkAmount, earmarkCurrency);
 
             Event responseEvent = generateEvent(
                     this.getClass().getName(), CardTransactionEvents.RESPONSE_MESSAGE.getEventName(), processedMessage,
@@ -101,23 +106,26 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         }
     }
 
-    private GpsMessageProcessed generateMessageProcessed(AuthorisationMessage authorisation, ResponseMsg response) {
+    private GpsMessageProcessed generateMessageProcessed(AuthorisationMessage authorisation, ResponseMsg response, BigDecimal earmarkAmount, String earmarkCurrency) {
 
         LOG.debug("Generating gpsMessageProcessed message");
         GpsMessageProcessed gpsMessageProcessed = new GpsMessageProcessed();
+        gpsMessageProcessed.setGpsMessageType(authorisation.getOriginalMessage().getTxnType());
         gpsMessageProcessed.setGpsTransactionLink(authorisation.getGpsTransactionLink());
         gpsMessageProcessed.setGpsTransactionId(authorisation.getGpsTransactionId());
         gpsMessageProcessed.setDebitCardId(authorisation.getDebitCardId());
 
         //mocked data!
-        gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(1));
-        gpsMessageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(1));
+        gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(0));
         gpsMessageProcessed.setFeesAmount(DecimalTypeUtils.toDecimal(0));
+
         //gpsMessageProcessed.setTransactionTimestamp(authorisation.getTxnGPSDate().toString());      //todo: is this a correct field?
         gpsMessageProcessed.setEhiResponse(response);
-
+        gpsMessageProcessed.setSpendGroup(authorisation.getSpendGroup());
+        gpsMessageProcessed.setTransactionTimestamp(new Date().getTime());
+        gpsMessageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(earmarkAmount));
+        gpsMessageProcessed.setBlockedClientCurrency(earmarkCurrency);
         LOG.debug("Message generated. Parameters: {}", gpsMessageProcessed);
-
         return gpsMessageProcessed;
     }
 

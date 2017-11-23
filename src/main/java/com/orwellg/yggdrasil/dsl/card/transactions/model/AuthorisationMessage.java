@@ -1,7 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.model;
 
+import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.avro.types.gps.Message;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendGroup;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionType;
 
 import java.io.Serializable;

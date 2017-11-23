@@ -7,7 +7,9 @@ import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 public class StatusValidator implements AuthorisationValidator {
     @Override
     public ValidationResult validate(AuthorisationMessage message, CardSettings cardSettings) {
-        return cardSettings.getStatus() == CardStatus.ACTIVE
+        return cardSettings == null
+                ? ValidationResult.error("Card settings not present")
+                : cardSettings.getStatus() == CardStatus.ACTIVE
                 ? ValidationResult.valid()
                 : ValidationResult.error(String.format("%s card", cardSettings.getStatus()));
     }
