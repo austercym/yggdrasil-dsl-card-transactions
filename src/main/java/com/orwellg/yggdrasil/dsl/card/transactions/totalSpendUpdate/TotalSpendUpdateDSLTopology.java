@@ -1,7 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.totalSpendUpdate;
 
-import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
-import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
+import com.orwellg.umbrella.commons.beans.config.kafka.SubscriberKafkaConfiguration;
 import com.orwellg.umbrella.commons.storm.topology.TopologyFactory;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.EventErrorBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
@@ -11,6 +10,8 @@ import com.orwellg.umbrella.commons.storm.topology.generic.grouping.ShuffleGroup
 import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfig;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfigFactory;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,7 +20,9 @@ import org.apache.storm.LocalCluster;
 import org.apache.storm.StormSubmitter;
 import org.apache.storm.generated.StormTopology;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class TotalSpendUpdateDSLTopology {
 
@@ -27,7 +30,7 @@ public class TotalSpendUpdateDSLTopology {
 
     private static final String TOPOLOGY_NAME = "dsl-card-total-spend-update";
     private static final String PROPERTIES_FILE = "total-spend-update-topology.properties";
-    private static final String KAFKA_EVENT_READER = "kafka-event-reader";
+    private static final String KAFKA_EVENT_READER_FORMAT = "kafka-event-reader-%d";
     private static final String KAFKA_EVENT_SUCCESS_PROCESS = "kafka-event-success-process";
     private static final String KAFKA_EVENT_ERROR_PROCESS = "kafka-event-error-process";
     private static final String READ_DATA = "read-data";
@@ -50,13 +53,23 @@ public class TotalSpendUpdateDSLTopology {
         // Read configuration params from properties file and zookeeper
         TopologyConfig config = TopologyConfigFactory.getTopologyConfig(PROPERTIES_FILE);
 
-        // Create the spout that reads events from Kafka
-        // TODO: add a spout for each topic (authorisation, presentment, etc)
-        GSpout kafkaEventReader = new GSpout(KAFKA_EVENT_READER, new KafkaSpoutWrapper(config.getKafkaSubscriberSpoutConfig(), String.class, String.class).getKafkaSpout(), config.getKafkaSpoutHints());
+        // Create spouts that read events from Kafka
+        List<SubscriberKafkaConfiguration> kafkaSubscriberSpoutConfigs = config.getKafkaSubscriberSpoutConfigs();
+        List<GSpout> kafkaEventReaders = new ArrayList<>();
+        List<String> spoutNames = new ArrayList<>();
+        for (int i = 0; i < kafkaSubscriberSpoutConfigs.size(); i++) {
+            SubscriberKafkaConfiguration subscriberConfig = kafkaSubscriberSpoutConfigs.get(i);
+            String spoutName = String.format(KAFKA_EVENT_READER_FORMAT, i);
+            GSpout kafkaEventReader = new GSpout(spoutName, new KafkaSpoutWrapper(subscriberConfig, String.class, String.class).getKafkaSpout(), config.getKafkaSpoutHints());
+            kafkaEventReaders.add(kafkaEventReader);
+            spoutNames.add(spoutName);
+        }
 
         // Parse the events and we send it to the rest of the topology
         GBolt<?> kafkaEventProcess = new GRichBolt(KAFKA_EVENT_SUCCESS_PROCESS, new ResponseEventProcessBolt(), config.getEventProcessHints());
-        kafkaEventProcess.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER, KafkaSpout.EVENT_SUCCESS_STREAM));
+        for (String spoutName : spoutNames) {
+            kafkaEventProcess.addGrouping(new ShuffleGrouping(spoutName, KafkaSpout.EVENT_SUCCESS_STREAM));
+        }
 
         // Read last total spend amounts from DB
         GBolt<?> readDataBolt = new GRichBolt(READ_DATA, new ReadLastSpendingTotalsBolt(), config.getActionBoltHints());
@@ -76,7 +89,9 @@ public class TotalSpendUpdateDSLTopology {
 
         // GBolt for work with the errors
         GBolt<?> kafkaEventError = new GRichBolt(KAFKA_EVENT_ERROR_PROCESS, new EventErrorBolt(), config.getEventErrorHints());
-        kafkaEventError.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER, KafkaSpout.EVENT_ERROR_STREAM));
+        for (String spoutName : spoutNames) {
+            kafkaEventError.addGrouping(new ShuffleGrouping(spoutName, KafkaSpout.EVENT_ERROR_STREAM));
+        }
 
         // GBolt for send errors of events to kafka
         GBolt<?> kafkaErrorProducer = new GRichBolt("kafka-error-producer", new KafkaBoltWrapper(config.getKafkaPublisherErrorBoltConfig(), String.class, String.class).getKafkaBolt(), config.getEventErrorHints());
@@ -84,7 +99,7 @@ public class TotalSpendUpdateDSLTopology {
 
         // Build the topology
         StormTopology topology = TopologyFactory.generateTopology(
-                kafkaEventReader,
+                kafkaEventReaders,
                 Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, readDataBolt, recalculateBolt, saveBolt));
         LOG.debug("Topology created");
 

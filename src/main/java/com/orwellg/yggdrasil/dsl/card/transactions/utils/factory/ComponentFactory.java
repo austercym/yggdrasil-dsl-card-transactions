@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.utils.factory;
 
-import com.orwellg.yggdrasil.dsl.card.transactions.bean.config.ConfigurationParams;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.ConfigurationParams;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
