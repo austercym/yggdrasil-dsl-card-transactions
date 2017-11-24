@@ -1,11 +1,14 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.saveToScylla;
 
-import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
-import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
+import com.orwellg.umbrella.commons.beans.config.kafka.SubscriberKafkaConfiguration;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.EventErrorBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
+import com.orwellg.umbrella.commons.storm.topology.generic.grouping.ShuffleGrouping;
+import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfig;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfigFactory;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,11 +17,16 @@ import org.apache.storm.LocalCluster;
 import org.apache.storm.StormSubmitter;
 import org.apache.storm.cassandra.bolt.CassandraWriterBolt;
 import org.apache.storm.generated.StormTopology;
+import org.apache.storm.topology.BoltDeclarer;
 import org.apache.storm.topology.TopologyBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.apache.storm.cassandra.DynamicStatementBuilder.async;
 import static org.apache.storm.cassandra.DynamicStatementBuilder.fields;
 import static org.apache.storm.cassandra.DynamicStatementBuilder.simpleQuery;
+
 
 
 public class CardSaveScyllaGpsMessageProcessedTopology {
@@ -31,6 +39,8 @@ public class CardSaveScyllaGpsMessageProcessedTopology {
     public static final String SCYLLA_SAVE_NAME = "save-to-scylla";
     public static final String SCYLLA_ERROR_HANDLER_NAME = "error-handler";
     public static final String SCYLLA_ERROR_PUBLISHER_NAME = "error-publisher";
+
+    private static final String KAFKA_EVENT_READER_FORMAT = "kafka-event-reader-%d";
 
     public static void main(String[] args) throws Exception {
 
@@ -48,23 +58,30 @@ public class CardSaveScyllaGpsMessageProcessedTopology {
 
         TopologyBuilder builder = new TopologyBuilder();
         TopologyConfig config = TopologyConfigFactory.getTopologyConfig("scylla-topology.properties");
-        Integer kafkaSpoutHints = config.getKafkaSpoutHints();
+        List<SubscriberKafkaConfiguration> kafkaSubscriberSpoutConfigs = config.getKafkaSubscriberSpoutConfigs();
         Integer scyllaHints = config.getEventProcessHints();
         Integer errorHints = config.getEventErrorHints();
 
         //------------------- Read from multiple kafka streams --------------------
-        builder.setSpout(PRESENTMENT_SPOUT_NAME,
-                new KafkaSpoutWrapper("subscriber-card-save-gps-presentment-processed.yaml", String.class, String.class).getKafkaSpout(), kafkaSpoutHints);
-        builder.setSpout(AUTHORISATION_SPOUT_NAME,
-                new KafkaSpoutWrapper("subscriber-card-save-gps-authorisation-processed.yaml", String.class, String.class).getKafkaSpout(), kafkaSpoutHints);
 
+        List<String> spoutNames = new ArrayList<>();
+        for (int i = 0; i < config.getKafkaSubscriberSpoutConfigs().size(); i++) {
+            SubscriberKafkaConfiguration subscriberConfig = kafkaSubscriberSpoutConfigs.get(i);
+            String spoutName = String.format(KAFKA_EVENT_READER_FORMAT, i);
+            spoutNames.add(spoutName);
+            builder.setSpout(spoutName, new KafkaSpoutWrapper(subscriberConfig, String.class, String.class).getKafkaSpout(), config.getKafkaSpoutHints());
+        }
 
         //------------------- Parse event and send fields forward -------------------
-        builder.setBolt(SCYLLA_PREPARE_NAME,
+
+
+        BoltDeclarer saveToScyllaBoltDeclarer = builder.setBolt(SCYLLA_PREPARE_NAME,
                 new CardSaveGpsMessageProcessedBolt(),
                 scyllaHints
-        ).shuffleGrouping(PRESENTMENT_SPOUT_NAME, KafkaSpout.EVENT_SUCCESS_STREAM)
-         .shuffleGrouping(AUTHORISATION_SPOUT_NAME, KafkaSpout.EVENT_SUCCESS_STREAM);
+        );
+        for (String spoutName : spoutNames) {
+            saveToScyllaBoltDeclarer.shuffleGrouping(spoutName, KafkaSpout.EVENT_SUCCESS_STREAM);
+        }
 
 
         // ------------------- Save To cards.CardTransactions ---------
@@ -85,11 +102,13 @@ public class CardSaveScyllaGpsMessageProcessedTopology {
 
         // ------------ Manage Errors ------------------------------
 
-        builder.setBolt(SCYLLA_ERROR_HANDLER_NAME,
+        BoltDeclarer errorHandlerDeclarer = builder.setBolt(SCYLLA_ERROR_HANDLER_NAME,
                 new EventErrorBolt(),
                 errorHints
-        ).shuffleGrouping(PRESENTMENT_SPOUT_NAME,  KafkaSpout.EVENT_ERROR_STREAM)
-         .shuffleGrouping(AUTHORISATION_SPOUT_NAME,  KafkaSpout.EVENT_ERROR_STREAM);
+        );
+        for (String spoutName : spoutNames) {
+            errorHandlerDeclarer.shuffleGrouping(spoutName, KafkaSpout.EVENT_SUCCESS_STREAM);
+        }
 
         builder.setBolt(SCYLLA_ERROR_PUBLISHER_NAME,
                 new KafkaBoltWrapper(config.getKafkaPublisherErrorBoltConfig(), String.class, String.class).getKafkaBolt(),
