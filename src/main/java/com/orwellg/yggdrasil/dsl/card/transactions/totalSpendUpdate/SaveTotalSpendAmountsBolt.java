@@ -1,11 +1,11 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.totalSpendUpdate;
 
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
-import com.orwellg.umbrella.commons.config.params.ScyllaParams;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
