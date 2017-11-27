@@ -2,7 +2,6 @@ package com.orwellg.yggdrasil.dsl.card.transactions.config;
 
 import com.netflix.config.DynamicPropertyFactory;
 import com.orwellg.umbrella.commons.beans.config.zookeeper.ZkConfigurationParams;
-import com.orwellg.umbrella.commons.config.params.ScyllaParams;
 import com.orwellg.umbrella.commons.utils.config.ZookeeperUtils;
 import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.yggdrasil.commons.config.NetworkConfig;
@@ -20,6 +19,9 @@ public class ConfigurationParams extends ZkConfigurationParams implements Serial
     private static final String CARDS_SCYLLA_NODE_LIST = "yggdrasil.cards.scylla.node.list";
     private static final String CARDS_SCYLLA_NODE_HOST_LIST = "yggdrasil.cards.scylla.node.host.list";
     private static final String CARDS_SCYLLA_KEYSPACE  = "yggdrasil.cards.scylla.keyspace";
+
+    public static final String SCYLLA_KEYSPACE  = "yggdrassil.scylla.keyspace";
+    public final static String DEFAULT_SCYLA_KEYSPACE = "ipagoo";
 
     private final static Logger LOG = LogManager.getLogger(ConfigurationParams.class);
 
@@ -57,14 +59,18 @@ public class ConfigurationParams extends ZkConfigurationParams implements Serial
         if (dynamicPropertyFactory != null) {
             LOG.info("Loading scylla parameters....");
             cardsScyllaParams = new ScyllaParams(
-                    dynamicPropertyFactory.getStringProperty(CARDS_SCYLLA_NODE_LIST, ScyllaParams.DEFAULT_SCYLA_NODE_LIST),
-                    dynamicPropertyFactory.getStringProperty(CARDS_SCYLLA_NODE_HOST_LIST, ScyllaParams.DEFAULT_SCYLA_NODE_HOST_LIST),
-                    dynamicPropertyFactory.getStringProperty(CARDS_SCYLLA_KEYSPACE, ScyllaParams.DEFAULT_SCYLA_KEYSPACE)
+                    dynamicPropertyFactory.getStringProperty(CARDS_SCYLLA_NODE_LIST, ScyllaParams.DEFAULT_SCYLLA_NODE_LIST),
+                    dynamicPropertyFactory.getStringProperty(CARDS_SCYLLA_NODE_HOST_LIST, ScyllaParams.DEFAULT_SCYLLA_NODE_HOST_LIST),
+                    dynamicPropertyFactory.getStringProperty(CARDS_SCYLLA_KEYSPACE, ScyllaParams.DEFAULT_SCYLLA_KEYSPACE)
             );
             transactionLogScyllaParams = new ScyllaParams(
-                    dynamicPropertyFactory.getStringProperty(Constants.SCYLLA_NODE_LIST, ScyllaParams.DEFAULT_SCYLA_NODE_LIST),
-                    dynamicPropertyFactory.getStringProperty(Constants.SCYLLA_NODE_HOST_LIST, ScyllaParams.DEFAULT_SCYLA_NODE_HOST_LIST),
-                    dynamicPropertyFactory.getStringProperty(Constants.SCYLLA_KEYSPACE, ScyllaParams.DEFAULT_SCYLA_KEYSPACE)
+                    dynamicPropertyFactory.getStringProperty(
+                            Constants.SCYLLA_NODE_LIST,
+                            com.orwellg.umbrella.commons.config.params.ScyllaParams.DEFAULT_SCYLA_NODE_LIST),
+                    dynamicPropertyFactory.getStringProperty(
+                            Constants.SCYLLA_NODE_HOST_LIST,
+                            com.orwellg.umbrella.commons.config.params.ScyllaParams.DEFAULT_SCYLA_NODE_HOST_LIST),
+                    dynamicPropertyFactory.getStringProperty(SCYLLA_KEYSPACE, DEFAULT_SCYLA_KEYSPACE)
             );
         }
     }
