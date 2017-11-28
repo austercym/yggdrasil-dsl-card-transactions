@@ -57,6 +57,9 @@ public class TotalSpendUpdateDSLTopology {
         List<SubscriberKafkaConfiguration> kafkaSubscriberSpoutConfigs = config.getKafkaSubscriberSpoutConfigs();
         List<GSpout> kafkaEventReaders = new ArrayList<>();
         List<String> spoutNames = new ArrayList<>();
+        if (kafkaSubscriberSpoutConfigs.size() == 0){
+            throw new Exception("No Kafka subscriber spouts configured");
+        }
         for (int i = 0; i < kafkaSubscriberSpoutConfigs.size(); i++) {
             SubscriberKafkaConfiguration subscriberConfig = kafkaSubscriberSpoutConfigs.get(i);
             String spoutName = String.format(KAFKA_EVENT_READER_FORMAT, i);
@@ -72,7 +75,7 @@ public class TotalSpendUpdateDSLTopology {
         }
 
         // Read last total spend amounts from DB
-        GBolt<?> readDataBolt = new GRichBolt(READ_DATA, new ReadLastSpendingTotalsBolt(), config.getActionBoltHints());
+        GBolt<?> readDataBolt = new GRichBolt(READ_DATA, new LoadDataBolt(READ_DATA), config.getActionBoltHints());
         readDataBolt.addGrouping(new ShuffleGrouping(KAFKA_EVENT_SUCCESS_PROCESS));
 
         // Recalculate total spend amounts

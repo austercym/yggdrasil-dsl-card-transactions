@@ -1,7 +1,9 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
+import com.orwellg.umbrella.avro.types.commons.Decimal;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalEarmark;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -21,7 +23,7 @@ public class TotalSpendAmountsCalculator {
         this.dateTimeService = dateTimeService;
     }
 
-    public SpendingTotalAmounts recalculate(GpsMessageProcessed messageProcessed, SpendingTotalAmounts lastSpendingTotalAmounts) {
+    public SpendingTotalAmounts recalculate(GpsMessageProcessed messageProcessed, SpendingTotalAmounts lastSpendingTotalAmounts, SpendingTotalEarmark earmark) {
 
         Instant now = dateTimeService.now();
         LocalDate today = now.atZone(ZoneId.of("UTC")).toLocalDate();
@@ -42,10 +44,10 @@ public class TotalSpendAmountsCalculator {
                 BigDecimal.ZERO;
 
         if (transactionTimestamp.toLocalDate().equals(today) && messageProcessed.getBlockedClientAmount() != null)
-            daily = daily.add(messageProcessed.getBlockedClientAmount().getValue().abs());
+            daily = calculateNewAmount(daily, messageProcessed.getBlockedClientAmount(), earmark);
 
         if (transactionTimestamp.getYear() == today.getYear() && messageProcessed.getBlockedClientAmount() != null)
-            annual = annual.add(messageProcessed.getBlockedClientAmount().getValue().abs());
+            annual = calculateNewAmount(annual, messageProcessed.getBlockedClientAmount(), earmark);
 
         SpendingTotalAmounts result = new SpendingTotalAmounts();
         result.setAnnualTotal(annual);
@@ -54,6 +56,15 @@ public class TotalSpendAmountsCalculator {
         result.setDebitCardId(messageProcessed.getDebitCardId());
         result.setTotalType(messageProcessed.getSpendGroup());
         return result;
+    }
+
+    private BigDecimal calculateNewAmount(BigDecimal currentAmount, Decimal blockedClientAmount, SpendingTotalEarmark earmark) {
+        BigDecimal newAmount = currentAmount.add(blockedClientAmount.getValue().abs());
+
+        if (earmark != null) {
+            newAmount = newAmount.subtract(earmark.getAmount().abs());
+        }
+        return newAmount;
     }
 
     public boolean isRequired(GpsMessageProcessed message) {
