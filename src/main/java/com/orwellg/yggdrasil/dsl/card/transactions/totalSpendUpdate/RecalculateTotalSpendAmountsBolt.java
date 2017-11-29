@@ -40,7 +40,7 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
         String processId = input.getStringByField(Fields.PROCESS_ID);
         String logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
-        LOG.info("[Key: {}][ProcessId: {}]: Recalculating total spend amounts", key, processId);
+        LOG.info("{}Recalculating total spend amounts", logPrefix, key, processId);
 
         try {
             GpsMessageProcessed eventData = (GpsMessageProcessed) input.getValueByField(Fields.EVENT_DATA);
@@ -49,17 +49,27 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
             SpendingTotalAmounts newSpendAmounts = null;
             SpendingTotalEarmark newEarmark = null;
 
-            // TODO: Process only accepted authorisations
-
-            if (calculator.isRequired(eventData)) {
+            if (isAcceptedAuthorisation(eventData) || isPresentment(eventData)) {
                 newSpendAmounts = calculator.recalculate(eventData, spendAmounts, earmark);
+            } else {
+                LOG.info(
+                        "{}No need for recalculation of spend total amounts - GpsMessageType={}, ResponseStatus={}",
+                        logPrefix,
+                        eventData == null ? null : eventData.getGpsMessageType(),
+                        eventData == null || eventData.getEhiResponse() == null ? null : eventData.getEhiResponse().getResponsestatus());
             }
 
-            if ("A".equalsIgnoreCase(eventData.getGpsMessageType())) {
+            if (isAcceptedAuthorisation(eventData)) {
                 newEarmark = new SpendingTotalEarmark();
                 newEarmark.setAmount(eventData.getBlockedClientAmount().getValue());
                 newEarmark.setGpsTransactionLink(eventData.getGpsTransactionLink());
                 newEarmark.setTimestamp(Instant.now());
+            } else {
+                LOG.info(
+                        "{}Earmark not needed - GpsMessageType={}, ResponseStatus={}",
+                        logPrefix,
+                        eventData == null ? null : eventData.getGpsMessageType(),
+                        eventData == null || eventData.getEhiResponse() == null ? null : eventData.getEhiResponse().getResponsestatus());
             }
 
             Map<String, Object> values = new HashMap<>();
@@ -73,5 +83,19 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
             LOG.error("{}Error recalculating total spend amounts. Message: {},", logPrefix, e.getMessage(), e);
             error(e, input);
         }
+    }
+
+    private boolean isAcceptedAuthorisation(GpsMessageProcessed eventData) {
+        return eventData != null && eventData.getEhiResponse() != null
+                &&
+                "A".equalsIgnoreCase(eventData.getGpsMessageType())
+                &&
+                "00".equals(eventData.getEhiResponse().getResponsestatus());
+    }
+
+    private boolean isPresentment(GpsMessageProcessed eventData) {
+        return eventData != null
+                &&
+                "P".equalsIgnoreCase(eventData.getGpsMessageType());
     }
 }
