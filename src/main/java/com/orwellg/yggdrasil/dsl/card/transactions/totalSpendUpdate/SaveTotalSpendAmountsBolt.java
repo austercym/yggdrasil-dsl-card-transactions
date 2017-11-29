@@ -3,8 +3,10 @@ package com.orwellg.yggdrasil.dsl.card.transactions.totalSpendUpdate;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalEarmarksRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalEarmark;
 import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
@@ -21,7 +23,8 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
 
     private static final Logger LOG = LogManager.getLogger(SaveTotalSpendAmountsBolt.class);
 
-    private SpendingTotalAmountsRepository repository;
+    private SpendingTotalAmountsRepository amountsRepository;
+    private SpendingTotalEarmarksRepositoryImpl earmarksRepository;
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -31,7 +34,10 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
 
     protected void setScyllaConnectionParameters() {
         ScyllaParams scyllaParams = ComponentFactory.getConfigurationParams().getCardsScyllaParams();
-        repository = new SpendingTotalAmountsRepositoryImpl(scyllaParams.getNodeList(), scyllaParams.getKeyspace());
+        String nodeList = scyllaParams.getNodeList();
+        String keyspace = scyllaParams.getKeyspace();
+        amountsRepository = new SpendingTotalAmountsRepositoryImpl(nodeList, keyspace);
+        earmarksRepository = new SpendingTotalEarmarksRepositoryImpl(nodeList, keyspace);
     }
 
     @Override
@@ -51,11 +57,19 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
         try {
             GpsMessageProcessed eventData = (GpsMessageProcessed) input.getValueByField(Fields.EVENT_DATA);
             SpendingTotalAmounts newSpendAmounts = (SpendingTotalAmounts) input.getValueByField(Fields.NEW_TOTAL_SPEND_AMOUNTS);
+            SpendingTotalEarmark newEarmark = (SpendingTotalEarmark) input.getValueByField(Fields.NEW_EARMARK);
 
-            if (newSpendAmounts == null)
+            if (newEarmark == null) {
+                LOG.info("{}No new earmark to save", logPrefix);
+            } else {
+                earmarksRepository.addEarmark(newEarmark);
+            }
+
+            if (newSpendAmounts == null) {
                 LOG.info("{}No new spend amounts to save", logPrefix);
-            else
-                repository.addTotalAmounts(newSpendAmounts);
+            } else {
+                amountsRepository.addTotalAmounts(newSpendAmounts);
+            }
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);

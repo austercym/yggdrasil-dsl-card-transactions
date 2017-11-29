@@ -73,10 +73,19 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
                 responseCode = ResponseCode.ALL_GOOD;
                 earmarkAmount = event.getSettlementAmount();
                 earmarkCurrency = event.getSettlementCurrency();
-                BigDecimal availableBalance =
-                        accountTransactionLog.getActualBalance().subtract(event.getSettlementAmount());
-                response.setAvlBalance(availableBalance.doubleValue());
-                response.setCurBalance(accountTransactionLog.getLedgerBalance().doubleValue());
+
+                if (accountTransactionLog != null) {
+                    double availableBalance =
+                            accountTransactionLog.getActualBalance() == null
+                            ? event.getSettlementAmount().negate().doubleValue()
+                            : accountTransactionLog.getActualBalance().subtract(event.getSettlementAmount()).doubleValue();
+                    double currentBalance = accountTransactionLog.getLedgerBalance() == null
+                            ? 0
+                            : accountTransactionLog.getLedgerBalance().doubleValue();
+
+                    response.setAvlBalance(availableBalance);
+                    response.setCurBalance(currentBalance);
+                }
             }
 
             response.setAcknowledgement("1");
@@ -122,8 +131,10 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         gpsMessageProcessed.setTransactionTimestamp(new Date().getTime());
         gpsMessageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(earmarkAmount));
         gpsMessageProcessed.setBlockedClientCurrency(earmarkCurrency);
-        gpsMessageProcessed.setInternalAccountCurrency(settings.getLinkedAccountCurrency());
-        gpsMessageProcessed.setInternalAccountId(settings.getLinkedAccountId());
+        if (settings != null) {
+            gpsMessageProcessed.setInternalAccountCurrency(settings.getLinkedAccountCurrency());
+            gpsMessageProcessed.setInternalAccountId(settings.getLinkedAccountId());
+        }
         LOG.debug("Message generated. Parameters: {}", gpsMessageProcessed);
         return gpsMessageProcessed;
     }

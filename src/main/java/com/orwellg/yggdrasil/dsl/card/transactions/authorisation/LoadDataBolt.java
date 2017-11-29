@@ -89,7 +89,7 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
 
         String logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
-        LOG.info("{}Previous starting processing the join data load for key {}", logPrefix, key);
+        LOG.info("{}Starting processing the join data load for key {}", logPrefix, key);
 
         try {
             long cardId = eventData.getDebitCardId();
