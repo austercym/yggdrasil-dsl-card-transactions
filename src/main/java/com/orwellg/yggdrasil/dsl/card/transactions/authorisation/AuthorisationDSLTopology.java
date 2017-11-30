@@ -35,6 +35,10 @@ public class AuthorisationDSLTopology {
     private static final String RESPONSE_GENERATOR = "response-generator";
     private static final String KAFKA_EVENT_SUCCESS_PRODUCER = "kafka-event-success-producer";
 
+    public static final String KAFKA_ERROR_PRODUCER_COMPONENT_ID = "get-kafka-error-producer";
+    public static final String KAFKA_EVENT_READER_COMPONENT_ID = "get-kafka-event-reader";
+    public static final String KAFKA_EVENT_ERROR_PROCESS_COMPONENT_ID = "get-kafka-event-error-process";
+
     public static void main(String[] args) throws Exception {
 
         boolean local = false;
@@ -58,14 +62,6 @@ public class AuthorisationDSLTopology {
         GBolt<?> kafkaEventProcess = new GRichBolt(KAFKA_EVENT_SUCCESS_PROCESS, new EventToAuthorisationMessageBolt(), config.getEventProcessHints());
         kafkaEventProcess.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER, KafkaSpout.EVENT_SUCCESS_STREAM));
 
-        // GBolt for work with the errors
-        GBolt<?> kafkaEventError = new GRichBolt(KAFKA_EVENT_ERROR_PROCESS, new EventErrorBolt(), config.getEventErrorHints());
-        kafkaEventError.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER, KafkaSpout.EVENT_ERROR_STREAM));
-
-        // GBolt for send errors of events to kafka
-        GBolt<?> kafkaErrorProducer = new GRichBolt("kafka-error-producer", new KafkaBoltWrapper(config.getKafkaPublisherErrorBoltConfig(), String.class, String.class).getKafkaBolt(), config.getEventErrorHints());
-        kafkaErrorProducer.addGrouping(new ShuffleGrouping(KAFKA_EVENT_ERROR_PROCESS));
-
         // Get data from DB
         GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadDataBolt(GET_DATA), config.getActionBoltHints());
         getDataBolt.addGrouping(new ShuffleGrouping(KAFKA_EVENT_SUCCESS_PROCESS));
@@ -81,6 +77,18 @@ public class AuthorisationDSLTopology {
         // Send a event with the result
         GBolt<?> kafkaEventSuccessProducer = new GRichBolt(KAFKA_EVENT_SUCCESS_PRODUCER, new KafkaBoltWrapper(config.getKafkaPublisherBoltConfig(), String.class, String.class).getKafkaBolt(), config.getEventResponseHints());
         kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping(RESPONSE_GENERATOR));
+
+        ///////
+        // GBolt for work with the errors
+        GBolt<?> kafkaEventError = new GRichBolt(KAFKA_EVENT_ERROR_PROCESS_COMPONENT_ID, new EventErrorBolt(), config.getEventErrorHints());
+        kafkaEventError
+                .addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER, KafkaSpout.EVENT_ERROR_STREAM));
+        // GBolt for send errors of events to kafka
+        KafkaBoltWrapper kafkaErrorBoltWrapper = new KafkaBoltWrapper(config.getKafkaPublisherErrorBoltConfig(), String.class, String.class);
+        GBolt<?> kafkaErrorProducer = new GRichBolt(KAFKA_ERROR_PRODUCER_COMPONENT_ID,
+                kafkaErrorBoltWrapper.getKafkaBolt(), config.getEventErrorHints());
+        kafkaErrorProducer.addGrouping(new ShuffleGrouping(KAFKA_EVENT_ERROR_PROCESS_COMPONENT_ID));
+
 
         // Build the topology
         StormTopology topology = TopologyFactory.generateTopology(

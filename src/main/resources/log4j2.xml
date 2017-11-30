@@ -12,7 +12,12 @@
 			</Policies>
 			<DefaultRolloverStrategy max="5" />
 		</RollingFile>
+		<Kafka name="KAFKA" topic="log_yggdrasil_dslcardtransactions_001" syncsend="true" ignoreexceptions="false">
+			<PatternLayout pattern="%d %-5p [%t] %C{2} (%F:%L) - %m%n" />
+			<Property name="bootstrap.servers">${kafka.bootstrap.host}</Property>
+		</Kafka>
 		<Async name="ASYNC">
+			<AppenderRef ref="KAFKA" />
 			<AppenderRef ref="FILE" />
 			<AppenderRef ref="CONSOLE" />
 		</Async>
