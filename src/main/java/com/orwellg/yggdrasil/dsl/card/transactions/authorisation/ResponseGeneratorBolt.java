@@ -33,7 +33,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
     @Override
     public void execute(Tuple input) {
 
-        LOG.debug("Event received: {}. Starting the decode process.", input);
+        LOG.debug("Preparing response for input={}", input);
 
         try {
             AuthorisationMessage event = (AuthorisationMessage) input.getValueByField(Fields.EVENT_DATA);
@@ -110,7 +110,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
                     logPrefix, response.getResponsestatus(), responseCode);
 
         } catch (Exception e) {
-            LOG.error("The received event {} can not be decoded. Message: {}", input, e.getMessage(), e);
+            LOG.error("Response generation failed - input={}, message={}", input, e.getMessage(), e);
             error(e, input);
         }
     }
