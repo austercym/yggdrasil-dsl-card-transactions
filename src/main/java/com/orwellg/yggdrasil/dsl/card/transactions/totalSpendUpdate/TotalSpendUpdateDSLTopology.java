@@ -48,7 +48,7 @@ public class TotalSpendUpdateDSLTopology {
     }
 
     private static void loadTopologyInStorm(boolean local) throws Exception {
-        LOG.info("Creating card total spend update topology");
+        LOG.debug("Creating card total spend update topology");
 
         // Read configuration params from properties file and zookeeper
         TopologyConfig config = TopologyConfigFactory.getTopologyConfig(PROPERTIES_FILE);
@@ -104,7 +104,7 @@ public class TotalSpendUpdateDSLTopology {
         StormTopology topology = TopologyFactory.generateTopology(
                 kafkaEventReaders,
                 Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, readDataBolt, recalculateBolt, saveBolt));
-        LOG.debug("Topology created");
+        LOG.debug("Total spend update topology created");
 
         // Create the basic config and upload the topology
         Config conf = new Config();
