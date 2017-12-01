@@ -46,7 +46,7 @@ public class AuthorisationAccountingDSLTopology {
     }
 
     private static void loadTopologyInStorm(boolean local) throws Exception {
-        LOG.info("Creating GPS authorisation message processing topology");
+        LOG.debug("Creating GPS authorisation accounting topology");
 
         // Read configuration params from authorisation-accounting-topology.properties and zookeeper
         TopologyConfig config = TopologyConfigFactory.getTopologyConfig(PROPERTIES_FILE);
@@ -72,7 +72,7 @@ public class AuthorisationAccountingDSLTopology {
         StormTopology topology = TopologyFactory.generateTopology(
                 kafkaEventReader,
                 Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer));
-        LOG.debug("Topology created");
+        LOG.info("Authorisation accounting topology created");
 
         // Create the basic config and upload the topology
         Config conf = new Config();
