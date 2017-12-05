@@ -1,7 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisation;
 
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
-import com.orwellg.umbrella.commons.config.params.ScyllaParams;
 import com.orwellg.umbrella.commons.repositories.scylla.AccountTransactionLogRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.CardSettingsRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
@@ -13,6 +12,7 @@ import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTransactionLog;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
@@ -89,7 +89,7 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
 
         String logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
-        LOG.info("{}Previous starting processing the join data load for key {}", logPrefix, key);
+        LOG.info("{}Starting processing the join data load for key {}", logPrefix, key);
 
         try {
             long cardId = eventData.getDebitCardId();
@@ -112,7 +112,7 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
             send(input, values);
 
         } catch (Exception e) {
-            LOG.error("{}Error processing the authorisation data load. Message: {},", logPrefix, e.getMessage(), e);
+            LOG.error("{}Error processing the authorisation data load. Message: {}", logPrefix, e.getMessage(), e);
             error(e, input);
         }
     }

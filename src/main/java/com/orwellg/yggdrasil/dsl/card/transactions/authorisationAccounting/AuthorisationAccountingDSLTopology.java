@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.authorisation;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisationAccounting;
 
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
@@ -21,12 +21,12 @@ import org.apache.storm.generated.StormTopology;
 
 import java.util.Arrays;
 
-public class AuthorisationDSLTopology {
+public class AuthorisationAccountingDSLTopology {
 
-    private final static Logger LOG = LogManager.getLogger(AuthorisationDSLTopology.class);
+    private final static Logger LOG = LogManager.getLogger(AuthorisationAccountingDSLTopology.class);
 
-    private static final String TOPOLOGY_NAME = "dsl-card-authorisation";
-    private static final String PROPERTIES_FILE = "authorisation-topology.properties";
+    private static final String TOPOLOGY_NAME = "dsl-card-authorisation-accounting";
+    private static final String PROPERTIES_FILE = "authorisation-accounting-topology.properties";
     private static final String KAFKA_EVENT_READER = "kafka-event-reader";
     private static final String KAFKA_EVENT_SUCCESS_PROCESS = "kafka-event-success-process";
     private static final String KAFKA_EVENT_ERROR_PROCESS = "kafka-event-error-process";
@@ -34,10 +34,6 @@ public class AuthorisationDSLTopology {
     private static final String PROCESS_VALIDATION = "process-validation";
     private static final String RESPONSE_GENERATOR = "response-generator";
     private static final String KAFKA_EVENT_SUCCESS_PRODUCER = "kafka-event-success-producer";
-
-    public static final String KAFKA_ERROR_PRODUCER_COMPONENT_ID = "get-kafka-error-producer";
-    public static final String KAFKA_EVENT_READER_COMPONENT_ID = "get-kafka-event-reader";
-    public static final String KAFKA_EVENT_ERROR_PROCESS_COMPONENT_ID = "get-kafka-event-error-process";
 
     public static void main(String[] args) throws Exception {
 
@@ -50,51 +46,33 @@ public class AuthorisationDSLTopology {
     }
 
     private static void loadTopologyInStorm(boolean local) throws Exception {
-        LOG.debug("Creating GPS authorisation message processing topology");
+        LOG.debug("Creating GPS authorisation accounting topology");
 
-        // Read configuration params from authorisation-topology.properties and zookeeper
+        // Read configuration params from authorisation-accounting-topology.properties and zookeeper
         TopologyConfig config = TopologyConfigFactory.getTopologyConfig(PROPERTIES_FILE);
 
         // Create the spout that read the events from Kafka
         GSpout kafkaEventReader = new GSpout(KAFKA_EVENT_READER, new KafkaSpoutWrapper(config.getKafkaSubscriberSpoutConfig(), String.class, String.class).getKafkaSpout(), config.getKafkaSpoutHints());
 
         // Parse the events and we send it to the rest of the topology
-        GBolt<?> kafkaEventProcess = new GRichBolt(KAFKA_EVENT_SUCCESS_PROCESS, new EventToAuthorisationMessageBolt(), config.getEventProcessHints());
+        GBolt<?> kafkaEventProcess = new GRichBolt(KAFKA_EVENT_SUCCESS_PROCESS, new EventToAuthorisationResponseBolt(), config.getEventProcessHints());
         kafkaEventProcess.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER, KafkaSpout.EVENT_SUCCESS_STREAM));
 
-        // Get data from DB
-        GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadDataBolt(GET_DATA), config.getActionBoltHints());
-        getDataBolt.addGrouping(new ShuffleGrouping(KAFKA_EVENT_SUCCESS_PROCESS));
-
-        // Validation bolt
-        GBolt<?> processValidationBolt = new GRichBolt(PROCESS_VALIDATION, new ProcessJoinValidatorBolt(PROCESS_VALIDATION), config.getActionBoltHints());
-        processValidationBolt.addGrouping(new ShuffleGrouping(GET_DATA));
-
-        // Response generation bolt
-        GBolt<?> responseGeneratorBolt = new GRichBolt(RESPONSE_GENERATOR, new ResponseGeneratorBolt(), config.getActionBoltHints());
-        responseGeneratorBolt.addGrouping(new ShuffleGrouping(PROCESS_VALIDATION));
-
-        // Send a event with the result
-        GBolt<?> kafkaEventSuccessProducer = new GRichBolt(KAFKA_EVENT_SUCCESS_PRODUCER, new KafkaBoltWrapper(config.getKafkaPublisherBoltConfig(), String.class, String.class).getKafkaBolt(), config.getEventResponseHints());
-        kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping(RESPONSE_GENERATOR));
-
-        ///////
         // GBolt for work with the errors
-        GBolt<?> kafkaEventError = new GRichBolt(KAFKA_EVENT_ERROR_PROCESS_COMPONENT_ID, new EventErrorBolt(), config.getEventErrorHints());
-        kafkaEventError
-                .addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER, KafkaSpout.EVENT_ERROR_STREAM));
-        // GBolt for send errors of events to kafka
-        KafkaBoltWrapper kafkaErrorBoltWrapper = new KafkaBoltWrapper(config.getKafkaPublisherErrorBoltConfig(), String.class, String.class);
-        GBolt<?> kafkaErrorProducer = new GRichBolt(KAFKA_ERROR_PRODUCER_COMPONENT_ID,
-                kafkaErrorBoltWrapper.getKafkaBolt(), config.getEventErrorHints());
-        kafkaErrorProducer.addGrouping(new ShuffleGrouping(KAFKA_EVENT_ERROR_PROCESS_COMPONENT_ID));
+        GBolt<?> kafkaEventError = new GRichBolt(KAFKA_EVENT_ERROR_PROCESS, new EventErrorBolt(), config.getEventErrorHints());
+        kafkaEventError.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER, KafkaSpout.EVENT_ERROR_STREAM));
 
+        // GBolt for send errors of events to kafka
+        GBolt<?> kafkaErrorProducer = new GRichBolt("kafka-error-producer", new KafkaBoltWrapper(config.getKafkaPublisherErrorBoltConfig(), String.class, String.class).getKafkaBolt(), config.getEventErrorHints());
+        kafkaErrorProducer.addGrouping(new ShuffleGrouping(KAFKA_EVENT_ERROR_PROCESS));
+
+        // TODO: Create accounting bolt
 
         // Build the topology
         StormTopology topology = TopologyFactory.generateTopology(
                 kafkaEventReader,
-                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, getDataBolt, processValidationBolt, responseGeneratorBolt, kafkaEventSuccessProducer));
-        LOG.info("GPS Authorisation message processing topology created");
+                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer));
+        LOG.info("Authorisation accounting topology created");
 
         // Create the basic config and upload the topology
         Config conf = new Config();

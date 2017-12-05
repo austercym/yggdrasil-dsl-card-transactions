@@ -90,7 +90,7 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<AuthorisationMessag
             send(input, values);
 
         } catch (Exception e) {
-            LOG.error("{} Error processing the authorisation validation. Message: {},", logPrefix, e.getMessage(), e);
+            LOG.error("{} Error processing the authorisation validation. Message: {}", logPrefix, e.getMessage(), e);
             error(e, input);
         }
     }

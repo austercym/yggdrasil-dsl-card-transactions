@@ -38,15 +38,14 @@ public class CheckAuthorisationBolt extends BasicRichBolt {
 
         try{
 
-            List<Object> inputValues = tuple.getValues();
-            String key = (String) inputValues.get(0);
-            String originalProcessId = (String)inputValues.get(1);
+            String key = (String) tuple.getValueByField("key");
+            String originalProcessId = (String)tuple.getValueByField("processId");
 
             LOG.debug("Key: {} | ProcessId: {} | Authorisation retrieved from database. Starting validation process", key, originalProcessId);
 
-            Message eventData = (Message) inputValues.get(2);
+            Message eventData = (Message) tuple.getValueByField("eventData");
             PresentmentMessage message = (PresentmentMessage) tuple.getValueByField("gpsMessage");
-            List<CardTransaction> cardTransactions = (List<CardTransaction>) inputValues.get(3);
+            List<CardTransaction> cardTransactions = (List<CardTransaction>) tuple.getValueByField("retrieveValue");
 
             CardTransaction lastTransaction = authorisationService.getLast(cardTransactions, eventData.getTXnID());
 

@@ -2,6 +2,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalEarmark;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,7 +50,7 @@ public class TotalSpendAmountsCalculatorTest {
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
 
         // act
-        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts);
+        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts, null);
 
         // assert
         assertNotNull(result);
@@ -75,7 +76,7 @@ public class TotalSpendAmountsCalculatorTest {
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
 
         // act
-        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts);
+        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts, null);
 
         // assert
         assertNotNull(result);
@@ -101,7 +102,7 @@ public class TotalSpendAmountsCalculatorTest {
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
 
         // act
-        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts);
+        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts, null);
 
         // assert
         assertNotNull(result);
@@ -122,7 +123,7 @@ public class TotalSpendAmountsCalculatorTest {
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
 
         // act
-        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, null);
+        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, null, null);
 
         // assert
         assertNotNull(result);
@@ -148,7 +149,7 @@ public class TotalSpendAmountsCalculatorTest {
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
 
         // act
-        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts);
+        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts, null);
 
         // assert
         assertNotNull(result);
@@ -174,7 +175,7 @@ public class TotalSpendAmountsCalculatorTest {
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
 
         // act
-        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts);
+        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts, null);
 
         // assert
         assertNotNull(result);
@@ -200,7 +201,7 @@ public class TotalSpendAmountsCalculatorTest {
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
 
         // act
-        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts);
+        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts, null);
 
         // assert
         assertNotNull(result);
@@ -226,12 +227,102 @@ public class TotalSpendAmountsCalculatorTest {
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
 
         // act
-        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts);
+        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts, null);
 
         // assert
         assertNotNull(result);
         assertEquals(mockedNow, result.getTimestamp());
         assertTrue(BigDecimal.ZERO.compareTo(result.getDailyTotal()) == 0);
         assertTrue(BigDecimal.ZERO.compareTo(result.getAnnualTotal()) == 0);
+    }
+
+    @Test
+    public void recalculateWhenEarmarkEqualBlockedClientAmountShouldNotChangeAmounts()
+            throws ParseException {
+
+        // arrange
+        GpsMessageProcessed messageProcessed = new GpsMessageProcessed();
+        messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
+        messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
+
+        SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
+        lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-19T07:55:42Z"));
+        lastSpendingTotalAmounts.setDailyTotal(BigDecimal.valueOf(19));
+        lastSpendingTotalAmounts.setAnnualTotal(BigDecimal.valueOf(2015));
+
+        SpendingTotalEarmark earmark = new SpendingTotalEarmark();
+        earmark.setAmount(BigDecimal.valueOf(9));
+
+        Instant mockedNow = Instant.parse("2015-09-19t21:15:20Z");
+        when(dateTimeServiceMock.now()).thenReturn(mockedNow);
+
+        // act
+        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts, earmark);
+
+        // assert
+        assertNotNull(result);
+        assertEquals(mockedNow, result.getTimestamp());
+        assertTrue(BigDecimal.valueOf(19).compareTo(result.getDailyTotal()) == 0);
+        assertTrue(BigDecimal.valueOf(2015).compareTo(result.getAnnualTotal()) == 0);
+    }
+
+    @Test
+    public void recalculateWhenEarmarkGreaterThenBlockedClientAmountShouldDecreaseAmounts()
+            throws ParseException {
+
+        // arrange
+        GpsMessageProcessed messageProcessed = new GpsMessageProcessed();
+        messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
+        messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
+
+        SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
+        lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-19T07:55:42Z"));
+        lastSpendingTotalAmounts.setDailyTotal(BigDecimal.valueOf(19));
+        lastSpendingTotalAmounts.setAnnualTotal(BigDecimal.valueOf(2015));
+
+        SpendingTotalEarmark earmark = new SpendingTotalEarmark();
+        earmark.setAmount(BigDecimal.valueOf(19));
+
+        Instant mockedNow = Instant.parse("2015-09-19t21:15:20Z");
+        when(dateTimeServiceMock.now()).thenReturn(mockedNow);
+
+        // act
+        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts, earmark);
+
+        // assert
+        assertNotNull(result);
+        assertEquals(mockedNow, result.getTimestamp());
+        assertTrue(BigDecimal.valueOf(9).compareTo(result.getDailyTotal()) == 0);
+        assertTrue(BigDecimal.valueOf(2005).compareTo(result.getAnnualTotal()) == 0);
+    }
+
+    @Test
+    public void recalculateWhenEarmarkLowerThenBlockedClientAmountShouldIncreaseAmounts()
+            throws ParseException {
+
+        // arrange
+        GpsMessageProcessed messageProcessed = new GpsMessageProcessed();
+        messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
+        messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
+
+        SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
+        lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-19T07:55:42Z"));
+        lastSpendingTotalAmounts.setDailyTotal(BigDecimal.valueOf(19));
+        lastSpendingTotalAmounts.setAnnualTotal(BigDecimal.valueOf(2015));
+
+        SpendingTotalEarmark earmark = new SpendingTotalEarmark();
+        earmark.setAmount(BigDecimal.valueOf(3));
+
+        Instant mockedNow = Instant.parse("2015-09-19t21:15:20Z");
+        when(dateTimeServiceMock.now()).thenReturn(mockedNow);
+
+        // act
+        SpendingTotalAmounts result = calculator.recalculate(messageProcessed, lastSpendingTotalAmounts, earmark);
+
+        // assert
+        assertNotNull(result);
+        assertEquals(mockedNow, result.getTimestamp());
+        assertTrue(BigDecimal.valueOf(25).compareTo(result.getDailyTotal()) == 0);
+        assertTrue(BigDecimal.valueOf(2021).compareTo(result.getAnnualTotal()) == 0);
     }
 }

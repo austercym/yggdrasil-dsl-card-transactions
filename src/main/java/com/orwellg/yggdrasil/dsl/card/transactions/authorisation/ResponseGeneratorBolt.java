@@ -1,6 +1,5 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisation;
 
-import com.orwellg.umbrella.avro.types.commons.Decimal;
 import com.orwellg.umbrella.avro.types.event.EntityIdentifierType;
 import com.orwellg.umbrella.avro.types.event.Event;
 import com.orwellg.umbrella.avro.types.event.EventType;
@@ -9,6 +8,7 @@ import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.ResponseMsg;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTransactionLog;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.ResponseCode;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.types.utils.avro.RawMessageUtils;
@@ -21,7 +21,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
 
 import java.math.BigDecimal;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -34,11 +33,12 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
     @Override
     public void execute(Tuple input) {
 
-        LOG.debug("Event received: {}. Starting the decode process.", input);
+        LOG.debug("Preparing response for input={}", input);
 
         try {
             AuthorisationMessage event = (AuthorisationMessage) input.getValueByField(Fields.EVENT_DATA);
             String parentKey = (String) input.getValueByField(Fields.KEY);
+            CardSettings settings = (CardSettings) input.getValueByField(Fields.CARD_SETTINGS);
             AccountTransactionLog accountTransactionLog =
                     (AccountTransactionLog) input.getValueByField(Fields.TRANSACTION_LOG);
             ValidationResult statusValidationResult =
@@ -73,16 +73,25 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
                 responseCode = ResponseCode.ALL_GOOD;
                 earmarkAmount = event.getSettlementAmount();
                 earmarkCurrency = event.getSettlementCurrency();
-                BigDecimal availableBalance =
-                        accountTransactionLog.getActualBalance().subtract(event.getSettlementAmount());
-                response.setAvlBalance(availableBalance.doubleValue());
-                response.setCurBalance(accountTransactionLog.getLedgerBalance().doubleValue());
+
+                if (accountTransactionLog != null) {
+                    double availableBalance =
+                            accountTransactionLog.getActualBalance() == null
+                            ? event.getSettlementAmount().negate().doubleValue()
+                            : accountTransactionLog.getActualBalance().subtract(event.getSettlementAmount()).doubleValue();
+                    double currentBalance = accountTransactionLog.getLedgerBalance() == null
+                            ? 0
+                            : accountTransactionLog.getLedgerBalance().doubleValue();
+
+                    response.setAvlBalance(availableBalance);
+                    response.setCurBalance(currentBalance);
+                }
             }
 
             response.setAcknowledgement("1");
             response.setResponsestatus(responseCode.getCode());
 
-            GpsMessageProcessed processedMessage = generateMessageProcessed(event, response, earmarkAmount, earmarkCurrency);
+            GpsMessageProcessed processedMessage = generateMessageProcessed(event, response, settings, earmarkAmount, earmarkCurrency);
 
             Event responseEvent = generateEvent(
                     this.getClass().getName(), CardTransactionEvents.RESPONSE_MESSAGE.getEventName(), processedMessage,
@@ -101,12 +110,12 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
                     logPrefix, response.getResponsestatus(), responseCode);
 
         } catch (Exception e) {
-            LOG.error("The received event {} can not be decoded. Message: {}", input, e.getMessage(), e);
+            LOG.error("Response generation failed - input={}, message={}", input, e.getMessage(), e);
             error(e, input);
         }
     }
 
-    private GpsMessageProcessed generateMessageProcessed(AuthorisationMessage authorisation, ResponseMsg response, BigDecimal earmarkAmount, String earmarkCurrency) {
+    private GpsMessageProcessed generateMessageProcessed(AuthorisationMessage authorisation, ResponseMsg response, CardSettings settings, BigDecimal earmarkAmount, String earmarkCurrency) {
 
         LOG.debug("Generating gpsMessageProcessed message");
         GpsMessageProcessed gpsMessageProcessed = new GpsMessageProcessed();
@@ -114,17 +123,18 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         gpsMessageProcessed.setGpsTransactionLink(authorisation.getGpsTransactionLink());
         gpsMessageProcessed.setGpsTransactionId(authorisation.getGpsTransactionId());
         gpsMessageProcessed.setDebitCardId(authorisation.getDebitCardId());
-
-        //mocked data!
-        gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(0));
+        gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(authorisation.getSettlementAmount()));
+        gpsMessageProcessed.setWirecardCurrency(authorisation.getSettlementCurrency());
         gpsMessageProcessed.setFeesAmount(DecimalTypeUtils.toDecimal(0));
-
-        //gpsMessageProcessed.setTransactionTimestamp(authorisation.getTxnGPSDate().toString());      //todo: is this a correct field?
         gpsMessageProcessed.setEhiResponse(response);
         gpsMessageProcessed.setSpendGroup(authorisation.getSpendGroup());
         gpsMessageProcessed.setTransactionTimestamp(new Date().getTime());
         gpsMessageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(earmarkAmount));
         gpsMessageProcessed.setBlockedClientCurrency(earmarkCurrency);
+        if (settings != null) {
+            gpsMessageProcessed.setInternalAccountCurrency(settings.getLinkedAccountCurrency());
+            gpsMessageProcessed.setInternalAccountId(settings.getLinkedAccountId());
+        }
         LOG.debug("Message generated. Parameters: {}", gpsMessageProcessed);
         return gpsMessageProcessed;
     }
