@@ -31,23 +31,22 @@ public class ProcessOfflineTransactionBolt extends BasicRichBolt {
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "gpsMessage"));
-        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData", "exceptionMessage", "exceptionStackTrace"));
     }
 
     @Override
     public void execute(Tuple tuple) {
 
-        String key = tuple.getStringByField("key");
-        String processId = tuple.getStringByField("processId");
-        Message eventData = (Message) tuple.getValueByField("eventData");
-
-        LOG.info("Key: {} | ProcessId: {} | Processing offline transaction. MessageID: {}", key, processId, tuple.getMessageId());
-
         try {
+            String key = tuple.getStringByField("key");
+            String processId = tuple.getStringByField("processId");
+            Message eventData = (Message) tuple.getValueByField("eventData");
+
+            LOG.debug("Key: {} | ProcessId: {} | Processing offline transaction", key, processId);
+
             PresentmentMessage presentment = (PresentmentMessage) tuple.getValueByField("gpsMessage");
             List<LinkedAccount> linkedAccounts = (List<LinkedAccount>) tuple.getValueByField("retrieveValue");
 
-            LOG.info("Key: {} | ProcessId: {} | " + "Selecting linked account. CardTransactionId: {}, Transaction date: {}", key, processId,
+            LOG.debug("Key: {} | ProcessId: {} | " + "Selecting linked account. CardTransactionId: {}, Transaction date: {}", key, processId,
                     eventData.getCustRef(), eventData.getPOSTimeDE12());
 
 
@@ -76,16 +75,8 @@ public class ProcessOfflineTransactionBolt extends BasicRichBolt {
 
         }catch (Exception e){
 
-            LOG.error("Key: {} | ProcessId: {} |Error when processing Linked Accounts. Tuple: {}, Message: {}, Error: {}", key, processId, tuple, e.getMessage(), e);
-
-            Map<String, Object> values = new HashMap<>();
-            values.put("key", key);
-            values.put("processId", processId);
-            values.put("eventData", eventData);
-            values.put("exceptionMessage", ExceptionUtils.getMessage(e));
-            values.put("exceptionStackTrace", ExceptionUtils.getStackTrace(e));
-
-            send(CardPresentmentDSLTopology.ERROR_STREAM, tuple, values);
+            LOG.error("Error when processing Linked Accounts. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
+            error(e, tuple);
         }
 
 

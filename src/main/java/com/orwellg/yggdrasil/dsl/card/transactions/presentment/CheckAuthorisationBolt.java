@@ -30,7 +30,6 @@ public class CheckAuthorisationBolt extends BasicRichBolt {
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "gpsMessage"));
         addFielsDefinition(CardPresentmentDSLTopology.OFFLINE_PRESENTMENT_STREAM, Arrays.asList("key", "processId", "eventData", "gpsMessage"));
-        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData", "exceptionMessage", "exceptionStackTrace"));
     }
 
     @Override
@@ -41,7 +40,7 @@ public class CheckAuthorisationBolt extends BasicRichBolt {
             String key = (String) tuple.getValueByField("key");
             String originalProcessId = (String)tuple.getValueByField("processId");
 
-            LOG.debug("Key: {} | ProcessId: {} | Authorisation retrieved from database. Starting validation process", key, originalProcessId);
+            LOG.debug("Key: {} | ProcessId: {} | Card Transactions retrieved from database. Starting validation process", key, originalProcessId);
 
             Message eventData = (Message) tuple.getValueByField("eventData");
             PresentmentMessage message = (PresentmentMessage) tuple.getValueByField("gpsMessage");
@@ -50,29 +49,21 @@ public class CheckAuthorisationBolt extends BasicRichBolt {
             CardTransaction lastTransaction = authorisationService.getLast(cardTransactions, eventData.getTXnID());
 
             if (lastTransaction != null){
-                LOG.debug("Key: {} | ProcessId: {} | Processing Presentment. GpsTransactionId: {}, GpsTransactionLink: {}", key, originalProcessId, eventData.getTXnID(), eventData.getTransLink());
+                LOG.info("Key: {} | ProcessId: {} | Processing Online Presentment. GpsTransactionId: {}, GpsTransactionLink: {}", key, originalProcessId, eventData.getTXnID(), eventData.getTransLink());
 
                 message = message.UpdateWithAuthorisationData(lastTransaction);
-
                 Map<String, Object> values = getReturnValues(key, originalProcessId, eventData, message);
                 send(tuple, values);
             }
             else {
-                LOG.debug("Key: {} | ProcessId: {} | Processing Offline Presentment. GpsTransactionId: {}, GpsTransactionLink: {}. Continuing with Offline PresentmentMessage flow", key, originalProcessId, eventData.getTXnID(), eventData.getTransLink());
+                LOG.info("Key: {} | ProcessId: {} | Processing Offline Presentment. GpsTransactionId: {}, GpsTransactionLink: {}. Continuing with Offline PresentmentMessage flow", key, originalProcessId, eventData.getTXnID(), eventData.getTransLink());
                 Map<String, Object> values = getReturnValues(key, originalProcessId, eventData, message);
                 send(CardPresentmentDSLTopology.OFFLINE_PRESENTMENT_STREAM, tuple, values);
             }
 
         }catch (Exception e) {
-
             LOG.error("Error when processing PresentmentMessage Message. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
-            Map<String, Object> values = new HashMap<>();
-            values.put("key", tuple.getValueByField("key"));
-            values.put("processId", tuple.getValueByField("processId"));
-            values.put("eventData", tuple.getValueByField("eventData"));
-            values.put("exceptionMessage", ExceptionUtils.getMessage(e));
-            values.put("exceptionStackTrace", ExceptionUtils.getStackTrace(e));
-            send(CardPresentmentDSLTopology.ERROR_STREAM, tuple, values);
+            error(e, tuple);
         }
     }
 

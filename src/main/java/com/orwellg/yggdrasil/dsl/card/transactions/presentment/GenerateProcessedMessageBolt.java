@@ -49,7 +49,6 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "message"));
-        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData", "exceptionMessage", "exceptionStackTrace"));
     }
 
     @Override
@@ -59,14 +58,13 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
         String originalProcessId = (String) tuple.getValueByField("processId");
         Message eventData = (Message) tuple.getValueByField("eventData");
 
-        LOG.info("Key: {} | ProcessId: {} | Preparing Response. GpsTransactionId: {}, GpsTransactionLink: {}", key, originalProcessId, eventData.getTXnID(),
+        LOG.debug("Key: {} | ProcessId: {} | Preparing Response. GpsTransactionId: {}, GpsTransactionLink: {}", key, originalProcessId, eventData.getTXnID(),
                 eventData.getTransLink());
 
         try {
 
             PresentmentMessage presentment = (PresentmentMessage) tuple.getValueByField("gpsMessage");
             List<FeeSchema> schema = (List<FeeSchema>) tuple.getValueByField("retrieveValue");
-
 
             FeeSchema fees = feeValidatorService.getLast(schema);
 
@@ -77,7 +75,6 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
             }
             LOG.debug("Key: {} | ProcessId: {} | Selected Fee Schema. Percentge: {}, Amount: {}, Type: {}, ",
                     key, originalProcessId, fees.getPercentage(), fees.getAmount(), fees.getFeeType());
-
 
             BigDecimal settlementAmount = presentment.getSettlementAmount();
             presentment.setFeeAmount(accountingService.getFeeAmount(fees, settlementAmount));
@@ -95,30 +92,21 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
             values.put("eventData", eventData);
             values.put("message", RawMessageUtils.encodeToString(Event.SCHEMA$, presentmentEvent));
 
-            LOG.info("PTransaction Amounts calculated. GpsTransactionId: {}, GpsTransactionLink: {}, key: {}, processId: {}", eventData.getTXnID(),
-                        eventData.getTransLink(), key, originalProcessId);
             send(tuple, values);
-
+            LOG.info(" Key: {} | ProcessId: {} | GPS Presentment Message Processed. Response sent to kafka topic. GpsTransactionId: {}, Gps TransactionLink: {}",
+                    key, originalProcessId, eventData.getTXnID(),  eventData.getTransLink());
 
         }catch(Exception e){
-            LOG.error("Error when processing Linked Accounts. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
-
-            Map<String, Object> values = new HashMap<>();
-            values.put("key", tuple.getValueByField("key"));
-            values.put("processId", tuple.getValueByField("processId"));
-            values.put("eventData", tuple.getValueByField("eventData"));
-            values.put("exceptionMessage", ExceptionUtils.getMessage(e));
-            values.put("exceptionStackTrace", ExceptionUtils.getStackTrace(e));
-
-            send(CardPresentmentDSLTopology.ERROR_STREAM, tuple, values);
-            LOG.info("Error when processing Linked Accounts - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
+            LOG.error("Error when generating response message. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);
+            error(e, tuple);
         }
     }
 
     private Event generteEvent(String eventName, String source, String parentKey, Object eventData){
 
-        LOG.debug("Generating event with presentment data");
+        LOG.trace("Generating event with presentment data");
 
+        //todo: should we use the key generator service?
         String uuid = UUID.randomUUID().toString();
 
         // Create the event type
@@ -146,7 +134,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
         event.setProcessIdentifier(processIdentifier);
         event.setEntityIdentifier(entityIdentifier);
 
-        LOG.debug("Eevent with presentment data generated correctly. Parameters: {}", eventData);
+        LOG.trace("Eevent with presentment data generated correctly. Parameters: {}", eventData);
 
         return event;
     }

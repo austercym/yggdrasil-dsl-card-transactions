@@ -18,13 +18,7 @@ import java.util.Map;
 
 public class EventToPresentmentBolt extends com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventProcessBolt {
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1L;
-
     private final static Logger LOG = LogManager.getLogger(KafkaEventProcessBolt.class);
-
     private PresentmentMessageMapper mapper;
 
     @Override
@@ -36,12 +30,11 @@ public class EventToPresentmentBolt extends com.orwellg.umbrella.commons.storm.t
     @Override
     public void sendNextStep(Tuple input, Event event) {
 
-        String key = event.getEvent().getKey();
-        String processId = event.getProcessIdentifier().getUuid();
-
         try {
 
-            LOG.info("Key: {} | ProcessId: {} | Received GPS message event", key, processId);
+            String key = event.getEvent().getKey();
+            String processId = event.getProcessIdentifier().getUuid();
+            LOG.info("Key: {} | ProcessId: {} | Received GPS message event. Processing Started", key, processId);
 
             // Get the JSON message with the data
             Message eventData = gson.fromJson(event.getEvent().getData(), Message.class);
@@ -55,23 +48,18 @@ public class EventToPresentmentBolt extends com.orwellg.umbrella.commons.storm.t
 
             send(input, values);
 
-            LOG.info("| Key: {} | ProcessId: {}| GPS message event sent.", key, processId);
-        }catch (Exception e){
-            LOG.error("| Key: {} | ProcessId: {} | Error occurred when processing message from Kafka. Error: {}, Event: {}", key, processId, e, event);
+            LOG.debug("Key: {} | ProcessId: {} | GPS message event passed down the stream.", key, processId);
 
-            Map<String, Object> values = new HashMap<>();
-            values.put("key", key);
-            values.put("processId", processId);
-            values.put("eventData", event);
-            values.put("exceptionMessage", ExceptionUtils.getMessage(e));
-            values.put("exceptionStackTrace", ExceptionUtils.getStackTrace(e));
+        }catch (Exception e){
+
+            LOG.error("Error occurred when processing message from Kafka. Error: {}, Event: {}", e, event);
+            error(e, input);
         }
     }
 
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "gpsMessage"));
-        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData", "exceptionMessage", "exceptionStackTrace"));
     }
 
 }
