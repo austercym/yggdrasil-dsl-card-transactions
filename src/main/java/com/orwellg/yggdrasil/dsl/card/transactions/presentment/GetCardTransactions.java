@@ -27,7 +27,6 @@ public class GetCardTransactions extends ScyllaRichBolt<List<CardTransaction>, M
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "retrieveValue", "gpsMessage"));
-        addFielsDefinition(CardPresentmentDSLTopology.ERROR_STREAM, Arrays.asList("key", "processId", "eventData", "exceptionMessage", "exceptionStackTrace"));
     }
 
 
@@ -50,8 +49,10 @@ public class GetCardTransactions extends ScyllaRichBolt<List<CardTransaction>, M
 
     @Override
     public void execute(Tuple input) {
-
         try {
+            String key = input.getStringByField("key");
+            String processId = input.getStringByField("processId");
+            LOG.info("Key: {} | ProcessId: {} | Retrieving Card Transactions from db", key, processId);
 
             Map<String, Object> values = new HashMap<>();
             values.put("key", input.getStringByField("key"));
@@ -59,21 +60,11 @@ public class GetCardTransactions extends ScyllaRichBolt<List<CardTransaction>, M
             values.put("eventData", input.getValueByField("eventData"));
             values.put("gpsMessage", input.getValueByField("gpsMessage"));
             values.put("retrieveValue", retrieve((Message) input.getValueByField("eventData")));
-
             send(input, values);
+
         } catch (Exception e) {
-
-            LOG.error("Error retrieving fee schema history information. Message: {}", input, e.getMessage(), e);
-
-            Map<String, Object> values = new HashMap<>();
-            values.put("key", input.getValueByField("key"));
-            values.put("processId", input.getValueByField("processId"));
-            values.put("eventData", input.getValueByField("eventData"));
-            values.put("exceptionMessage", ExceptionUtils.getMessage(e));
-            values.put("exceptionStackTrace", ExceptionUtils.getStackTrace(e));
-
-            send(CardPresentmentDSLTopology.ERROR_STREAM, input, values);
-            LOG.info("Error when retrieving CardTransactions from database - error send to corresponded kafka topic. Tuple: {}, Message: {}, Error: {}", input, e.getMessage(), e);
+            LOG.error("Error retrieving Card Transactions from db. Tuple: {}, Message: {}", input, e.getMessage(), e);
+            error(e, input);
         }
     }
 
