@@ -1,6 +1,5 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
-import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.avro.types.event.EntityIdentifierType;
 import com.orwellg.umbrella.avro.types.event.Event;
 import com.orwellg.umbrella.avro.types.event.EventType;
@@ -9,8 +8,6 @@ import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.FeeSchema;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionType;
-import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.types.utils.avro.RawMessageUtils;
 import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
@@ -20,15 +17,21 @@ import com.orwellg.yggdrasil.dsl.card.transactions.model.PresentmentMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.presentment.services.FeeValidationService;
 import com.orwellg.yggdrasil.dsl.card.transactions.presentment.services.ResponseService;
 import com.orwellg.yggdrasil.dsl.card.transactions.services.AccountingOperationsService;
-import com.orwellg.yggdrasil.dsl.card.transactions.services.FeeValidatorService;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
+import com.orwellg.yggdrasil.net.client.producer.CommandProducerConfig;
+import com.orwellg.yggdrasil.net.client.producer.GeneratorIdCommandProducer;
+import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.common.protocol.SecurityProtocol;
+import org.apache.kafka.common.utils.Time;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.tuple.Tuple;
+
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.*;
 
 public class GenerateProcessedMessageBolt extends BasicRichBolt {
@@ -36,6 +39,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
     private FeeValidationService feeValidatorService;
     private AccountingOperationsService accountingService;
     private ResponseService responseService;
+    private GeneratorIdCommandProducer idGeneratorClient;
     private static final Logger LOG = LogManager.getLogger(GenerateProcessedMessageBolt.class);
 
     @Override
@@ -44,6 +48,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
         accountingService = new AccountingOperationsService();
         feeValidatorService = new FeeValidationService();
         responseService = new ResponseService();
+        initializeIdGeneratorClient();
     }
 
     @Override
@@ -81,7 +86,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
             presentment.setBlockedClientAmount(accountingService.calculateBlockedClientAmount(settlementAmount, presentment.getFeeAmount()));
 
             GpsMessageProcessed messageProcessed = responseService.generateResponse(presentment);
-            Event presentmentEvent = generteEvent(this.getClass().getName()
+            Event presentmentEvent = generateEvent(this.getClass().getName()
                         , CardTransactionEvents.RESPONSE_MESSAGE.getEventName()
                         , key
                         , messageProcessed);
@@ -102,19 +107,27 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
         }
     }
 
-    private Event generteEvent(String eventName, String source, String parentKey, Object eventData){
+    private void initializeIdGeneratorClient() {
+        Properties props = new Properties();
+        props.setProperty(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, SecurityProtocol.PLAINTEXT.name());
+        props.setProperty(CommandProducerConfig.BOOTSTRAP_SERVERS_CONFIG, ComponentFactory.getConfigurationParams().getZookeeperConnection());
+        props.setProperty(CommandProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+        props.setProperty(CommandProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+
+        idGeneratorClient = new GeneratorIdCommandProducer(new CommandProducerConfig(props), 1, Time.SYSTEM);
+    }
+
+    private Event generateEvent(String eventName, String source, String parentKey, Object eventData){
 
         LOG.trace("Generating event with presentment data");
 
-        //todo: should we use the key generator service?
-        String uuid = UUID.randomUUID().toString();
+        String uuid = retrieveResponseKey();
 
         // Create the event type
         EventType eventType = new EventType();
         eventType.setName(eventName);
         eventType.setVersion(Constants.getDefaultEventVersion()); //??
-        eventType.setParentKey(Constants.EMPTY);
-        eventType.setKey("EVENT-" + uuid); //todo: should this be the key?
+        eventType.setKey(uuid);
         eventType.setSource(source);
         eventType.setParentKey(parentKey);
         SimpleDateFormat format = new SimpleDateFormat(Constants.getDefaultEventTimestampFormat());
@@ -122,7 +135,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
         eventType.setData(eventData.toString());
 
         ProcessIdentifierType processIdentifier = new ProcessIdentifierType();
-        processIdentifier.setUuid("PROCESS-" + uuid);
+        processIdentifier.setUuid(uuid);
 
         EntityIdentifierType entityIdentifier = new EntityIdentifierType();
         entityIdentifier.setEntity(Constants.IPAGOO_ENTITY);
@@ -134,9 +147,21 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
         event.setProcessIdentifier(processIdentifier);
         event.setEntityIdentifier(entityIdentifier);
 
-        LOG.trace("Eevent with presentment data generated correctly. Parameters: {}", eventData);
+        LOG.trace("Event with presentment data generated correctly. Parameters: {}", eventData);
 
         return event;
     }
 
+    private String retrieveResponseKey() {
+
+        LOG.debug("Retrieving response message key ...");
+        String id;
+        try {
+            id = idGeneratorClient.getGeneralUniqueId();
+        } catch (Exception e) {
+            LOG.error("Id generator client exception (a random id has been generated locally) - {}", e.getMessage(), e);
+            id = UUID.randomUUID().toString() + "_" + Instant.now().hashCode();
+        }
+        return id;
+    }
 }

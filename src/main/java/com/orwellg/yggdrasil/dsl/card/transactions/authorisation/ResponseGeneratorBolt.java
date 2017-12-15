@@ -151,7 +151,6 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         EventType eventType = new EventType();
         eventType.setName(eventName);
         eventType.setVersion(Constants.getDefaultEventVersion());
-        eventType.setParentKey(Constants.EMPTY);
         eventType.setKey(responseKey);
         eventType.setSource(source);
         eventType.setParentKey(parentKey);
