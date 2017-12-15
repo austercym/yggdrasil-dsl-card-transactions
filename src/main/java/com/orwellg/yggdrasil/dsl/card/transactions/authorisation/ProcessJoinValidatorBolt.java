@@ -86,6 +86,7 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<AuthorisationMessag
             values.put(Fields.MERCHANT_VALIDATION_RESULT, merchantFuture.get());
             values.put(Fields.VELOCITY_LIMITS_VALIDATION_RESULT, velocityLimitsFuture.get());
             values.put(Fields.BALANCE_VALIDATION_RESULT, balanceFuture.get());
+            values.put(Fields.RESPONSE_KEY, input.getValueByField(Fields.RESPONSE_KEY));
 
             send(input, values);
 
@@ -101,7 +102,7 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<AuthorisationMessag
                 Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.CARD_SETTINGS, Fields.TRANSACTION_LOG,
                 Fields.STATUS_VALIDATION_RESULT, Fields.TRANSACTION_TYPE_VALIDATION_RESULT,
                 Fields.MERCHANT_VALIDATION_RESULT, Fields.VELOCITY_LIMITS_VALIDATION_RESULT,
-                Fields.BALANCE_VALIDATION_RESULT));
+                Fields.BALANCE_VALIDATION_RESULT, Fields.RESPONSE_KEY));
     }
 
     private CompletableFuture<ValidationResult> validate(

@@ -7,6 +7,7 @@ class Fields {
     static final String CARD_SETTINGS = "cardSettings";
     static final String TRANSACTION_LOG = "transactionLog";
     static final String SPENDING_TOTALS = "spendingTotals";
+    static final String RESPONSE_KEY = "responseKey";
     static final String STATUS_VALIDATION_RESULT = "statusValidationResult";
     static final String TRANSACTION_TYPE_VALIDATION_RESULT = "transactionTypeValidationResult";
     static final String MERCHANT_VALIDATION_RESULT = "merchantValidationResult";

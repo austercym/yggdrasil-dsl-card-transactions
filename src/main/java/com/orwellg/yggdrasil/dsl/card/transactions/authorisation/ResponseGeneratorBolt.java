@@ -22,7 +22,10 @@ import org.apache.storm.tuple.Tuple;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ResponseGeneratorBolt extends BasicRichBolt {
 
@@ -51,10 +54,11 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
                     (ValidationResult) input.getValueByField(Fields.VELOCITY_LIMITS_VALIDATION_RESULT);
             ValidationResult balanceValidationResult =
                     (ValidationResult) input.getValueByField(Fields.BALANCE_VALIDATION_RESULT);
+            String responseKey = input.getStringByField(Fields.RESPONSE_KEY);
 
             String logPrefix = String.format(
-                    "[TransLink: %s, TxnId: %s, DebitCardId: %s, Token: %s, Amount: %s %s] ",
-                    event.getGpsTransactionLink(), event.getGpsTransactionId(),
+                    "[Key: %s, TransLink: %s, TxnId: %s, DebitCardId: %s, Token: %s, Amount: %s %s] ",
+                    parentKey, event.getGpsTransactionLink(), event.getGpsTransactionId(),
                     event.getDebitCardId(), event.getCardToken(),
                     event.getTransactionAmount(), event.getTransactionCurrency());
             LOG.debug("{}Generating response for authorisation message...", logPrefix);
@@ -95,7 +99,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
 
             Event responseEvent = generateEvent(
                     this.getClass().getName(), CardTransactionEvents.RESPONSE_MESSAGE.getEventName(), processedMessage,
-                    parentKey);
+                    responseKey, parentKey);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, input.getStringByField(Fields.KEY));
@@ -139,18 +143,15 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         return gpsMessageProcessed;
     }
 
-    private Event generateEvent(String source, String eventName, Object eventData, String parentKey) {
+    private Event generateEvent(String source, String eventName, Object eventData, String responseKey, String parentKey) {
 
         LOG.debug("Generating event with response data.");
-
-        String uuid = UUID.randomUUID().toString();
 
         // Create the event type
         EventType eventType = new EventType();
         eventType.setName(eventName);
         eventType.setVersion(Constants.getDefaultEventVersion());
-        eventType.setParentKey(Constants.EMPTY);
-        eventType.setKey("EVENT-" + uuid);
+        eventType.setKey(responseKey);
         eventType.setSource(source);
         eventType.setParentKey(parentKey);
         SimpleDateFormat format = new SimpleDateFormat(Constants.getDefaultEventTimestampFormat());
@@ -158,7 +159,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         eventType.setData(eventData.toString());
 
         ProcessIdentifierType processIdentifier = new ProcessIdentifierType();
-        processIdentifier.setUuid("PROCESS-" + uuid);
+        processIdentifier.setUuid(responseKey);
 
         EntityIdentifierType entityIdentifier = new EntityIdentifierType();
         entityIdentifier.setEntity(Constants.IPAGOO_ENTITY);
