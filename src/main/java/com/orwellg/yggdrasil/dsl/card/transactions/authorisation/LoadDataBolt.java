@@ -116,7 +116,9 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
             CompletableFuture<AccountTransactionLog> accountTransactionLogFuture =
                     retrieveAccountTransactionLog(settingsFuture, logPrefix);
             CompletableFuture<SpendingTotalAmounts> totalFuture =
-                    retrieveTotalAmounts(cardId, totalType, new Date(), logPrefix);
+                    eventData.getIsBalanceEnquiry()
+                            ? CompletableFuture.completedFuture(null)
+                            : retrieveTotalAmounts(cardId, totalType, new Date(), logPrefix);
             CompletableFuture<String> responseKeyFuture = retrieveResponseKey();
 
             Map<String, Object> values = new HashMap<>();

@@ -67,13 +67,21 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<AuthorisationMessag
             CompletableFuture<ValidationResult> statusFuture =
                     validate("Card status", statusValidator, eventData, settings, logPrefix);
             CompletableFuture<ValidationResult> transactionTypeFuture =
-                    validate("Transaction type", transactionTypeValidator, eventData, settings, logPrefix);
+                    eventData.getIsBalanceEnquiry()
+                            ? CompletableFuture.completedFuture(null)
+                            : validate("Transaction type", transactionTypeValidator, eventData, settings, logPrefix);
             CompletableFuture<ValidationResult> merchantFuture =
-                    validate("Merchant", merchantValidator, eventData, settings, logPrefix);
+                    eventData.getIsBalanceEnquiry()
+                            ? CompletableFuture.completedFuture(null)
+                            : validate("Merchant", merchantValidator, eventData, settings, logPrefix);
             CompletableFuture<ValidationResult> velocityLimitsFuture =
-                    validateVelocityLimits(eventData, settings, totalAmounts, logPrefix);
+                    eventData.getIsBalanceEnquiry()
+                            ? CompletableFuture.completedFuture(null)
+                            : validateVelocityLimits(eventData, settings, totalAmounts, logPrefix);
             CompletableFuture<ValidationResult> balanceFuture =
-                    validateBalance(eventData, accountTransactionLog, logPrefix);
+                    eventData.getIsBalanceEnquiry()
+                            ? CompletableFuture.completedFuture(null)
+                            : validateBalance(eventData, accountTransactionLog, logPrefix);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);

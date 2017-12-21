@@ -22,6 +22,7 @@ public class AuthorisationMessage implements Serializable {
     private BigDecimal transactionAmount;
     private String transactionCurrency;
     private CreditDebit creditDebit;
+    private Boolean isBalanceEnquiry;
 
     public Message getOriginalMessage() {
         return originalMessage;
@@ -133,5 +134,13 @@ public class AuthorisationMessage implements Serializable {
 
     public void setCreditDebit(CreditDebit creditDebit) {
         this.creditDebit = creditDebit;
+    }
+
+    public Boolean getIsBalanceEnquiry() {
+        return isBalanceEnquiry;
+    }
+
+    public void setIsBalanceEnquiry(Boolean balanceEnquiry) {
+        isBalanceEnquiry = balanceEnquiry;
     }
 }
