@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 public class GpsMessageMapper {
 
+    static final String BALANCE_INQUIRY_SERVICE = "30";
     private final CardPresenceResolver cardPresenceResolver;
     private final TransactionTypeResolver transactionTypeResolver;
     private final Map<String, String> availableCurrencies;
@@ -52,6 +53,7 @@ public class GpsMessageMapper {
         if (message.getTxnAmt() != null)
             model.setTransactionAmount(BigDecimal.valueOf(message.getTxnAmt()));
         model.setTransactionCurrency(currencyFromNumericCode(message.getTxnCCy()));
+        model.setIsBalanceEnquiry(isBalanceEnquiry(message.getProcCode()));
         return model;
     }
 
@@ -63,5 +65,9 @@ public class GpsMessageMapper {
         return MerchantCategoryCode.ATM.equals(message.getMCCCode())
                 ? SpendGroup.ATM
                 : SpendGroup.POS;
+    }
+
+    private Boolean isBalanceEnquiry(String procCode){
+        return procCode != null && procCode.startsWith(BALANCE_INQUIRY_SERVICE);
     }
 }

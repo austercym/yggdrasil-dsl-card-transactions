@@ -67,7 +67,19 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
             ResponseMsg response = new ResponseMsg();
             BigDecimal earmarkAmount = BigDecimal.ZERO;
             String earmarkCurrency = null;
-            if (!balanceValidationResult.getIsValid()) {
+            if (event.getIsBalanceEnquiry()) {
+                if (statusValidationResult.getIsValid()) {
+                    responseCode = ResponseCode.ALL_GOOD;
+                    if (accountTransactionLog != null) {
+                        response.setAvlBalance(accountTransactionLog.getActualBalance() == null
+                                ? 0
+                                : accountTransactionLog.getActualBalance().doubleValue());
+                        response.setCurBalance(accountTransactionLog.getLedgerBalance() == null
+                                ? 0
+                                : accountTransactionLog.getLedgerBalance().doubleValue());
+                    }
+                }
+            } else if (!balanceValidationResult.getIsValid()) {
                 responseCode = ResponseCode.INSUFFICIENT_FUNDS;
             } else if (!velocityLimitsValidationResult.getIsValid()) {
                 responseCode = ResponseCode.EXCEEDS_WITHDRAWAL_AMOUNT_LIMIT;
