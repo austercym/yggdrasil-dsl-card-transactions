@@ -3,7 +3,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.authorisation;
 import com.orwellg.umbrella.avro.types.event.Event;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventProcessBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import com.orwellg.yggdrasil.dsl.card.transactions.services.GpsMessageMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,7 +39,7 @@ public class EventToAuthorisationMessageBolt extends KafkaEventProcessBolt {
 
 		// Get the JSON message with the data
 		Message eventData = gson.fromJson(event.getEvent().getData(), Message.class);
-		AuthorisationMessage message = mapper.map(eventData);
+		TransactionInfo message = mapper.map(eventData);
 
 		Map<String, Object> values = new HashMap<>();
 		values.put(Fields.KEY, key);

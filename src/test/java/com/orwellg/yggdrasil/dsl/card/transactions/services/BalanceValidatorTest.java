@@ -1,7 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
 import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTransactionLog;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -15,7 +15,7 @@ public class BalanceValidatorTest {
     @Test
     public void validateWhenActualBalanceNotExceededShouldReturnValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setSettlementAmount(BigDecimal.valueOf(19.09));
         message.setSettlementCurrency("EUR");
 
@@ -35,7 +35,7 @@ public class BalanceValidatorTest {
     @Test
     public void validateWhenActualBalanceExceededShouldReturnInvalid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setSettlementAmount(BigDecimal.valueOf(19.09));
         message.setSettlementCurrency("EUR");
 
@@ -55,7 +55,7 @@ public class BalanceValidatorTest {
     @Test
     public void validateWhenNoBalanceInformationShouldReturnInvalid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setSettlementAmount(BigDecimal.valueOf(19.09));
         message.setSettlementCurrency("EUR");
 

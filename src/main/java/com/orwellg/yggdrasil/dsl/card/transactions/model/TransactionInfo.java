@@ -7,8 +7,8 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionType;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
-public class AuthorisationMessage implements Serializable {
-    private Message originalMessage;
+public class TransactionInfo implements Serializable {
+    private Message message;
     private Long debitCardId;
     private SpendGroup spendGroup;
     private BigDecimal settlementAmount;
@@ -24,12 +24,12 @@ public class AuthorisationMessage implements Serializable {
     private CreditDebit creditDebit;
     private Boolean isBalanceEnquiry;
 
-    public Message getOriginalMessage() {
-        return originalMessage;
+    public Message getMessage() {
+        return message;
     }
 
-    public void setOriginalMessage(Message originalMessage) {
-        this.originalMessage = originalMessage;
+    public void setMessage(Message message) {
+        this.message = message;
     }
 
     public Long getDebitCardId() {

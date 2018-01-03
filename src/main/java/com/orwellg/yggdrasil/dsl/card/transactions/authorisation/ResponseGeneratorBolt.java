@@ -14,7 +14,7 @@ import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.types.utils.avro.RawMessageUtils;
 import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import com.orwellg.yggdrasil.dsl.card.transactions.services.ValidationResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,7 +39,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         LOG.debug("Preparing response for input={}", input);
 
         try {
-            AuthorisationMessage event = (AuthorisationMessage) input.getValueByField(Fields.EVENT_DATA);
+            TransactionInfo event = (TransactionInfo) input.getValueByField(Fields.EVENT_DATA);
             String parentKey = (String) input.getValueByField(Fields.KEY);
             CardSettings settings = (CardSettings) input.getValueByField(Fields.CARD_SETTINGS);
             AccountTransactionLog accountTransactionLog =
@@ -131,11 +131,11 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         }
     }
 
-    private GpsMessageProcessed generateMessageProcessed(AuthorisationMessage authorisation, ResponseMsg response, CardSettings settings, BigDecimal earmarkAmount, String earmarkCurrency) {
+    private GpsMessageProcessed generateMessageProcessed(TransactionInfo authorisation, ResponseMsg response, CardSettings settings, BigDecimal earmarkAmount, String earmarkCurrency) {
 
         LOG.debug("Generating gpsMessageProcessed message");
         GpsMessageProcessed gpsMessageProcessed = new GpsMessageProcessed();
-        gpsMessageProcessed.setGpsMessageType(authorisation.getOriginalMessage().getTxnType());
+        gpsMessageProcessed.setGpsMessageType(authorisation.getMessage().getTxnType());
         gpsMessageProcessed.setGpsTransactionLink(authorisation.getGpsTransactionLink());
         gpsMessageProcessed.setGpsTransactionId(authorisation.getGpsTransactionId());
         gpsMessageProcessed.setDebitCardId(authorisation.getDebitCardId());

@@ -2,7 +2,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.avro.types.gps.Message;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.CreditDebit;
 
 import java.math.BigDecimal;
@@ -28,9 +28,9 @@ public class GpsMessageMapper {
                 .collect(Collectors.toMap(c -> Integer.toString(c.getNumericCode()), Currency::getCurrencyCode));
     }
 
-    public AuthorisationMessage map(Message message) {
-        AuthorisationMessage model = new AuthorisationMessage();
-        model.setOriginalMessage(message);
+    public TransactionInfo map(Message message) {
+        TransactionInfo model = new TransactionInfo();
+        model.setMessage(message);
         if (message.getCustRef() != null && !message.getCustRef().isEmpty())
             model.setDebitCardId(Long.parseLong(message.getCustRef()));
         model.setSpendGroup(getSpendGroup(message));

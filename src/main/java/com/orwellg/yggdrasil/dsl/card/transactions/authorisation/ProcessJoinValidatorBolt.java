@@ -5,7 +5,7 @@ import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTransactionLog;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import com.orwellg.yggdrasil.dsl.card.transactions.services.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-public class ProcessJoinValidatorBolt extends JoinFutureBolt<AuthorisationMessage> {
+public class ProcessJoinValidatorBolt extends JoinFutureBolt<TransactionInfo> {
 
     private static final Logger LOG = LogManager.getLogger(ProcessJoinValidatorBolt.class);
 
@@ -53,7 +53,7 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<AuthorisationMessag
     }
 
     @Override
-    protected void join(Tuple input, String key, String processId, AuthorisationMessage eventData) {
+    protected void join(Tuple input, String key, String processId, TransactionInfo eventData) {
 
         String logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
@@ -114,7 +114,7 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<AuthorisationMessag
     }
 
     private CompletableFuture<ValidationResult> validate(
-            String name, AuthorisationValidator validator, AuthorisationMessage message, CardSettings settings, String logPrefix) {
+            String name, AuthorisationValidator validator, TransactionInfo message, CardSettings settings, String logPrefix) {
         return CompletableFuture.supplyAsync(
                 () -> {
                     ValidationResult result = validator.validate(message, settings);
@@ -124,7 +124,7 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<AuthorisationMessag
     }
 
     private CompletableFuture<ValidationResult> validateVelocityLimits(
-            AuthorisationMessage message, CardSettings settings, SpendingTotalAmounts totalCurrent, String logPrefix) {
+            TransactionInfo message, CardSettings settings, SpendingTotalAmounts totalCurrent, String logPrefix) {
         return CompletableFuture.supplyAsync(
                 () -> {
                     ValidationResult result = velocityLimitsValidator.validate(
@@ -135,7 +135,7 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<AuthorisationMessag
     }
 
     private CompletableFuture<ValidationResult> validateBalance(
-            AuthorisationMessage message, AccountTransactionLog accountTransactionLog, String logPrefix) {
+            TransactionInfo message, AccountTransactionLog accountTransactionLog, String logPrefix) {
         return CompletableFuture.supplyAsync(
                 () -> {
                     ValidationResult result = balanceValidator.validate(

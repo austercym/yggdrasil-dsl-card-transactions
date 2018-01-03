@@ -2,10 +2,9 @@ package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionType;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 
@@ -21,7 +20,7 @@ public class TransactionTypeValidatorTest {
     @Test
     public void validateWhenTransactionTypeAllowedReturnsIsValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setTransactionType(TransactionType.ONLINE);
         message.setSettlementCurrency("ZLT");
         CardSettings cardSettings = new CardSettings();
@@ -40,7 +39,7 @@ public class TransactionTypeValidatorTest {
     @Test
     public void validateWhenTransactionTypeNotAllowedReturnsNotValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setTransactionType(TransactionType.POS);
         message.setSettlementCurrency("ZLT");
         CardSettings cardSettings = new CardSettings();

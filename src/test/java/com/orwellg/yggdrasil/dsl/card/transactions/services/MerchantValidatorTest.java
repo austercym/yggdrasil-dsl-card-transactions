@@ -1,7 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import org.junit.Test;
 
 import java.util.Calendar;
@@ -17,7 +17,7 @@ public class MerchantValidatorTest {
     @Test
     public void validateWhenCardNotPresentAndMerchantNotOnTheListReturnsNotValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setMerchantId("bar");
         message.setIsCardPresent(false);
 
@@ -39,7 +39,7 @@ public class MerchantValidatorTest {
     @Test
     public void validateWhenCardNotPresentAndMerchantIsExpiredReturnsNotValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setMerchantId("foo");
         message.setIsCardPresent(false);
 
@@ -63,7 +63,7 @@ public class MerchantValidatorTest {
     @Test
     public void validateWhenCardNotPresentAndMerchantIsNotExpiredReturnsIsValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setMerchantId("foo");
         message.setIsCardPresent(false);
 
@@ -87,7 +87,7 @@ public class MerchantValidatorTest {
     @Test
     public void validateWhenCardNotPresentAndDatelessMerchantReturnsIsValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setMerchantId("foo");
         message.setIsCardPresent(false);
 
@@ -109,7 +109,7 @@ public class MerchantValidatorTest {
     @Test
     public void validateWhenCardPresentReturnsIsValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setMerchantId("foo");
         message.setIsCardPresent(true);
 
