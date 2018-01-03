@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.authorisation;
+package com.orwellg.yggdrasil.dsl.card.transactions.common;
 
 import com.orwellg.umbrella.avro.types.event.Event;
 import com.orwellg.umbrella.avro.types.gps.Message;
@@ -15,11 +15,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EventToAuthorisationMessageBolt extends KafkaEventProcessBolt {
+public class EventToTransactionInfoBolt extends KafkaEventProcessBolt {
 
 	private static final long serialVersionUID = 1L;
 
-	private final static Logger LOG = LogManager.getLogger(EventToAuthorisationMessageBolt.class);
+	private final static Logger LOG = LogManager.getLogger(EventToTransactionInfoBolt.class);
 
 	private GpsMessageMapper mapper;
 

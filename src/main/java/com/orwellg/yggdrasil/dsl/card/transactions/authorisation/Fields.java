@@ -1,9 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisation;
 
-class Fields {
-    static final String KEY = "key";
-    static final String PROCESS_ID = "processId";
-    static final String EVENT_DATA = "eventData";
+class Fields extends com.orwellg.yggdrasil.dsl.card.transactions.common.Fields {
     static final String CARD_SETTINGS = "cardSettings";
     static final String TRANSACTION_LOG = "transactionLog";
     static final String SPENDING_TOTALS = "spendingTotals";
