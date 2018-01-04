@@ -6,7 +6,7 @@ import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmount
 import com.orwellg.umbrella.commons.repositories.scylla.impl.TransactionEarmarksRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalEarmark;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionEarmark;
 import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
@@ -57,7 +57,7 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
         try {
             GpsMessageProcessed eventData = (GpsMessageProcessed) input.getValueByField(Fields.EVENT_DATA);
             SpendingTotalAmounts newSpendAmounts = (SpendingTotalAmounts) input.getValueByField(Fields.NEW_TOTAL_SPEND_AMOUNTS);
-            SpendingTotalEarmark newEarmark = (SpendingTotalEarmark) input.getValueByField(Fields.NEW_EARMARK);
+            TransactionEarmark newEarmark = (TransactionEarmark) input.getValueByField(Fields.NEW_EARMARK);
 
             if (newEarmark == null) {
                 LOG.info("{}No new earmark to save", logPrefix);

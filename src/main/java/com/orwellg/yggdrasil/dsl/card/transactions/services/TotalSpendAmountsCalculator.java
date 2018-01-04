@@ -3,7 +3,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.services;
 import com.orwellg.umbrella.avro.types.commons.Decimal;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalEarmark;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionEarmark;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -27,7 +27,7 @@ public class TotalSpendAmountsCalculator {
         this.dateTimeService = dateTimeService;
     }
 
-    public SpendingTotalAmounts recalculate(GpsMessageProcessed messageProcessed, SpendingTotalAmounts lastSpendingTotalAmounts, SpendingTotalEarmark earmark) {
+    public SpendingTotalAmounts recalculate(GpsMessageProcessed messageProcessed, SpendingTotalAmounts lastSpendingTotalAmounts, TransactionEarmark earmark) {
 
         Instant now = dateTimeService.now();
         LocalDate today = now.atZone(ZoneId.of("UTC")).toLocalDate();
@@ -78,7 +78,7 @@ public class TotalSpendAmountsCalculator {
         return result;
     }
 
-    private BigDecimal calculateNewAmount(BigDecimal currentAmount, Decimal blockedClientAmount, SpendingTotalEarmark earmark) {
+    private BigDecimal calculateNewAmount(BigDecimal currentAmount, Decimal blockedClientAmount, TransactionEarmark earmark) {
         BigDecimal newAmount = currentAmount.add(blockedClientAmount.getValue().abs());
 
         if (earmark != null) {

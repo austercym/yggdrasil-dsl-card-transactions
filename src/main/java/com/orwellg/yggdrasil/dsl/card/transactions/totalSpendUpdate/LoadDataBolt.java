@@ -9,7 +9,7 @@ import com.orwellg.umbrella.commons.repositories.scylla.impl.TransactionEarmarks
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalEarmark;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionEarmark;
 import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
@@ -79,7 +79,7 @@ public class LoadDataBolt extends JoinFutureBolt<GpsMessageProcessed> {
         try {
             CompletableFuture<SpendingTotalAmounts> totalAmountsFuture = retrieveTotalAmounts(
                     eventData.getDebitCardId(), eventData.getSpendGroup(), logPrefix);
-            CompletableFuture<SpendingTotalEarmark> earmarkFuture = "P".equalsIgnoreCase(eventData.getGpsMessageType())
+            CompletableFuture<TransactionEarmark> earmarkFuture = "P".equalsIgnoreCase(eventData.getGpsMessageType())
                     ? retrieveEarmark(eventData.getGpsTransactionLink(), logPrefix)
                     : CompletableFuture.completedFuture(null);
 
@@ -98,11 +98,11 @@ public class LoadDataBolt extends JoinFutureBolt<GpsMessageProcessed> {
         }
     }
 
-    private CompletableFuture<SpendingTotalEarmark> retrieveEarmark(String gpsTransactionLink, String logPrefix) {
+    private CompletableFuture<TransactionEarmark> retrieveEarmark(String gpsTransactionLink, String logPrefix) {
         return CompletableFuture.supplyAsync(
                 () -> {
                     LOG.info("{}Retrieving earmark for GpsTransactionLink={} ...", logPrefix, gpsTransactionLink);
-                    SpendingTotalEarmark earmark = ermarksRepository.getEarmark(gpsTransactionLink);
+                    TransactionEarmark earmark = ermarksRepository.getEarmark(gpsTransactionLink);
                     LOG.info("{}Earmark retrieved for GpsTransactionLink={}: {}", logPrefix, gpsTransactionLink, earmark);
                     return earmark;
                 });

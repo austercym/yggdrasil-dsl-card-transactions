@@ -3,7 +3,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.totalSpendUpdate;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalEarmark;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionEarmark;
 import com.orwellg.yggdrasil.dsl.card.transactions.services.TotalSpendAmountsCalculator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,9 +45,9 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
         try {
             GpsMessageProcessed eventData = (GpsMessageProcessed) input.getValueByField(Fields.EVENT_DATA);
             SpendingTotalAmounts spendAmounts = (SpendingTotalAmounts) input.getValueByField(Fields.TOTAL_AMOUNTS);
-            SpendingTotalEarmark earmark = (SpendingTotalEarmark) input.getValueByField(Fields.EARMARK);
+            TransactionEarmark earmark = (TransactionEarmark) input.getValueByField(Fields.EARMARK);
             SpendingTotalAmounts newSpendAmounts = null;
-            SpendingTotalEarmark newEarmark = null;
+            TransactionEarmark newEarmark = null;
 
             if (isAcceptedAuthorisation(eventData) || isPresentment(eventData)) {
                 newSpendAmounts = calculator.recalculate(eventData, spendAmounts, earmark);
@@ -60,7 +60,7 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
             }
 
             if (isAcceptedAuthorisation(eventData)) {
-                newEarmark = new SpendingTotalEarmark();
+                newEarmark = new TransactionEarmark();
                 newEarmark.setAmount(eventData.getBlockedClientAmount().getValue());
                 newEarmark.setGpsTransactionLink(eventData.getGpsTransactionLink());
                 newEarmark.setTimestamp(Instant.now());

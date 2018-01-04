@@ -3,7 +3,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.authorisationReversal;
 import com.orwellg.umbrella.commons.repositories.scylla.TransactionEarmarksRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.TransactionEarmarksRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalEarmark;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionEarmark;
 import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
@@ -16,7 +16,6 @@ import org.apache.storm.tuple.Tuple;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 public class LoadDataBolt extends BasicRichBolt {
 
@@ -56,7 +55,7 @@ public class LoadDataBolt extends BasicRichBolt {
         LOG.info("{}Retrieving earmark for key {}", logPrefix, key);
 
         try {
-            SpendingTotalEarmark earmark = getEarmark(eventData.getGpsTransactionLink(), logPrefix);
+            TransactionEarmark earmark = getEarmark(eventData.getGpsTransactionLink(), logPrefix);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
@@ -72,9 +71,9 @@ public class LoadDataBolt extends BasicRichBolt {
         }
     }
 
-    private SpendingTotalEarmark getEarmark(String gpsTransactionLink, String logPrefix) {
+    private TransactionEarmark getEarmark(String gpsTransactionLink, String logPrefix) {
         LOG.info("{}Retrieving earmark for GpsTransactionLink={} ...", logPrefix, gpsTransactionLink);
-        SpendingTotalEarmark earmark = ermarksRepository.getEarmark(gpsTransactionLink);
+        TransactionEarmark earmark = ermarksRepository.getEarmark(gpsTransactionLink);
         LOG.info("{}Earmark retrieved for GpsTransactionLink={}: {}", logPrefix, gpsTransactionLink, earmark);
         return earmark;
     }
