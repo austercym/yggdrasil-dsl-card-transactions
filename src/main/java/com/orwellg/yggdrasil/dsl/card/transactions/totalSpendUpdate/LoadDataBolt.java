@@ -3,9 +3,9 @@ package com.orwellg.yggdrasil.dsl.card.transactions.totalSpendUpdate;
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalEarmarksRepository;
+import com.orwellg.umbrella.commons.repositories.scylla.TransactionEarmarksRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
-import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalEarmarksRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.TransactionEarmarksRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
@@ -31,7 +31,7 @@ public class LoadDataBolt extends JoinFutureBolt<GpsMessageProcessed> {
 
     private SpendingTotalAmountsRepository amountsRepository;
 
-    private SpendingTotalEarmarksRepository ermarksRepository;
+    private TransactionEarmarksRepository ermarksRepository;
 
 
     public LoadDataBolt(String joinId) {
@@ -60,7 +60,7 @@ public class LoadDataBolt extends JoinFutureBolt<GpsMessageProcessed> {
         String nodeList = scyllaParams.getNodeList();
         String keyspace = scyllaParams.getKeyspace();
         amountsRepository = new SpendingTotalAmountsRepositoryImpl(nodeList, keyspace);
-        ermarksRepository = new SpendingTotalEarmarksRepositoryImpl(nodeList, keyspace);
+        ermarksRepository = new TransactionEarmarksRepositoryImpl(nodeList, keyspace);
     }
 
     @Override

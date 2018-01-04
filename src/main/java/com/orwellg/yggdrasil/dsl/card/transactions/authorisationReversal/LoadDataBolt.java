@@ -1,7 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisationReversal;
 
-import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalEarmarksRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalEarmarksRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.TransactionEarmarksRepository;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.TransactionEarmarksRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalEarmark;
 import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
@@ -24,7 +24,7 @@ public class LoadDataBolt extends BasicRichBolt {
 
     private Logger LOG = LogManager.getLogger(LoadDataBolt.class);
 
-    private SpendingTotalEarmarksRepository ermarksRepository;
+    private TransactionEarmarksRepository ermarksRepository;
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -37,7 +37,7 @@ public class LoadDataBolt extends BasicRichBolt {
         ScyllaParams scyllaParams = ComponentFactory.getConfigurationParams().getCardsScyllaParams();
         String nodeList = scyllaParams.getNodeList();
         String keyspace = scyllaParams.getKeyspace();
-        ermarksRepository = new SpendingTotalEarmarksRepositoryImpl(nodeList, keyspace);
+        ermarksRepository = new TransactionEarmarksRepositoryImpl(nodeList, keyspace);
     }
 
     @Override
