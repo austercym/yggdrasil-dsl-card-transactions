@@ -143,4 +143,17 @@ public class TransactionInfo implements Serializable {
     public void setIsBalanceEnquiry(Boolean balanceEnquiry) {
         isBalanceEnquiry = balanceEnquiry;
     }
+
+    @Override
+    public String toString() {
+        return "TransactionInfo{" +
+                "gpsTransactionLink='" + gpsTransactionLink + '\'' +
+                ", gpsTransactionId='" + gpsTransactionId + '\'' +
+                ", debitCardId=" + debitCardId +
+                ", transactionAmount=" + transactionAmount +
+                ", transactionCurrency='" + transactionCurrency + '\'' +
+                ", creditDebit=" + creditDebit +
+                ", transactionType=" + transactionType +
+                '}';
+    }
 }
