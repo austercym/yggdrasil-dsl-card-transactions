@@ -64,6 +64,8 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
                 newEarmark.setAmount(eventData.getBlockedClientAmount().getValue());
                 newEarmark.setGpsTransactionLink(eventData.getGpsTransactionLink());
                 newEarmark.setTimestamp(Instant.now());
+                newEarmark.setInternalAccountId(eventData.getInternalAccountId());
+                newEarmark.setInternalAccountCurrency(eventData.getInternalAccountCurrency());
             } else {
                 LOG.info(
                         "{}Earmark not needed - GpsMessageType={}, ResponseStatus={}",

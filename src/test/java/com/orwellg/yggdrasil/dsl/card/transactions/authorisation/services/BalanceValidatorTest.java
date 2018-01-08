@@ -1,7 +1,10 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.services;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services;
 
 import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTransactionLog;
+import com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services.BalanceValidator;
+import com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services.ValidationResult;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -27,9 +30,9 @@ public class BalanceValidatorTest {
         ValidationResult result = validator.validate(message, accountTransactionLog);
 
         // assert
-        assertNotNull(result);
-        assertTrue(result.getIsValid());
-        assertNull(result.getMessage());
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.getIsValid());
+        Assert.assertNull(result.getMessage());
     }
 
     @Test
@@ -47,9 +50,9 @@ public class BalanceValidatorTest {
         ValidationResult result = validator.validate(message, accountTransactionLog);
 
         // assert
-        assertNotNull(result);
-        assertFalse(result.getIsValid());
-        assertNotNull(result.getMessage());
+        Assert.assertNotNull(result);
+        Assert.assertFalse(result.getIsValid());
+        Assert.assertNotNull(result.getMessage());
     }
 
     @Test
@@ -63,8 +66,8 @@ public class BalanceValidatorTest {
         ValidationResult result = validator.validate(message, null);
 
         // assert
-        assertNotNull(result);
-        assertFalse(result.getIsValid());
-        assertNotNull(result.getMessage());
+        Assert.assertNotNull(result);
+        Assert.assertFalse(result.getIsValid());
+        Assert.assertNotNull(result.getMessage());
     }
 }

@@ -31,6 +31,8 @@ public class AuthorisationReversalDSLTopology {
     private static final String KAFKA_EVENT_READER = "kafka-event-reader";
     private static final String KAFKA_EVENT_SUCCESS_PROCESS = "kafka-event-success-process";
     private static final String GET_DATA = "get-data";
+    private static final String PROCESSED_MESSAGE_GENERATION = "processed-message-generation";
+    private static final String KAFKA_EVENT_SUCCESS_PRODUCER = "kafka-event-success-producer";
 
     public static final String KAFKA_ERROR_PRODUCER_COMPONENT_ID = "get-kafka-error-producer";
     public static final String KAFKA_EVENT_ERROR_PROCESS_COMPONENT_ID = "get-kafka-event-error-process";
@@ -58,8 +60,16 @@ public class AuthorisationReversalDSLTopology {
         kafkaEventProcess.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER, KafkaSpout.EVENT_SUCCESS_STREAM));
 
         // Get data from DB
-        GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadDataBolt(), config.getActionBoltHints());
+        GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadDataBolt(GET_DATA), config.getActionBoltHints());
         getDataBolt.addGrouping(new ShuffleGrouping(KAFKA_EVENT_SUCCESS_PROCESS));
+
+        // Generate processed message
+        GBolt<?> processedMessageBolt = new GRichBolt(PROCESSED_MESSAGE_GENERATION, new GenerateProcessedMessageBolt(), config.getActionBoltHints());
+        processedMessageBolt.addGrouping(new ShuffleGrouping(GET_DATA));
+
+        // Send a event with the result
+        GBolt<?> kafkaEventSuccessProducer = new GRichBolt(KAFKA_EVENT_SUCCESS_PRODUCER, new KafkaBoltWrapper(config.getKafkaPublisherBoltConfig(), String.class, String.class).getKafkaBolt(), config.getEventResponseHints());
+        kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping(PROCESSED_MESSAGE_GENERATION));
 
         ///////
         // GBolt for work with the errors
@@ -76,7 +86,7 @@ public class AuthorisationReversalDSLTopology {
         // Build the topology
         StormTopology topology = TopologyFactory.generateTopology(
                 kafkaEventReader,
-                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, getDataBolt));
+                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, getDataBolt, processedMessageBolt, kafkaEventSuccessProducer));
         LOG.info("GPS Authorisation reversal message processing topology created");
 
         // Create the basic config and upload the topology

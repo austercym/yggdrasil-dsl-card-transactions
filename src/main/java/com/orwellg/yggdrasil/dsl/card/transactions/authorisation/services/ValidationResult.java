@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.services;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services;
 
 import java.io.Serializable;
 
