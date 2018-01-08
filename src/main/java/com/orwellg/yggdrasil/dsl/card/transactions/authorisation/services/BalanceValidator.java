@@ -1,10 +1,10 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.services;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services;
 
 import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTransactionLog;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 
 public class BalanceValidator {
-    public ValidationResult validate(AuthorisationMessage message, AccountTransactionLog accountTransactionLog) {
+    public ValidationResult validate(TransactionInfo message, AccountTransactionLog accountTransactionLog) {
         if (accountTransactionLog == null)
             return ValidationResult.error("Account balance not available");
 

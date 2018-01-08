@@ -1,9 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisation;
 
-import com.orwellg.umbrella.avro.types.event.EntityIdentifierType;
 import com.orwellg.umbrella.avro.types.event.Event;
-import com.orwellg.umbrella.avro.types.event.EventType;
-import com.orwellg.umbrella.avro.types.event.ProcessIdentifierType;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.ResponseMsg;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
@@ -12,16 +9,15 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.ResponseCode;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.types.utils.avro.RawMessageUtils;
-import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
-import com.orwellg.yggdrasil.dsl.card.transactions.services.ValidationResult;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
+import com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services.ValidationResult;
+import com.orwellg.yggdrasil.dsl.card.transactions.utils.EventBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
 
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -39,7 +35,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         LOG.debug("Preparing response for input={}", input);
 
         try {
-            AuthorisationMessage event = (AuthorisationMessage) input.getValueByField(Fields.EVENT_DATA);
+            TransactionInfo event = (TransactionInfo) input.getValueByField(Fields.EVENT_DATA);
             String parentKey = (String) input.getValueByField(Fields.KEY);
             CardSettings settings = (CardSettings) input.getValueByField(Fields.CARD_SETTINGS);
             AccountTransactionLog accountTransactionLog =
@@ -109,7 +105,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
 
             GpsMessageProcessed processedMessage = generateMessageProcessed(event, response, settings, earmarkAmount, earmarkCurrency);
 
-            Event responseEvent = generateEvent(
+            Event responseEvent = new EventBuilder().buildResponseEvent(
                     this.getClass().getName(), CardTransactionEvents.RESPONSE_MESSAGE.getEventName(), processedMessage,
                     responseKey, parentKey);
 
@@ -131,11 +127,11 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         }
     }
 
-    private GpsMessageProcessed generateMessageProcessed(AuthorisationMessage authorisation, ResponseMsg response, CardSettings settings, BigDecimal earmarkAmount, String earmarkCurrency) {
+    private GpsMessageProcessed generateMessageProcessed(TransactionInfo authorisation, ResponseMsg response, CardSettings settings, BigDecimal earmarkAmount, String earmarkCurrency) {
 
         LOG.debug("Generating gpsMessageProcessed message");
         GpsMessageProcessed gpsMessageProcessed = new GpsMessageProcessed();
-        gpsMessageProcessed.setGpsMessageType(authorisation.getOriginalMessage().getTxnType());
+        gpsMessageProcessed.setGpsMessageType(authorisation.getMessage().getTxnType());
         gpsMessageProcessed.setGpsTransactionLink(authorisation.getGpsTransactionLink());
         gpsMessageProcessed.setGpsTransactionId(authorisation.getGpsTransactionId());
         gpsMessageProcessed.setDebitCardId(authorisation.getDebitCardId());
@@ -153,39 +149,6 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         }
         LOG.debug("Message generated. Parameters: {}", gpsMessageProcessed);
         return gpsMessageProcessed;
-    }
-
-    private Event generateEvent(String source, String eventName, Object eventData, String responseKey, String parentKey) {
-
-        LOG.debug("Generating event with response data.");
-
-        // Create the event type
-        EventType eventType = new EventType();
-        eventType.setName(eventName);
-        eventType.setVersion(Constants.getDefaultEventVersion());
-        eventType.setKey(responseKey);
-        eventType.setSource(source);
-        eventType.setParentKey(parentKey);
-        SimpleDateFormat format = new SimpleDateFormat(Constants.getDefaultEventTimestampFormat());
-        eventType.setTimestamp(format.format(new Date()));
-        eventType.setData(eventData.toString());
-
-        ProcessIdentifierType processIdentifier = new ProcessIdentifierType();
-        processIdentifier.setUuid(responseKey);
-
-        EntityIdentifierType entityIdentifier = new EntityIdentifierType();
-        entityIdentifier.setEntity(Constants.IPAGOO_ENTITY);
-        entityIdentifier.setBrand(Constants.IPAGOO_BRAND);
-
-        // Create the correspondent event
-        Event event = new Event();
-        event.setEvent(eventType);
-        event.setProcessIdentifier(processIdentifier);
-        event.setEntityIdentifier(entityIdentifier);
-
-        LOG.debug("Response event generated correctly. Parameters: {}", eventData);
-
-        return event;
     }
 
     @Override

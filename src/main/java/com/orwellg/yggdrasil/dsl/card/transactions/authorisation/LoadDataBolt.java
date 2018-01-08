@@ -13,7 +13,7 @@ import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTran
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
 import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import com.orwellg.yggdrasil.net.client.producer.CommandProducerConfig;
 import com.orwellg.yggdrasil.net.client.producer.GeneratorIdCommandProducer;
@@ -30,7 +30,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
+public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
 
     private static final long serialVersionUID = 1L;
 
@@ -102,7 +102,7 @@ public class LoadDataBolt extends JoinFutureBolt<AuthorisationMessage> {
     }
 
     @Override
-    protected void join(Tuple input, String key, String processId, AuthorisationMessage eventData) {
+    protected void join(Tuple input, String key, String processId, TransactionInfo eventData) {
 
         String logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 

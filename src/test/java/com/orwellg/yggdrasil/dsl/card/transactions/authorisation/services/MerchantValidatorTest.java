@@ -1,7 +1,10 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.services;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services;
 
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services.MerchantValidator;
+import com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services.ValidationResult;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Calendar;
@@ -17,7 +20,7 @@ public class MerchantValidatorTest {
     @Test
     public void validateWhenCardNotPresentAndMerchantNotOnTheListReturnsNotValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setMerchantId("bar");
         message.setIsCardPresent(false);
 
@@ -31,15 +34,15 @@ public class MerchantValidatorTest {
         ValidationResult result = validator.validate(message, cardSettings);
 
         // assert
-        assertNotNull(result);
-        assertFalse(result.getIsValid());
-        assertNotNull(result.getMessage());
+        Assert.assertNotNull(result);
+        Assert.assertFalse(result.getIsValid());
+        Assert.assertNotNull(result.getMessage());
     }
 
     @Test
     public void validateWhenCardNotPresentAndMerchantIsExpiredReturnsNotValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setMerchantId("foo");
         message.setIsCardPresent(false);
 
@@ -55,15 +58,15 @@ public class MerchantValidatorTest {
         ValidationResult result = validator.validate(message, cardSettings);
 
         // assert
-        assertNotNull(result);
-        assertFalse(result.getIsValid());
-        assertNotNull(result.getMessage());
+        Assert.assertNotNull(result);
+        Assert.assertFalse(result.getIsValid());
+        Assert.assertNotNull(result.getMessage());
     }
 
     @Test
     public void validateWhenCardNotPresentAndMerchantIsNotExpiredReturnsIsValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setMerchantId("foo");
         message.setIsCardPresent(false);
 
@@ -79,15 +82,15 @@ public class MerchantValidatorTest {
         ValidationResult result = validator.validate(message, cardSettings);
 
         // assert
-        assertNotNull(result);
-        assertTrue(result.getIsValid());
-        assertNull(result.getMessage());
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.getIsValid());
+        Assert.assertNull(result.getMessage());
     }
 
     @Test
     public void validateWhenCardNotPresentAndDatelessMerchantReturnsIsValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setMerchantId("foo");
         message.setIsCardPresent(false);
 
@@ -101,15 +104,15 @@ public class MerchantValidatorTest {
         ValidationResult result = validator.validate(message, cardSettings);
 
         // assert
-        assertNotNull(result);
-        assertTrue(result.getIsValid());
-        assertNull(result.getMessage());
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.getIsValid());
+        Assert.assertNull(result.getMessage());
     }
 
     @Test
     public void validateWhenCardPresentReturnsIsValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setMerchantId("foo");
         message.setIsCardPresent(true);
 
@@ -119,8 +122,8 @@ public class MerchantValidatorTest {
         ValidationResult result = validator.validate(message, cardSettings);
 
         // assert
-        assertNotNull(result);
-        assertTrue(result.getIsValid());
-        assertNull(result.getMessage());
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.getIsValid());
+        Assert.assertNull(result.getMessage());
     }
 }

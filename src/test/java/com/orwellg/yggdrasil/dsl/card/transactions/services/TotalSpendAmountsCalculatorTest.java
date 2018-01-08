@@ -2,7 +2,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalEarmark;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionEarmark;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -250,7 +250,7 @@ public class TotalSpendAmountsCalculatorTest {
         lastSpendingTotalAmounts.setDailyTotal(BigDecimal.valueOf(19));
         lastSpendingTotalAmounts.setAnnualTotal(BigDecimal.valueOf(2015));
 
-        SpendingTotalEarmark earmark = new SpendingTotalEarmark();
+        TransactionEarmark earmark = new TransactionEarmark();
         earmark.setAmount(BigDecimal.valueOf(9));
 
         Instant mockedNow = Instant.parse("2015-09-19t21:15:20Z");
@@ -280,7 +280,7 @@ public class TotalSpendAmountsCalculatorTest {
         lastSpendingTotalAmounts.setDailyTotal(BigDecimal.valueOf(19));
         lastSpendingTotalAmounts.setAnnualTotal(BigDecimal.valueOf(2015));
 
-        SpendingTotalEarmark earmark = new SpendingTotalEarmark();
+        TransactionEarmark earmark = new TransactionEarmark();
         earmark.setAmount(BigDecimal.valueOf(19));
 
         Instant mockedNow = Instant.parse("2015-09-19t21:15:20Z");
@@ -310,7 +310,7 @@ public class TotalSpendAmountsCalculatorTest {
         lastSpendingTotalAmounts.setDailyTotal(BigDecimal.valueOf(19));
         lastSpendingTotalAmounts.setAnnualTotal(BigDecimal.valueOf(2015));
 
-        SpendingTotalEarmark earmark = new SpendingTotalEarmark();
+        TransactionEarmark earmark = new TransactionEarmark();
         earmark.setAmount(BigDecimal.valueOf(3));
 
         Instant mockedNow = Instant.parse("2015-09-19t21:15:20Z");

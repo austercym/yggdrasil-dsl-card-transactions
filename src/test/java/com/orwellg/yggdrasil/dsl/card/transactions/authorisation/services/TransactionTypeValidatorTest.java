@@ -1,11 +1,13 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.services;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services;
 
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionType;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services.TransactionTypeValidator;
+import com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services.ValidationResult;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
+import junit.framework.TestCase;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 
@@ -21,7 +23,7 @@ public class TransactionTypeValidatorTest {
     @Test
     public void validateWhenTransactionTypeAllowedReturnsIsValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setTransactionType(TransactionType.ONLINE);
         message.setSettlementCurrency("ZLT");
         CardSettings cardSettings = new CardSettings();
@@ -32,15 +34,15 @@ public class TransactionTypeValidatorTest {
         ValidationResult result = validator.validate(message, cardSettings);
 
         // assert
-        assertNotNull(result);
-        assertTrue(result.getIsValid());
-        assertNull(result.getMessage());
+        TestCase.assertNotNull(result);
+        TestCase.assertTrue(result.getIsValid());
+        TestCase.assertNull(result.getMessage());
     }
 
     @Test
     public void validateWhenTransactionTypeNotAllowedReturnsNotValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setTransactionType(TransactionType.POS);
         message.setSettlementCurrency("ZLT");
         CardSettings cardSettings = new CardSettings();
@@ -51,8 +53,8 @@ public class TransactionTypeValidatorTest {
         ValidationResult result = validator.validate(message, cardSettings);
 
         // assert
-        assertNotNull(result);
-        assertFalse(result.getIsValid());
-        assertNotNull(result.getMessage());
+        TestCase.assertNotNull(result);
+        TestCase.assertFalse(result.getIsValid());
+        TestCase.assertNotNull(result.getMessage());
     }
 }

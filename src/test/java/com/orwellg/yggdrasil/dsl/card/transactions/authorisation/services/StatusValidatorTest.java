@@ -1,7 +1,11 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.services;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services;
 
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardStatus;
+import com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services.StatusValidator;
+import com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services.ValidationResult;
+import org.hamcrest.CoreMatchers;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,12 +57,12 @@ public class StatusValidatorTest {
         ValidationResult result = validator.validate(null, settings);
 
         // assert
-        assertNotNull(result);
-        assertEquals(expectedIsValid, result.getIsValid());
+        Assert.assertNotNull(result);
+        Assert.assertEquals(expectedIsValid, result.getIsValid());
         if (!expectedIsValid)
         {
-            assertNotNull(result.getMessage());
-            assertThat(result.getMessage().toLowerCase(), containsString(status.toString().toLowerCase()));
+            Assert.assertNotNull(result.getMessage());
+            Assert.assertThat(result.getMessage().toLowerCase(), CoreMatchers.containsString(status.toString().toLowerCase()));
         }
     }
 }

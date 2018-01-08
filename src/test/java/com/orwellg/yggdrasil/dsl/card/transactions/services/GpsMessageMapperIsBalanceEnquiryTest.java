@@ -1,7 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
 import com.orwellg.umbrella.avro.types.gps.Message;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -42,7 +42,7 @@ public class GpsMessageMapperIsBalanceEnquiryTest {
         message.setProcCode(procCode);
 
         // act
-        AuthorisationMessage result = mapper.map(message);
+        TransactionInfo result = mapper.map(message);
 
         // assert
         assertNotNull(result);

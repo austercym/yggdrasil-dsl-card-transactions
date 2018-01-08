@@ -1,7 +1,7 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.services;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services;
 
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 
 import java.util.Date;
 import java.util.Map;
@@ -9,7 +9,7 @@ import java.util.Map;
 public class MerchantValidator implements AuthorisationValidator {
 
     @Override
-    public ValidationResult validate(AuthorisationMessage message, CardSettings cardSettings) {
+    public ValidationResult validate(TransactionInfo message, CardSettings cardSettings) {
 
         if (message.getIsCardPresent()) {
             return ValidationResult.valid();

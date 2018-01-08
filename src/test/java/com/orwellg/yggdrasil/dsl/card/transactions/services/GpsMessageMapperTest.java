@@ -1,7 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
 import com.orwellg.umbrella.avro.types.gps.Message;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -18,7 +18,7 @@ public class GpsMessageMapperTest {
         message.setTxnCCy("946");
 
         // act
-        AuthorisationMessage result = mapper.map(message);
+        TransactionInfo result = mapper.map(message);
 
         // assert
         assertNotNull(result);

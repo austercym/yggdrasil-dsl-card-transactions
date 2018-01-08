@@ -1,9 +1,11 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.services;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services;
 
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.AuthorisationMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services.ValidationResult;
+import com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services.VelocityLimitsValidator;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -20,7 +22,7 @@ public class VelocityLimitsValidatorTest {
     @Test
     public void validateWhenFirstTransactionEverReturnsValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setSettlementAmount(BigDecimal.valueOf(19.09));
         message.setSettlementCurrency("EUR");
         message.setSpendGroup(SpendGroup.POS);
@@ -40,7 +42,7 @@ public class VelocityLimitsValidatorTest {
     @Test
     public void validateWhenLimitsNotExceededReturnsValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setSettlementAmount(BigDecimal.valueOf(19.09));
         message.setSettlementCurrency("EUR");
         message.setSpendGroup(SpendGroup.POS);
@@ -62,7 +64,7 @@ public class VelocityLimitsValidatorTest {
     @Test
     public void validateWhenDailyLimitsExpiredReturnsValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setSettlementAmount(BigDecimal.valueOf(19.09));
         message.setSettlementCurrency("EUR");
         message.setSpendGroup(SpendGroup.POS);
@@ -84,7 +86,7 @@ public class VelocityLimitsValidatorTest {
     @Test
     public void validateWhenAnnualLimitsExpiredReturnsValid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setSettlementAmount(BigDecimal.valueOf(19.09));
         message.setSettlementCurrency("EUR");
         message.setSpendGroup(SpendGroup.POS);
@@ -106,7 +108,7 @@ public class VelocityLimitsValidatorTest {
     @Test
     public void validateWhenDailyLimitExceededReturnsInvalid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setSettlementAmount(BigDecimal.valueOf(19.09));
         message.setSettlementCurrency("EUR");
         message.setSpendGroup(SpendGroup.POS);
@@ -128,7 +130,7 @@ public class VelocityLimitsValidatorTest {
     @Test
     public void validateWhenAnnualLimitExceededReturnsInvalid() {
         // arrange
-        AuthorisationMessage message = new AuthorisationMessage();
+        TransactionInfo message = new TransactionInfo();
         message.setSettlementAmount(BigDecimal.valueOf(19.09));
         message.setSettlementCurrency("EUR");
         message.setSpendGroup(SpendGroup.POS);
