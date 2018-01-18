@@ -11,8 +11,9 @@ import com.orwellg.umbrella.commons.storm.topology.generic.grouping.ShuffleGroup
 import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
+import com.orwellg.yggdrasil.dsl.card.transactions.authorisationReversal.bolts.GenerateProcessedMessageBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.authorisationReversal.bolts.LoadDataBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.EventToTransactionInfoBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.LoadTransactionDataBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -61,7 +62,7 @@ public class AuthorisationReversalDSLTopology {
         kafkaEventProcess.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER, KafkaSpout.EVENT_SUCCESS_STREAM));
 
         // Get data from DB
-        GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadTransactionDataBolt(GET_DATA), config.getActionBoltHints());
+        GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadDataBolt(GET_DATA), config.getActionBoltHints());
         getDataBolt.addGrouping(new ShuffleGrouping(KAFKA_EVENT_SUCCESS_PROCESS));
 
         // Generate processed message

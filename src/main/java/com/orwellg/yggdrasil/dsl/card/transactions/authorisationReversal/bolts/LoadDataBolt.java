@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisationReversal.bolts;
 
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.TransactionEarmarksRepository;
@@ -23,17 +23,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-public class LoadTransactionDataBolt extends JoinFutureBolt<TransactionInfo> {
+public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
 
     private static final long serialVersionUID = 1L;
 
-    private Logger LOG = LogManager.getLogger(LoadTransactionDataBolt.class);
+    private Logger LOG = LogManager.getLogger(LoadDataBolt.class);
 
     private TransactionEarmarksRepository earmarkRepository;
 
     private CardTransactionRepository transactionRepository;
 
-    public LoadTransactionDataBolt(String joinId) {
+    public LoadDataBolt(String joinId) {
         super(joinId);
     }
 
