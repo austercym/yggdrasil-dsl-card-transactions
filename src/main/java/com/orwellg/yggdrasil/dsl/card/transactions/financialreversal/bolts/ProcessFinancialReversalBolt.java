@@ -1,8 +1,11 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.financialreversal.bolts;
 
+import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
+import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
+import com.orwellg.yggdrasil.dsl.card.transactions.utils.GpsMessageProcessedFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
@@ -19,7 +22,7 @@ public class ProcessFinancialReversalBolt extends BasicRichBolt {
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList(
-                Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA));
+                Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_NAME, Fields.RESULT));
     }
 
     @Override
@@ -33,11 +36,13 @@ public class ProcessFinancialReversalBolt extends BasicRichBolt {
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
             LOG.info("{}Financial Reversal processing...", logPrefix);
+            GpsMessageProcessed result = GpsMessageProcessedFactory.from(eventData);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
             values.put(Fields.PROCESS_ID, processId);
-            values.put(Fields.EVENT_DATA, eventData);
+            values.put(Fields.EVENT_NAME, CardTransactionEvents.RESPONSE_MESSAGE.getEventName());
+            values.put(Fields.RESULT, result);
             send(input, values);
         } catch (Exception e) {
             LOG.error("{}Financial Reversal processing error. Message: {},", logPrefix, e.getMessage(), e);

@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.orwellg.yggdrasil</groupId>
 	<artifactId>yggdrasil-dsl-card-transactions</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<name>yggdrasil-dsl-card-transactions</name>
 	<description>DSL Topology to process card transactions</description>
 
@@ -14,7 +14,8 @@
 
 		<storm.version>1.1.0</storm.version>
 		<kafka.clients.version>0.11.0.0</kafka.clients.version>
-		<umbrella.version>0.0.1</umbrella.version>
+		<umbrella.version>0.0.2-SNAPSHOT</umbrella.version>
+		<umbrella.storm.version>0.0.1-SNAPSHOT</umbrella.storm.version>
 		<yggdrasil.version>0.0.1</yggdrasil.version>
 		<yggdrasil.network.version>0.0.1</yggdrasil.network.version>
 		<yggdrasil.network.client.version>0.0.2</yggdrasil.network.client.version>
@@ -40,7 +41,7 @@
 		<dependency>
 			<groupId>com.orwellg.umbrella</groupId>
 			<artifactId>umbrella-commons-storm</artifactId>
-			<version>${umbrella.version}</version>
+			<version>${umbrella.storm.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.orwellg.yggdrasil</groupId>
