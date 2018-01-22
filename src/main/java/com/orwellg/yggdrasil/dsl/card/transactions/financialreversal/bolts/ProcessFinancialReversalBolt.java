@@ -3,6 +3,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.financialreversal.bolts;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
+import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.GpsMessageProcessedFactory;
@@ -35,8 +36,17 @@ public class ProcessFinancialReversalBolt extends BasicRichBolt {
             List<CardTransaction> transactionList = (List<CardTransaction>) input.getValueByField(Fields.TRANSACTION_LIST);
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
-            LOG.info("{}Financial Reversal processing...", logPrefix);
+            LOG.debug("{}Financial Reversal processing", logPrefix);
             GpsMessageProcessed result = GpsMessageProcessedFactory.from(eventData);
+
+            // TODO: debit wc, credit user
+            // TODO: What amounts do we need?
+            // - amount to debit from wirecard
+            // - amount to credit user
+            // - overall amount credited/debited to wirecard
+            // - overall amount debited/credited from user
+            result.setWirecardAmount(DecimalTypeUtils.toDecimal(eventData.getSettlementAmount()));
+            result.setWirecardCurrency(eventData.getSettlementCurrency());
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
