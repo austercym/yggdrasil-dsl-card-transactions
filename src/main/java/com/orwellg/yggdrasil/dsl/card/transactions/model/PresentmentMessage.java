@@ -42,7 +42,7 @@ public class PresentmentMessage {
             this.setAuthWirecardCurrency(lastTransaction.getWirecardCurrency());
             this.setInternalAccountId(lastTransaction.getInternalAccountId());
             this.setInternalAccountCurrency(lastTransaction.getInternalAccountCurrency()); //todo:??
-            this.setAuthFeeAmount(lastTransaction.getFeeAmount());
+            this.setAuthFeeAmount(lastTransaction.getFeesAmount());
             this.setAuthFeeCurrency(lastTransaction.getInternalAccountCurrency()); //todo: what currency should we get fees?
         }
         return this;

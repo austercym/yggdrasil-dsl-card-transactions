@@ -7,10 +7,12 @@ import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.GpsMessageProcessedFactory;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -44,12 +46,23 @@ public class ProcessFinancialReversalBolt extends BasicRichBolt {
             }
             CardTransaction lastTransaction = transactionList.get(0);
 
-            // TODO: Validate returned amounts
-            // TODO: Add total/applied amounts
             result.setWirecardAmount(DecimalTypeUtils.toDecimal(eventData.getSettlementAmount().negate()));
             result.setWirecardCurrency(eventData.getSettlementCurrency());
             result.setClientAmount(DecimalTypeUtils.toDecimal(eventData.getSettlementAmount()));
             result.setClientCurrency(lastTransaction.getInternalAccountCurrency());
+
+            result.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(
+                    lastTransaction.getWirecardAmount().subtract(eventData.getSettlementAmount())));
+            result.setTotalWirecardCurrency(eventData.getSettlementCurrency());
+            result.setTotalClientAmount(DecimalTypeUtils.toDecimal(
+                    lastTransaction.getClientAmount().add(eventData.getSettlementAmount())));
+            result.setTotalClientCurrency(lastTransaction.getInternalAccountCurrency());
+            result.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(
+                    ObjectUtils.firstNonNull(lastTransaction.getEarmarkAmount(), BigDecimal.ZERO)));
+            result.setTotalEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
+            result.setTotalFeesAmount(DecimalTypeUtils.toDecimal(
+                    ObjectUtils.firstNonNull(lastTransaction.getFeesAmount(), BigDecimal.ZERO)));
+            result.setTotalFeesCurrency(lastTransaction.getInternalAccountCurrency());
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);

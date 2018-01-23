@@ -46,8 +46,8 @@ public class PrepareDataBolt extends com.orwellg.umbrella.commons.storm.topology
             transaction.setClientCurrency(message.getTotalClientCurrency());
             transaction.setEarmarkAmount(message.getTotalEarmarkAmount().getValue());
             transaction.setEarmarkCurrency(message.getTotalEarmarkCurrency());
-            transaction.setFeeAmount(message.getTotalFeesAmount().getValue());
-            transaction.setFeeCurrency(message.getTotalFeesCurrency());
+            transaction.setFeesAmount(message.getTotalFeesAmount().getValue());
+            transaction.setFeesCurrency(message.getTotalFeesCurrency());
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
