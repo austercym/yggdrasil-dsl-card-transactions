@@ -1,7 +1,8 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.totalSpendUpdate;
+package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
+import com.orwellg.umbrella.commons.repositories.scylla.TransactionEarmarksRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.TransactionEarmarksRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
@@ -24,7 +25,7 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
     private static final Logger LOG = LogManager.getLogger(SaveTotalSpendAmountsBolt.class);
 
     private SpendingTotalAmountsRepository amountsRepository;
-    private TransactionEarmarksRepositoryImpl earmarksRepository;
+    private TransactionEarmarksRepository earmarksRepository;
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {

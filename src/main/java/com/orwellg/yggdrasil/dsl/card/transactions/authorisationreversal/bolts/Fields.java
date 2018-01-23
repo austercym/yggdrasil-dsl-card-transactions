@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.authorisationReversal.bolts;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisationreversal.bolts;
 
 class Fields extends com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.Fields {
     static final String EARMARK = "earmark";

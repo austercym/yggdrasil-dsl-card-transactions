@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.totalSpendUpdate;
+package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
 class Fields {
     static final String KEY = "key";

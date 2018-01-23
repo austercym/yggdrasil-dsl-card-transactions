@@ -1,9 +1,10 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
-import com.orwellg.umbrella.avro.types.commons.Decimal;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionEarmark;
+import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -46,14 +47,17 @@ public class TotalSpendAmountsCalculator {
                 lastUpdateDate.getYear() == today.getYear() ?
                 lastSpendingTotalAmounts.getAnnualTotal() :
                 BigDecimal.ZERO;
+        BigDecimal clientAmountWithEarmark =
+                ObjectUtils.firstNonNull(messageProcessed.getClientAmount(), DecimalTypeUtils.toDecimal(0)).getValue().add(
+                        ObjectUtils.firstNonNull(messageProcessed.getEarmarkAmount(), DecimalTypeUtils.toDecimal(0)).getValue());
 
-        if (messageProcessed.getBlockedClientAmount() == null) {
+        if (BigDecimal.ZERO.compareTo(clientAmountWithEarmark) == 0) {
             LOG.info(
-                    "Spending total amounts will not be updated - BlockedClientAmount is not set for GpsTransactionLink={}",
+                    "Spending total amounts will not be updated - transaction's client and earmark amounts are zero for GpsTransactionLink={}",
                     messageProcessed.getGpsTransactionLink());
         } else {
             if (transactionTimestamp.toLocalDate().equals(today)) {
-                daily = calculateNewAmount(daily, messageProcessed.getBlockedClientAmount(), earmark);
+                daily = calculateNewAmount(daily, clientAmountWithEarmark, earmark);
             } else {
                 LOG.info(
                         "Daily spending total amount will not be updated - GpsTransactionLink={}, TransactionTimestamp={}",
@@ -61,7 +65,7 @@ public class TotalSpendAmountsCalculator {
             }
 
             if (transactionTimestamp.getYear() == today.getYear()) {
-                annual = calculateNewAmount(annual, messageProcessed.getBlockedClientAmount(), earmark);
+                annual = calculateNewAmount(annual, clientAmountWithEarmark, earmark);
             } else {
                 LOG.info(
                         "Annual spending total amount will not be updated - GpsTransactionLink={}, TransactionTimestamp={}",
@@ -78,8 +82,8 @@ public class TotalSpendAmountsCalculator {
         return result;
     }
 
-    private BigDecimal calculateNewAmount(BigDecimal currentAmount, Decimal blockedClientAmount, TransactionEarmark earmark) {
-        BigDecimal newAmount = currentAmount.add(blockedClientAmount.getValue().abs());
+    private BigDecimal calculateNewAmount(BigDecimal currentAmount, BigDecimal blockedClientAmount, TransactionEarmark earmark) {
+        BigDecimal newAmount = currentAmount.add(blockedClientAmount.abs());
 
         if (earmark != null) {
             newAmount = newAmount.subtract(earmark.getAmount().abs());

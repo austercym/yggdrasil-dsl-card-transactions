@@ -39,14 +39,17 @@ public class ProcessFinancialReversalBolt extends BasicRichBolt {
             LOG.debug("{}Financial Reversal processing", logPrefix);
             GpsMessageProcessed result = GpsMessageProcessedFactory.from(eventData);
 
-            // TODO: debit wc, credit user
-            // TODO: What amounts do we need?
-            // - amount to debit from wirecard
-            // - amount to credit user
-            // - overall amount credited/debited to wirecard
-            // - overall amount debited/credited from user
-            result.setWirecardAmount(DecimalTypeUtils.toDecimal(eventData.getSettlementAmount()));
+            if (transactionList == null || transactionList.isEmpty()){
+                throw new IllegalArgumentException("Empty transaction list - cannot process financial reversal");
+            }
+            CardTransaction lastTransaction = transactionList.get(0);
+
+            // TODO: Validate returned amounts
+            // TODO: Add total/applied amounts
+            result.setWirecardAmount(DecimalTypeUtils.toDecimal(eventData.getSettlementAmount().negate()));
             result.setWirecardCurrency(eventData.getSettlementCurrency());
+            result.setClientAmount(DecimalTypeUtils.toDecimal(eventData.getSettlementAmount()));
+            result.setClientCurrency(lastTransaction.getInternalAccountCurrency());
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);

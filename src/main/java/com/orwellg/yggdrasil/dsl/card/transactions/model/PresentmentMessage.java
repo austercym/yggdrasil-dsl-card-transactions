@@ -36,8 +36,8 @@ public class PresentmentMessage {
     public PresentmentMessage UpdateWithAuthorisationData(CardTransaction lastTransaction){
 
         if (lastTransaction != null){
-            this.setAuthBlockedClientAmaount(lastTransaction.getBlockedClientAmount());
-            this.setAuthBlockedClientCurrency(lastTransaction.getBlockedClientCurrency());
+            this.setAuthBlockedClientAmaount(lastTransaction.getClientAmount());
+            this.setAuthBlockedClientCurrency(lastTransaction.getClientCurrency());
             this.setAuthWirecardAmount(lastTransaction.getWirecardAmount());
             this.setAuthWirecardCurrency(lastTransaction.getWirecardCurrency());
             this.setInternalAccountId(lastTransaction.getInternalAccountId());

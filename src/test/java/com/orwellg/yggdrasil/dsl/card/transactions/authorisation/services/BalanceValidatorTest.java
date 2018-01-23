@@ -19,7 +19,7 @@ public class BalanceValidatorTest {
     public void validateWhenActualBalanceNotExceededShouldReturnValid() {
         // arrange
         TransactionInfo message = new TransactionInfo();
-        message.setSettlementAmount(BigDecimal.valueOf(19.09));
+        message.setSettlementAmount(BigDecimal.valueOf(-19.09));
         message.setSettlementCurrency("EUR");
 
         AccountTransactionLog accountTransactionLog = new AccountTransactionLog();
@@ -39,7 +39,7 @@ public class BalanceValidatorTest {
     public void validateWhenActualBalanceExceededShouldReturnInvalid() {
         // arrange
         TransactionInfo message = new TransactionInfo();
-        message.setSettlementAmount(BigDecimal.valueOf(19.09));
+        message.setSettlementAmount(BigDecimal.valueOf(-19.09));
         message.setSettlementCurrency("EUR");
 
         AccountTransactionLog accountTransactionLog = new AccountTransactionLog();
@@ -59,7 +59,7 @@ public class BalanceValidatorTest {
     public void validateWhenNoBalanceInformationShouldReturnInvalid() {
         // arrange
         TransactionInfo message = new TransactionInfo();
-        message.setSettlementAmount(BigDecimal.valueOf(19.09));
+        message.setSettlementAmount(BigDecimal.valueOf(-19.09));
         message.setSettlementCurrency("EUR");
 
         // act
