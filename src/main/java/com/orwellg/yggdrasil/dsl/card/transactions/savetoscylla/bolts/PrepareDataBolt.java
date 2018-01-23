@@ -40,14 +40,14 @@ public class PrepareDataBolt extends com.orwellg.umbrella.commons.storm.topology
             transaction.setDebitCardId(message.getDebitCardId());
             transaction.setInternalAccountId(message.getInternalAccountId());
             transaction.setInternalAccountCurrency(message.getInternalAccountCurrency());
-            transaction.setWirecardAmount(message.getAppliedWirecardAmount().getValue());
-            transaction.setWirecardCurrency(message.getAppliedWirecardCurrency());
-            transaction.setClientAmount(message.getAppliedClientAmount().getValue());
-            transaction.setClientCurrency(message.getAppliedClientCurrency());
-            transaction.setEarmarkAmount(message.getAppliedEarmarkAmount().getValue());
-            transaction.setEarmarkCurrency(message.getAppliedEarmarkCurrency());
-            transaction.setFeeAmount(message.getAppliedFeesAmount().getValue());
-            transaction.setFeeCurrency(message.getAppliedFeesCurrency());
+            transaction.setWirecardAmount(message.getTotalWirecardAmount().getValue());
+            transaction.setWirecardCurrency(message.getTotalWirecardCurrency());
+            transaction.setClientAmount(message.getTotalClientAmount().getValue());
+            transaction.setClientCurrency(message.getTotalClientCurrency());
+            transaction.setEarmarkAmount(message.getTotalEarmarkAmount().getValue());
+            transaction.setEarmarkCurrency(message.getTotalEarmarkCurrency());
+            transaction.setFeeAmount(message.getTotalFeesAmount().getValue());
+            transaction.setFeeCurrency(message.getTotalFeesCurrency());
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);

@@ -36,11 +36,11 @@ public class ResponseService {
 //        gpsMessageProcessed.setAppliedBlockedClientAmount(DecimalTypeUtils.toDecimal(authBlockedAmount));
 //        gpsMessageProcessed.setAppliedBlockedClientCurrency(presentment.getAuthBlockedClientCurrency());
         double authWirecardAmount = presentment.getAuthWirecardAmount() == null ? 0.0 : presentment.getAuthWirecardAmount().doubleValue();
-        gpsMessageProcessed.setAppliedWirecardAmount(DecimalTypeUtils.toDecimal(authWirecardAmount));
-        gpsMessageProcessed.setAppliedWirecardCurrency(presentment.getAuthWirecardCurrency());
+        gpsMessageProcessed.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(authWirecardAmount));
+        gpsMessageProcessed.setTotalWirecardCurrency(presentment.getAuthWirecardCurrency());
         double authFeeAmount = presentment.getAuthFeeAmount() == null ? 0.0 : presentment.getAuthFeeAmount().doubleValue();
-        gpsMessageProcessed.setAppliedFeesAmount(DecimalTypeUtils.toDecimal(authFeeAmount));
-        gpsMessageProcessed.setAppliedFeesCurrency(presentment.getAuthFeeCurrency());
+        gpsMessageProcessed.setTotalFeesAmount(DecimalTypeUtils.toDecimal(authFeeAmount));
+        gpsMessageProcessed.setTotalFeesCurrency(presentment.getAuthFeeCurrency());
 
         return gpsMessageProcessed;
     }

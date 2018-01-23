@@ -105,12 +105,12 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
         gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(transactionInfo.getSettlementAmount().negate()));
         gpsMessageProcessed.setWirecardCurrency(transactionInfo.getSettlementCurrency());
 
-        gpsMessageProcessed.setAppliedEarmarkAmount(DecimalTypeUtils.toDecimal(
+        gpsMessageProcessed.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(
                 lastEarmark.getAmount().add(transactionInfo.getSettlementAmount())));
-        gpsMessageProcessed.setAppliedEarmarkCurrency(lastEarmark.getInternalAccountCurrency());
-        gpsMessageProcessed.setAppliedWirecardAmount(DecimalTypeUtils.toDecimal(
+        gpsMessageProcessed.setTotalEarmarkCurrency(lastEarmark.getInternalAccountCurrency());
+        gpsMessageProcessed.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(
                 lastTransaction.getWirecardAmount().subtract(transactionInfo.getSettlementAmount())));
-        gpsMessageProcessed.setAppliedWirecardCurrency(transactionInfo.getSettlementCurrency());
+        gpsMessageProcessed.setTotalWirecardCurrency(transactionInfo.getSettlementCurrency());
 
         gpsMessageProcessed.setInternalAccountCurrency(lastEarmark.getInternalAccountCurrency());
         gpsMessageProcessed.setInternalAccountId(lastEarmark.getInternalAccountId());
