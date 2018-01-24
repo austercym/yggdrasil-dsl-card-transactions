@@ -8,7 +8,7 @@ public class BalanceValidator {
         if (accountTransactionLog == null)
             return ValidationResult.error("Account balance not available");
 
-        if (message.getSettlementAmount().compareTo(accountTransactionLog.getActualBalance()) > 0)
+        if (message.getSettlementAmount().abs().compareTo(accountTransactionLog.getActualBalance()) > 0)
             return ValidationResult.error(String.format(
                     "Settlement amount exceeds actual balance (SettlementAmount=%f, ActualBalance=%f)",
                     message.getSettlementAmount(), accountTransactionLog.getActualBalance()));

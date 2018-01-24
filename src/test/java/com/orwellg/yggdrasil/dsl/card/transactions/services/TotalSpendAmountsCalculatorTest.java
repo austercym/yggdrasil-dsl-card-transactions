@@ -8,7 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
@@ -34,12 +34,12 @@ public class TotalSpendAmountsCalculatorTest {
     }
 
     @Test
-    public void recalculateWhenTodayTransactionAndTodayTotalSpendShouldIncreaseDailyAndAnnualTotalSpend()
+    public void recalculateWhenAuthorisationTodayTransactionAndTodayTotalSpendShouldIncreaseDailyAndAnnualTotalSpend()
             throws ParseException {
         // arrange
         GpsMessageProcessed messageProcessed = new GpsMessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
-        messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
+        messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(-9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
         lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-19T07:55:42Z"));
@@ -60,12 +60,12 @@ public class TotalSpendAmountsCalculatorTest {
     }
 
     @Test
-    public void recalculateWhenTodayTransactionAndYesterdayTotalSpendShouldSetDailyAndIncreaseAnnualTotalSpend()
+    public void recalculateWhenAuthorisationTodayTransactionAndYesterdayTotalSpendShouldSetDailyAndIncreaseAnnualTotalSpend()
             throws ParseException {
         // arrange
         GpsMessageProcessed messageProcessed = new GpsMessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
-        messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
+        messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(-9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
         lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-18T21:20:42Z"));
@@ -86,12 +86,12 @@ public class TotalSpendAmountsCalculatorTest {
     }
 
     @Test
-    public void recalculateWhenTodayTransactionAndTheYearBeforeTotalSpendShouldSetDailyAndAnnualTotalSpend()
+    public void recalculateWhenAuthorisationTodayTransactionAndTheYearBeforeTotalSpendShouldSetDailyAndAnnualTotalSpend()
             throws ParseException {
         // arrange
         GpsMessageProcessed messageProcessed = new GpsMessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
-        messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
+        messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(-9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
         lastSpendingTotalAmounts.setTimestamp(Instant.parse("2014-09-18T21:20:42Z"));
@@ -112,12 +112,12 @@ public class TotalSpendAmountsCalculatorTest {
     }
 
     @Test
-    public void recalculateWhenTodayTransactionAndTotalSpendNotPresentShouldSetDailyAndAnnualTotalSpend()
+    public void recalculateWhenAuthorisationTodayTransactionAndTotalSpendNotPresentShouldSetDailyAndAnnualTotalSpend()
             throws ParseException {
         // arrange
         GpsMessageProcessed messageProcessed = new GpsMessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
-        messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
+        messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(-9));
 
         Instant mockedNow = Instant.parse("2015-09-19T21:15:20Z");
         when(dateTimeServiceMock.now()).thenReturn(mockedNow);
@@ -133,12 +133,12 @@ public class TotalSpendAmountsCalculatorTest {
     }
 
     @Test
-    public void recalculateWhenYesterdayTransactionAndTodayTotalSpendShouldIncreaseAnnualTotalSpendOnly()
+    public void recalculateWhenPresentmentYesterdayTransactionAndTodayTotalSpendShouldIncreaseAnnualTotalSpendOnly()
             throws ParseException {
         // arrange
         GpsMessageProcessed messageProcessed = new GpsMessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-18 19:09:42").getTime());
-        messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
+        messageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(-9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
         lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-19T07:55:42Z"));
@@ -159,12 +159,12 @@ public class TotalSpendAmountsCalculatorTest {
     }
 
     @Test
-    public void recalculateWhenTheYearBeforeTransactionAndTodayTotalSpendShouldNotChangeAmounts()
+    public void recalculateWhenPresentmentTheYearBeforeTransactionAndTodayTotalSpendShouldNotChangeAmounts()
             throws ParseException {
         // arrange
         GpsMessageProcessed messageProcessed = new GpsMessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2014-09-19 19:09:42").getTime());
-        messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
+        messageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(-9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
         lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-19T07:55:42Z"));
@@ -185,12 +185,12 @@ public class TotalSpendAmountsCalculatorTest {
     }
 
     @Test
-    public void recalculateWhenTheYearBeforeTransactionAndYesterdayTotalSpendShouldSetDailyTotalToZero()
+    public void recalculateWhenPresentmentTheYearBeforeTransactionAndYesterdayTotalSpendShouldSetDailyTotalToZero()
             throws ParseException {
         // arrange
         GpsMessageProcessed messageProcessed = new GpsMessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2014-09-19 19:09:42").getTime());
-        messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
+        messageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(-9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
         lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-18T07:55:42Z"));
@@ -211,12 +211,12 @@ public class TotalSpendAmountsCalculatorTest {
     }
 
     @Test
-    public void recalculateWhenTheYearBeforeTransactionAndTheYearBeforeTotalSpendShouldSetAmountsToZero()
+    public void recalculateWhenPresentmentTheYearBeforeTransactionAndTheYearBeforeTotalSpendShouldSetAmountsToZero()
             throws ParseException {
         // arrange
         GpsMessageProcessed messageProcessed = new GpsMessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2014-09-19 19:09:42").getTime());
-        messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
+        messageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(-9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
         lastSpendingTotalAmounts.setTimestamp(Instant.parse("2014-09-19T07:55:42Z"));
@@ -237,13 +237,13 @@ public class TotalSpendAmountsCalculatorTest {
     }
 
     @Test
-    public void recalculateWhenEarmarkEqualBlockedClientAmountShouldNotChangeAmounts()
+    public void recalculateWhenPresentmentEarmarkEqualClientAmountShouldNotChangeAmounts()
             throws ParseException {
 
         // arrange
         GpsMessageProcessed messageProcessed = new GpsMessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
-        messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
+        messageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(-9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
         lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-19T07:55:42Z"));
@@ -267,13 +267,13 @@ public class TotalSpendAmountsCalculatorTest {
     }
 
     @Test
-    public void recalculateWhenEarmarkGreaterThenBlockedClientAmountShouldDecreaseAmounts()
+    public void recalculateWhenPresentmentEarmarkGreaterThenClientAmountShouldDecreaseAmounts()
             throws ParseException {
 
         // arrange
         GpsMessageProcessed messageProcessed = new GpsMessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
-        messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
+        messageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(-9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
         lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-19T07:55:42Z"));
@@ -297,13 +297,13 @@ public class TotalSpendAmountsCalculatorTest {
     }
 
     @Test
-    public void recalculateWhenEarmarkLowerThenBlockedClientAmountShouldIncreaseAmounts()
+    public void recalculateWhenPresentmentEarmarkLowerThenClientAmountShouldIncreaseAmounts()
             throws ParseException {
 
         // arrange
         GpsMessageProcessed messageProcessed = new GpsMessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
-        messageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(9));
+        messageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(-9));
 
         SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
         lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-19T07:55:42Z"));

@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.totalSpendUpdate;
+package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
 import com.orwellg.umbrella.commons.beans.config.kafka.SubscriberKafkaConfiguration;
 import com.orwellg.umbrella.commons.storm.topology.TopologyFactory;

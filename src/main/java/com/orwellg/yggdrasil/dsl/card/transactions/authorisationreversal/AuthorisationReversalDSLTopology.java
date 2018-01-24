@@ -1,9 +1,10 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.authorisationReversal;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisationreversal;
 
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
 import com.orwellg.umbrella.commons.storm.topology.TopologyFactory;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.EventErrorBolt;
+import com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventGeneratorBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GBolt;
 import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GRichBolt;
@@ -11,7 +12,9 @@ import com.orwellg.umbrella.commons.storm.topology.generic.grouping.ShuffleGroup
 import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
-import com.orwellg.yggdrasil.dsl.card.transactions.common.EventToTransactionInfoBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.authorisationreversal.bolts.GenerateProcessedMessageBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.authorisationreversal.bolts.LoadDataBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.EventToTransactionInfoBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,6 +35,7 @@ public class AuthorisationReversalDSLTopology {
     private static final String KAFKA_EVENT_SUCCESS_PROCESS = "kafka-event-success-process";
     private static final String GET_DATA = "get-data";
     private static final String PROCESSED_MESSAGE_GENERATION = "processed-message-generation";
+    private static final String EVENT_GENERATOR = "authorisationReversalEventGenerator";
     private static final String KAFKA_EVENT_SUCCESS_PRODUCER = "kafka-event-success-producer";
 
     public static final String KAFKA_ERROR_PRODUCER_COMPONENT_ID = "get-kafka-error-producer";
@@ -67,6 +71,9 @@ public class AuthorisationReversalDSLTopology {
         GBolt<?> processedMessageBolt = new GRichBolt(PROCESSED_MESSAGE_GENERATION, new GenerateProcessedMessageBolt(), config.getActionBoltHints());
         processedMessageBolt.addGrouping(new ShuffleGrouping(GET_DATA));
 
+        GBolt<?> eventGeneratorBolt = new GRichBolt(EVENT_GENERATOR, new KafkaEventGeneratorBolt(), config.getActionBoltHints());
+        eventGeneratorBolt.addGrouping(new ShuffleGrouping(PROCESSED_MESSAGE_GENERATION));
+
         // Send a event with the result
         GBolt<?> kafkaEventSuccessProducer = new GRichBolt(KAFKA_EVENT_SUCCESS_PRODUCER, new KafkaBoltWrapper(config.getKafkaPublisherBoltConfig(), String.class, String.class).getKafkaBolt(), config.getEventResponseHints());
         kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping(PROCESSED_MESSAGE_GENERATION));
@@ -86,7 +93,7 @@ public class AuthorisationReversalDSLTopology {
         // Build the topology
         StormTopology topology = TopologyFactory.generateTopology(
                 kafkaEventReader,
-                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, getDataBolt, processedMessageBolt, kafkaEventSuccessProducer));
+                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, getDataBolt, processedMessageBolt, eventGeneratorBolt, kafkaEventSuccessProducer));
         LOG.info("GPS Authorisation reversal message processing topology created");
 
         // Create the basic config and upload the topology

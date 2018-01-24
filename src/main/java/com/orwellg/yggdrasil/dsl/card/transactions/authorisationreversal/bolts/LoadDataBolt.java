@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.authorisationReversal;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisationreversal.bolts;
 
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.TransactionEarmarksRepository;
@@ -29,7 +29,7 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
 
     private Logger LOG = LogManager.getLogger(LoadDataBolt.class);
 
-    private TransactionEarmarksRepository ermarksRepository;
+    private TransactionEarmarksRepository earmarkRepository;
 
     private CardTransactionRepository transactionRepository;
 
@@ -58,7 +58,7 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
         ScyllaParams scyllaParams = ComponentFactory.getConfigurationParams().getCardsScyllaParams();
         String nodeList = scyllaParams.getNodeList();
         String keyspace = scyllaParams.getKeyspace();
-        ermarksRepository = new TransactionEarmarksRepositoryImpl(nodeList, keyspace);
+        earmarkRepository = new TransactionEarmarksRepositoryImpl(nodeList, keyspace);
         transactionRepository = new CardTransactionRepositoryImpl(nodeList, keyspace);
     }
 
@@ -97,7 +97,7 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
         return CompletableFuture.supplyAsync(
                 () -> {
                     LOG.info("{}Retrieving earmark for GpsTransactionLink={} ...", logPrefix, gpsTransactionLink);
-                    TransactionEarmark earmark = ermarksRepository.getEarmark(gpsTransactionLink);
+                    TransactionEarmark earmark = earmarkRepository.getEarmark(gpsTransactionLink);
                     LOG.info("{}Earmark retrieved for GpsTransactionLink={}: {}", logPrefix, gpsTransactionLink, earmark);
                     return earmark;
                 });

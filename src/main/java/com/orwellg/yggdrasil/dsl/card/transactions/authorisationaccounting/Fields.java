@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.authorisationAccounting;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisationaccounting;
 
 public class Fields {
     static final String KEY = "key";

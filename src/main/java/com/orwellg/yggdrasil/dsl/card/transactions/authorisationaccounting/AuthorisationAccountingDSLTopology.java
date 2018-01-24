@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.authorisationAccounting;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisationaccounting;
 
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;

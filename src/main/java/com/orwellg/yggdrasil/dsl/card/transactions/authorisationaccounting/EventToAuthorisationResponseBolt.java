@@ -1,33 +1,21 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.common;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisationaccounting;
 
 import com.orwellg.umbrella.avro.types.event.Event;
-import com.orwellg.umbrella.avro.types.gps.Message;
+import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventProcessBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
-import com.orwellg.yggdrasil.dsl.card.transactions.services.GpsMessageMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.storm.task.OutputCollector;
-import org.apache.storm.task.TopologyContext;
 import org.apache.storm.tuple.Tuple;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class EventToTransactionInfoBolt extends KafkaEventProcessBolt {
+public class EventToAuthorisationResponseBolt extends KafkaEventProcessBolt {
 
 	private static final long serialVersionUID = 1L;
 
-	private final static Logger LOG = LogManager.getLogger(EventToTransactionInfoBolt.class);
-
-	private GpsMessageMapper mapper;
-
-	@Override
-	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
-		super.prepare(stormConf, context, collector);
-		mapper = new GpsMessageMapper();
-	}
+	private final static Logger LOG = LogManager.getLogger(EventToAuthorisationResponseBolt.class);
 
 	@Override
 	public void sendNextStep(Tuple input, Event event) {
@@ -38,13 +26,12 @@ public class EventToTransactionInfoBolt extends KafkaEventProcessBolt {
 		LOG.info("[Key: {}][ProcessId: {}]: Received GPS message event", key, processId);
 
 		// Get the JSON message with the data
-		Message eventData = gson.fromJson(event.getEvent().getData(), Message.class);
-		TransactionInfo message = mapper.map(eventData);
+		GpsMessageProcessed eventData = gson.fromJson(event.getEvent().getData(), GpsMessageProcessed.class);
 
 		Map<String, Object> values = new HashMap<>();
 		values.put(Fields.KEY, key);
 		values.put(Fields.PROCESS_ID, processId);
-		values.put(Fields.EVENT_DATA, message);
+		values.put(Fields.EVENT_DATA, eventData);
 
 		send(input, values);
 

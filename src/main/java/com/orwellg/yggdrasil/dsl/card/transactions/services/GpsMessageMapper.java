@@ -4,6 +4,7 @@ import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.CreditDebit;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -34,15 +35,16 @@ public class GpsMessageMapper {
         if (message.getCustRef() != null && !message.getCustRef().isEmpty())
             model.setDebitCardId(Long.parseLong(message.getCustRef()));
         model.setSpendGroup(getSpendGroup(message));
-        Double settlementBillingAmount = message.getBillAmt();
+        Double settlementBillingAmount = ObjectUtils.firstNonNull(message.getBillAmt(), message.getSettleAmt());
         if (settlementBillingAmount != null) {
-            model.setSettlementAmount(BigDecimal.valueOf(settlementBillingAmount).abs());
+            model.setSettlementAmount(BigDecimal.valueOf(settlementBillingAmount));
             if (settlementBillingAmount > 0)
                 model.setCreditDebit(CreditDebit.CREDIT);
             else if (settlementBillingAmount < 0)
                 model.setCreditDebit(CreditDebit.DEBIT);
         }
-        model.setSettlementCurrency(currencyFromNumericCode(message.getBillCcy()));
+        model.setSettlementCurrency(currencyFromNumericCode(ObjectUtils.firstNonNull(
+                message.getBillCcy(), message.getSettleCcy())));
         model.setIsCardPresent(cardPresenceResolver.isCardPresent(message));
         if (message.getMerchIDDE42() != null)
             model.setMerchantId(message.getMerchIDDE42().trim());

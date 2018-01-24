@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisation;
 
-class Fields extends com.orwellg.yggdrasil.dsl.card.transactions.common.Fields {
+class Fields extends com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.Fields {
     static final String CARD_SETTINGS = "cardSettings";
     static final String TRANSACTION_LOG = "transactionLog";
     static final String SPENDING_TOTALS = "spendingTotals";

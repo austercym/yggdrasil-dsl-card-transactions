@@ -1,0 +1,81 @@
+package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
+
+import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
+import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
+import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.storm.task.OutputCollector;
+import org.apache.storm.task.TopologyContext;
+import org.apache.storm.tuple.Tuple;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class LoadTransactionListBolt extends BasicRichBolt {
+
+    private static final long serialVersionUID = 1L;
+
+    private Logger LOG = LogManager.getLogger(LoadTransactionListBolt.class);
+
+    private CardTransactionRepository transactionRepository;
+
+    @Override
+    public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
+        super.prepare(stormConf, context, collector);
+
+        initializeCardRepositories();
+    }
+
+    private void initializeCardRepositories() {
+        ScyllaParams scyllaParams = ComponentFactory.getConfigurationParams().getCardsScyllaParams();
+        String nodeList = scyllaParams.getNodeList();
+        String keyspace = scyllaParams.getKeyspace();
+        transactionRepository = new CardTransactionRepositoryImpl(nodeList, keyspace);
+    }
+
+    @Override
+    public void declareFieldsDefinition() {
+        addFielsDefinition(Arrays.asList(
+                Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.TRANSACTION_LIST));
+    }
+
+    @Override
+    public void execute(Tuple input) {
+        String logPrefix = null;
+
+        try {
+            String key = input.getStringByField(Fields.KEY);
+            String processId = input.getStringByField(Fields.PROCESS_ID);
+            TransactionInfo eventData = (TransactionInfo) input.getValueByField(Fields.EVENT_DATA);
+            logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
+
+            List<CardTransaction> transactionList = getTransactionList(eventData.getGpsTransactionLink(), logPrefix);
+
+            Map<String, Object> values = new HashMap<>();
+            values.put(Fields.KEY, key);
+            values.put(Fields.PROCESS_ID, processId);
+            values.put(Fields.EVENT_DATA, eventData);
+            values.put(Fields.TRANSACTION_LIST, transactionList);
+
+            send(input, values);
+
+        } catch (Exception e) {
+            LOG.error("{}Error retrieving transaction list. Message: {},", logPrefix, e.getMessage(), e);
+            error(e, input);
+        }
+    }
+
+    private List<CardTransaction> getTransactionList(String gpsTransactionLink, String logPrefix) {
+        LOG.info("{}Retrieving transaction list for GpsTransactionLink={} ...", logPrefix, gpsTransactionLink);
+        List<CardTransaction> transactionList = transactionRepository.getCardTransaction(gpsTransactionLink);
+        LOG.info("{}Retrieved transaction list for GpsTransactionLink={}: {}", logPrefix, gpsTransactionLink, transactionList);
+        return transactionList;
+    }
+}

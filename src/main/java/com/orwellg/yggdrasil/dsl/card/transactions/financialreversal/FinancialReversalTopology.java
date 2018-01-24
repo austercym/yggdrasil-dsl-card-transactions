@@ -1,10 +1,11 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.savetoscylla;
+package com.orwellg.yggdrasil.dsl.card.transactions.financialreversal;
 
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
 import com.orwellg.umbrella.commons.storm.topology.TopologyFactory;
 import com.orwellg.umbrella.commons.storm.topology.component.base.AbstractTopology;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.EventErrorBolt;
+import com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventGeneratorBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GBolt;
 import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GRichBolt;
@@ -12,25 +13,29 @@ import com.orwellg.umbrella.commons.storm.topology.generic.grouping.ShuffleGroup
 import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
-import com.orwellg.yggdrasil.dsl.card.transactions.savetoscylla.bolts.PrepareDataBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.EventToTransactionInfoBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.LoadTransactionListBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.financialreversal.bolts.ProcessFinancialReversalBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.generated.StormTopology;
 
 import java.util.Arrays;
 
-public class CardSaveScyllaGpsMessageProcessedTopology extends AbstractTopology {
+public class FinancialReversalTopology extends AbstractTopology {
 
-    private static final Logger LOG = LogManager.getLogger(CardSaveScyllaGpsMessageProcessedTopology.class);
-
-    public static final String PROPERTIES_FILE = "scylla-topology.properties.properties";
-    private static final String TOPOLOGY_NAME = "dsl-gps-processed-scylla";
-    private static final String BOLT_NAME_PREFIX = "gpsProcessedScylla";
+    public static final String PROPERTIES_FILE = "financial-reversal-topology.properties";
+    private static final Logger LOG = LogManager.getLogger(FinancialReversalTopology.class);
+    private static final String TOPOLOGY_NAME = "dsl-card-financial-reversal";
+    private static final String BOLT_NAME_PREFIX = "financialReversal";
     private static final String KAFKA_EVENT_READER_COMPONENT = BOLT_NAME_PREFIX + "Reader";
-    private static final String PROCESS_COMPONENT = BOLT_NAME_PREFIX + "Process";
-    private static final String SAVE_COMPONENT = BOLT_NAME_PREFIX + "Save";
+    private static final String MAP_EVENT = BOLT_NAME_PREFIX + "Map";
     private static final String ERROR_HANDLING = BOLT_NAME_PREFIX + "ErrorHandling";
     private static final String ERROR_PRODUCER_COMPONENT = BOLT_NAME_PREFIX + "ErrorProducer";
+    private static final String GET_DATA = BOLT_NAME_PREFIX + "GetData";
+    private static final String PROCESS_MESSAGE = BOLT_NAME_PREFIX + "ProcessMessage";
+    private static final String EVENT_GENERATOR = BOLT_NAME_PREFIX + "EventGenerator";
+    private static final String KAFKA_EVENT_SUCCESS_PRODUCER = BOLT_NAME_PREFIX + "SuccessEventProducer";
 
     @Override
     public StormTopology load() {
@@ -47,13 +52,22 @@ public class CardSaveScyllaGpsMessageProcessedTopology extends AbstractTopology 
         // -------------------------------------------------------
         // Process events
         // -------------------------------------------------------
-        GBolt<?> processBolt = new GRichBolt(PROCESS_COMPONENT, new PrepareDataBolt(),
+        GBolt<?> mapBolt = new GRichBolt(MAP_EVENT, new EventToTransactionInfoBolt(),
                 config.getActionBoltHints());
-        processBolt.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER_COMPONENT, KafkaSpout.EVENT_SUCCESS_STREAM));
+        mapBolt.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER_COMPONENT, KafkaSpout.EVENT_SUCCESS_STREAM));
 
-        GBolt<?> saveBolt = new GRichBolt(SAVE_COMPONENT, new PrepareDataBolt(),
-                config.getActionBoltHints());
-        saveBolt.addGrouping(new ShuffleGrouping(PROCESS_COMPONENT, KafkaSpout.EVENT_SUCCESS_STREAM));
+        GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadTransactionListBolt(), config.getActionBoltHints());
+        getDataBolt.addGrouping(new ShuffleGrouping(MAP_EVENT));
+
+        GBolt<?> processBolt = new GRichBolt(PROCESS_MESSAGE, new ProcessFinancialReversalBolt(), config.getActionBoltHints());
+        processBolt.addGrouping(new ShuffleGrouping(GET_DATA));
+
+        GBolt<?> eventGeneratorBolt = new GRichBolt(EVENT_GENERATOR, new KafkaEventGeneratorBolt(), config.getActionBoltHints());
+        eventGeneratorBolt.addGrouping(new ShuffleGrouping(PROCESS_MESSAGE));
+
+        GBolt<?> kafkaEventSuccessProducer = new GRichBolt(KAFKA_EVENT_SUCCESS_PRODUCER, new KafkaBoltWrapper(config.getKafkaPublisherBoltConfig(), String.class, String.class).getKafkaBolt(), config.getEventResponseHints());
+        kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping(EVENT_GENERATOR));
+
         // -------------------------------------------------------
 
         // -------------------------------------------------------
@@ -67,8 +81,9 @@ public class CardSaveScyllaGpsMessageProcessedTopology extends AbstractTopology 
         // -------------------------------------------------------
 
         // Topology
-        StormTopology topology = TopologyFactory.generateTopology(kafkaEventReader,
-                Arrays.asList(processBolt, saveBolt, errorHandlingBolt, kafkaEventErrorProducer));
+        StormTopology topology = TopologyFactory.generateTopology(
+                kafkaEventReader,
+                Arrays.asList(mapBolt, getDataBolt, processBolt, eventGeneratorBolt, kafkaEventSuccessProducer, errorHandlingBolt, kafkaEventErrorProducer));
 
         LOG.info("{} Topology created, submitting it to storm...", TOPOLOGY_NAME);
 

@@ -16,13 +16,13 @@ public class ResponseService {
         gpsMessageProcessed.setGpsTransactionId(presentment.getGpsTransactionId());
         gpsMessageProcessed.setDebitCardId(presentment.getDebitCardId());
         gpsMessageProcessed.setTransactionTimestamp(presentment.getTransactionTimestamp().getTime()); //todo: helper to
-        gpsMessageProcessed.setGpsTransactionTime(presentment.getGpsTrnasactionDate().getTime() / 1000L);
+        gpsMessageProcessed.setGpsTransactionTime(presentment.getGpsTrnasactionDate().getTime());
         gpsMessageProcessed.setInternalAccountId(presentment.getInternalAccountId());
         gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(presentment.getSettlementAmount()));
         gpsMessageProcessed.setWirecardCurrency(presentment.getSettlementCurrency());
-        gpsMessageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(presentment.getBlockedClientAmount()));
-        //gpsMessageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(blockedClientAmount.doubleValue()));
-        gpsMessageProcessed.setBlockedClientCurrency(presentment.getSettlementCurrency());
+//        gpsMessageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(presentment.getBlockedClientAmount()));
+        //gpsMessageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(blockedClientAmount.doubleValue()));
+//        gpsMessageProcessed.setBlockedClientCurrency(presentment.getSettlementCurrency());
         //gpsMessageProcessed.setFeesAmount(DecimalTypeUtils.toDecimal(feesAmount.doubleValue()));
         gpsMessageProcessed.setFeesAmount(DecimalTypeUtils.toDecimal(presentment.getFeeAmount()));
         gpsMessageProcessed.setFeesCurrency(presentment.getInternalAccountCurrency());
@@ -33,14 +33,14 @@ public class ResponseService {
                     : SpendGroup.POS);
 
         double authBlockedAmount = presentment.getAuthBlockedClientAmount() == null ? 0.0 : presentment.getAuthBlockedClientAmount().doubleValue();
-        gpsMessageProcessed.setAppliedBlockedClientAmount(DecimalTypeUtils.toDecimal(authBlockedAmount));
-        gpsMessageProcessed.setAppliedBlockedClientCurrency(presentment.getAuthBlockedClientCurrency());
+//        gpsMessageProcessed.setAppliedBlockedClientAmount(DecimalTypeUtils.toDecimal(authBlockedAmount));
+//        gpsMessageProcessed.setAppliedBlockedClientCurrency(presentment.getAuthBlockedClientCurrency());
         double authWirecardAmount = presentment.getAuthWirecardAmount() == null ? 0.0 : presentment.getAuthWirecardAmount().doubleValue();
-        gpsMessageProcessed.setAppliedWirecardAmount(DecimalTypeUtils.toDecimal(authWirecardAmount));
-        gpsMessageProcessed.setAppliedWirecardCurrency(presentment.getAuthWirecardCurrency());
+        gpsMessageProcessed.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(authWirecardAmount));
+        gpsMessageProcessed.setTotalWirecardCurrency(presentment.getAuthWirecardCurrency());
         double authFeeAmount = presentment.getAuthFeeAmount() == null ? 0.0 : presentment.getAuthFeeAmount().doubleValue();
-        gpsMessageProcessed.setAppliedFeesAmount(DecimalTypeUtils.toDecimal(authFeeAmount));
-        gpsMessageProcessed.setAppliedFeesCurrency(presentment.getAuthFeeCurrency());
+        gpsMessageProcessed.setTotalFeesAmount(DecimalTypeUtils.toDecimal(authFeeAmount));
+        gpsMessageProcessed.setTotalFeesCurrency(presentment.getAuthFeeCurrency());
 
         return gpsMessageProcessed;
     }

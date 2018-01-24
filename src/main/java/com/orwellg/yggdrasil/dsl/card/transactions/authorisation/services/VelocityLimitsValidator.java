@@ -27,12 +27,12 @@ public class VelocityLimitsValidator {
                 ||
                 lastUpdateDate.isBefore(LocalDate.now())
                 ||
-                totalAmounts.getDailyTotal().add(message.getSettlementAmount()).compareTo(dailyLimit) <= 0;
+                totalAmounts.getDailyTotal().add(message.getSettlementAmount().abs()).compareTo(dailyLimit) <= 0;
         Boolean isAnnualValid = lastUpdateDate == null
                 ||
                 lastUpdateDate.getYear() < LocalDate.now().getYear()
                 ||
-                totalAmounts.getAnnualTotal().add(message.getSettlementAmount()).compareTo(annualLimit) <= 0;
+                totalAmounts.getAnnualTotal().add(message.getSettlementAmount().abs()).compareTo(annualLimit) <= 0;
         if (!isDailyValid) {
             return ValidationResult.error(String.format(
                     "Daily limit exceeded (SpendGroup=%f, Limit=%f)", totalAmounts.getDailyTotal(), dailyLimit));

@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.totalSpendUpdate;
+package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;

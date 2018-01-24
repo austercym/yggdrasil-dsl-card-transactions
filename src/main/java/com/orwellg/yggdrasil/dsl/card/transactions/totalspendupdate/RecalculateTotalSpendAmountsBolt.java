@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.totalSpendUpdate;
+package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
@@ -50,6 +50,7 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
             TransactionEarmark newEarmark = null;
 
             if (isAcceptedAuthorisation(eventData) || isPresentment(eventData)) {
+                // TODO: Crediting presentment should not cause spend amounts recalculation
                 newSpendAmounts = calculator.recalculate(eventData, spendAmounts, earmark);
             } else {
                 LOG.info(
@@ -61,7 +62,7 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
 
             if (isAcceptedAuthorisation(eventData)) {
                 newEarmark = new TransactionEarmark();
-                newEarmark.setAmount(eventData.getBlockedClientAmount().getValue());
+                newEarmark.setAmount(eventData.getEarmarkAmount().getValue());
                 newEarmark.setGpsTransactionLink(eventData.getGpsTransactionLink());
                 newEarmark.setTimestamp(Instant.now());
                 newEarmark.setInternalAccountId(eventData.getInternalAccountId());

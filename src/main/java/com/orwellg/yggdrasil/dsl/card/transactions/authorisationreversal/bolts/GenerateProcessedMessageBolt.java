@@ -1,15 +1,13 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.authorisationReversal;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisationreversal.bolts;
 
-import com.orwellg.umbrella.avro.types.event.Event;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionEarmark;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
-import com.orwellg.umbrella.commons.types.utils.avro.RawMessageUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.EventBuilder;
+import com.orwellg.yggdrasil.dsl.card.transactions.utils.GpsMessageProcessedFactory;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import com.orwellg.yggdrasil.net.client.producer.CommandProducerConfig;
 import com.orwellg.yggdrasil.net.client.producer.GeneratorIdCommandProducer;
@@ -22,7 +20,6 @@ import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.tuple.Tuple;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 public class GenerateProcessedMessageBolt extends BasicRichBolt {
@@ -34,7 +31,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList(
-                Fields.KEY, Fields.MESSAGE, Fields.TOPIC));
+                Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_NAME, Fields.RESULT));
     }
 
     @Override
@@ -70,31 +67,24 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
             if (earmark == null) {
                 throw new IllegalArgumentException("No earmark information found - cannot process authorisation reversal");
             }
-            BigDecimal newEarmarkAmount = earmark.getAmount().abs().subtract(event.getSettlementAmount().abs());
-            if (newEarmarkAmount.compareTo(BigDecimal.ZERO) < 0) {
+            if (event.getSettlementAmount().compareTo(earmark.getAmount().abs()) > 0) {
                 throw new IllegalArgumentException("Authorisation reversal amount is greater than earmarked amount");
             }
-
             if (transactionList == null || transactionList.isEmpty()){
-                throw new IllegalArgumentException("No transaction list found - cannot process authorisation reversal");
+                throw new IllegalArgumentException("Empty transaction list - cannot process authorisation reversal");
             }
             CardTransaction lastTransaction = transactionList.get(0);
-            BigDecimal newWirecardAmount = lastTransaction.getWirecardAmount().abs().subtract(event.getSettlementAmount().abs());
-            if (newWirecardAmount.compareTo(BigDecimal.ZERO) < 0) {
+            if (event.getSettlementAmount().compareTo(lastTransaction.getWirecardAmount().abs()) < 0) {
                 throw new IllegalArgumentException("Authorisation reversal amount is greater than amount sent to Wirecard");
             }
 
-            GpsMessageProcessed processedMessage = generateMessageProcessed(event, earmark, newEarmarkAmount, newWirecardAmount, logPrefix);
-
-            Event responseEvent = new EventBuilder().buildResponseEvent(
-                    this.getClass().getName(), CardTransactionEvents.RESPONSE_MESSAGE.getEventName(), processedMessage,
-                    responseKey, key);
+            GpsMessageProcessed processedMessage = generateMessageProcessed(event, earmark, lastTransaction, logPrefix);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
-            values.put(Fields.MESSAGE, RawMessageUtils.encodeToString(Event.SCHEMA$, responseEvent));
-            // TODO: get response topic from input event or config
-            values.put(Fields.TOPIC, "com.orwellg.gps.authorisation.reversal.response.1");
+            values.put(Fields.PROCESS_ID, processId);
+            values.put(Fields.EVENT_NAME, CardTransactionEvents.RESPONSE_MESSAGE.getEventName());
+            values.put(Fields.RESULT, processedMessage);
             send(input, values);
         } catch (Exception e) {
             LOG.error("{}Error generating processed message. Message: {},", logPrefix, e.getMessage(), e);
@@ -102,34 +92,30 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
         }
     }
 
-    private GpsMessageProcessed generateMessageProcessed(TransactionInfo transactionInfo, TransactionEarmark earmark, BigDecimal newEarmarkAmount, BigDecimal newWirecardAmount, String logPrefix) {
+    private GpsMessageProcessed generateMessageProcessed(
+            TransactionInfo transactionInfo, TransactionEarmark lastEarmark, CardTransaction lastTransaction,
+            String logPrefix) {
 
-        LOG.debug("{}Generating gpsMessageProcessed message", logPrefix);
+        LOG.debug("{}Generating GPS message processed", logPrefix);
 
-        GpsMessageProcessed gpsMessageProcessed = new GpsMessageProcessed();
-        gpsMessageProcessed.setGpsMessageType(transactionInfo.getMessage().getTxnType());
-        gpsMessageProcessed.setGpsTransactionLink(transactionInfo.getGpsTransactionLink());
-        gpsMessageProcessed.setGpsTransactionId(transactionInfo.getGpsTransactionId());
-        gpsMessageProcessed.setDebitCardId(transactionInfo.getDebitCardId());
+        GpsMessageProcessed gpsMessageProcessed = GpsMessageProcessedFactory.from(transactionInfo);
 
-        gpsMessageProcessed.setBlockedClientAmount(DecimalTypeUtils.toDecimal(newEarmarkAmount));
-        gpsMessageProcessed.setBlockedClientCurrency(earmark.getInternalAccountCurrency());
-        gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(newWirecardAmount));
+        gpsMessageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(transactionInfo.getSettlementAmount()));
+        gpsMessageProcessed.setEarmarkCurrency(lastEarmark.getInternalAccountCurrency());
+        gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(transactionInfo.getSettlementAmount().negate()));
         gpsMessageProcessed.setWirecardCurrency(transactionInfo.getSettlementCurrency());
-        gpsMessageProcessed.setFeesAmount(DecimalTypeUtils.toDecimal(0));
 
-        gpsMessageProcessed.setAppliedBlockedClientAmount(DecimalTypeUtils.toDecimal(earmark.getAmount()));
-        gpsMessageProcessed.setAppliedBlockedClientCurrency(earmark.getInternalAccountCurrency());
-        gpsMessageProcessed.setAppliedWirecardAmount(DecimalTypeUtils.toDecimal(transactionInfo.getSettlementAmount()));
-        gpsMessageProcessed.setAppliedWirecardCurrency(transactionInfo.getSettlementCurrency());
+        gpsMessageProcessed.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(
+                lastEarmark.getAmount().add(transactionInfo.getSettlementAmount())));
+        gpsMessageProcessed.setTotalEarmarkCurrency(lastEarmark.getInternalAccountCurrency());
+        gpsMessageProcessed.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(
+                lastTransaction.getWirecardAmount().subtract(transactionInfo.getSettlementAmount())));
+        gpsMessageProcessed.setTotalWirecardCurrency(transactionInfo.getSettlementCurrency());
 
-        gpsMessageProcessed.setSpendGroup(transactionInfo.getSpendGroup());
-        gpsMessageProcessed.setTransactionTimestamp(new Date().getTime());
+        gpsMessageProcessed.setInternalAccountCurrency(lastEarmark.getInternalAccountCurrency());
+        gpsMessageProcessed.setInternalAccountId(lastEarmark.getInternalAccountId());
 
-        gpsMessageProcessed.setInternalAccountCurrency(earmark.getInternalAccountCurrency());
-        gpsMessageProcessed.setInternalAccountId(earmark.getInternalAccountId());
-
-        LOG.debug("{}Message generated: {}", logPrefix, gpsMessageProcessed);
+        LOG.debug("{}GPS message processed generated: {}", logPrefix, gpsMessageProcessed);
         return gpsMessageProcessed;
     }
 }
