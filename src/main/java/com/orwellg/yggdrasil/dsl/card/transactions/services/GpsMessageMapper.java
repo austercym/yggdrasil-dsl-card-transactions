@@ -2,11 +2,14 @@ package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.avro.types.gps.Message;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.CreditDebit;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Currency;
 import java.util.List;
@@ -56,7 +59,15 @@ public class GpsMessageMapper {
             model.setTransactionAmount(BigDecimal.valueOf(message.getTxnAmt()));
         model.setTransactionCurrency(currencyFromNumericCode(message.getTxnCCy()));
         model.setIsBalanceEnquiry(isBalanceEnquiry(message.getProcCode()));
+        if (StringUtils.isNotBlank(message.getTxnGPSDate())) {
+            model.setGpsTransactionTime(parseDateTime(message.getTxnGPSDate()));
+        }
         return model;
+    }
+
+    private LocalDateTime parseDateTime(String dateTime) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+        return LocalDateTime.parse(dateTime, formatter);
     }
 
     private String currencyFromNumericCode(String numericCurrencyCode) {

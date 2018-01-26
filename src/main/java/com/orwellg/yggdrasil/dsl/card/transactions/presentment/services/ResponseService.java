@@ -12,6 +12,7 @@ public class ResponseService {
     public GpsMessageProcessed generateResponse(PresentmentMessage presentment){
 
         GpsMessageProcessed gpsMessageProcessed = new GpsMessageProcessed();
+        gpsMessageProcessed.setGpsMessageType(presentment.getGpsMessageType());
         gpsMessageProcessed.setGpsTransactionLink(presentment.getGpsTransactionLink());
         gpsMessageProcessed.setGpsTransactionId(presentment.getGpsTransactionId());
         gpsMessageProcessed.setDebitCardId(presentment.getDebitCardId());
@@ -26,7 +27,6 @@ public class ResponseService {
         //gpsMessageProcessed.setFeesAmount(DecimalTypeUtils.toDecimal(feesAmount.doubleValue()));
         gpsMessageProcessed.setFeesAmount(DecimalTypeUtils.toDecimal(presentment.getFeeAmount()));
         gpsMessageProcessed.setFeesCurrency(presentment.getInternalAccountCurrency());
-        gpsMessageProcessed.setGpsMessageType(presentment.getGpsMessageType());
         gpsMessageProcessed.setInternalAccountCurrency(presentment.getInternalAccountCurrency());
         gpsMessageProcessed.setSpendGroup(presentment.getTransactionType() == TransactionType.ATM
                     ? SpendGroup.ATM

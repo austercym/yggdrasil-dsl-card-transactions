@@ -6,6 +6,7 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionType;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public class TransactionInfo implements Serializable {
     private Message message;
@@ -18,6 +19,7 @@ public class TransactionInfo implements Serializable {
     private String settlementCurrency;
     private String gpsTransactionLink;
     private String gpsTransactionId;
+    private LocalDateTime gpsTransactionTime;
     private String cardToken;
     private BigDecimal transactionAmount;
     private String transactionCurrency;
@@ -142,6 +144,14 @@ public class TransactionInfo implements Serializable {
 
     public void setIsBalanceEnquiry(Boolean balanceEnquiry) {
         isBalanceEnquiry = balanceEnquiry;
+    }
+
+    public LocalDateTime getGpsTransactionTime() {
+        return gpsTransactionTime;
+    }
+
+    public void setGpsTransactionTime(LocalDateTime gpsTransactionTime) {
+        this.gpsTransactionTime = gpsTransactionTime;
     }
 
     @Override
