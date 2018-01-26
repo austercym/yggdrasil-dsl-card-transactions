@@ -1,65 +1,54 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.savetoscylla.bolts;
 
-import com.orwellg.umbrella.avro.types.event.Event;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
+import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.GenericEventProcessBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.storm.tuple.Tuple;
 
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
-public class PrepareDataBolt extends com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventProcessBolt {
+public class PrepareDataBolt extends GenericEventProcessBolt<GpsMessageProcessed> {
+
+    private static final long serialVersionUID = 1L;
 
     private static final Logger LOG = LogManager.getLogger(PrepareDataBolt.class);
 
-    @Override
-    public void declareFieldsDefinition() {
-        addFielsDefinition(Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.TRANSACTION));
+    public PrepareDataBolt() {
+        super(GpsMessageProcessed.class);
     }
 
     @Override
-    public void sendNextStep(Tuple input, Event event) {
+    protected Object process(GpsMessageProcessed message, String key, String processId) {
 
-        try {
-            String key = event.getEvent().getKey();
-            String processId = event.getProcessIdentifier().getUuid();
-
-            LOG.info("Key: {} | ProcessId: {} | Received GPS message event", key, processId);
-
-            GpsMessageProcessed message = gson.fromJson(event.getEvent().getData(), GpsMessageProcessed.class);
-            CardTransaction transaction = new CardTransaction();
-            transaction.setGpsTransactionLink(message.getGpsTransactionLink());
-            transaction.setGpsTransactionId(message.getGpsTransactionId());
-            transaction.setGpsTransactionDateTime(Instant.ofEpochMilli(message.getGpsTransactionTime()));
-            transaction.setTransactionTimestamp(Instant.ofEpochMilli(message.getTransactionTimestamp()));
-            transaction.setGpsMessageType(message.getGpsMessageType());
-            transaction.setDebitCardId(message.getDebitCardId());
-            transaction.setInternalAccountId(message.getInternalAccountId());
-            transaction.setInternalAccountCurrency(message.getInternalAccountCurrency());
+        CardTransaction transaction = new CardTransaction();
+        transaction.setGpsTransactionLink(message.getGpsTransactionLink());
+        transaction.setGpsTransactionId(message.getGpsTransactionId());
+        transaction.setGpsTransactionDateTime(Instant.ofEpochMilli(message.getGpsTransactionTime()));
+        transaction.setTransactionTimestamp(Instant.ofEpochMilli(message.getTransactionTimestamp()));
+        transaction.setGpsMessageType(message.getGpsMessageType());
+        transaction.setDebitCardId(message.getDebitCardId());
+        transaction.setInternalAccountId(message.getInternalAccountId());
+        transaction.setInternalAccountCurrency(message.getInternalAccountCurrency());
+        if (message.getTotalWirecardAmount() != null) {
             transaction.setWirecardAmount(message.getTotalWirecardAmount().getValue());
-            transaction.setWirecardCurrency(message.getTotalWirecardCurrency());
-            transaction.setClientAmount(message.getTotalClientAmount().getValue());
-            transaction.setClientCurrency(message.getTotalClientCurrency());
-            transaction.setEarmarkAmount(message.getTotalEarmarkAmount().getValue());
-            transaction.setEarmarkCurrency(message.getTotalEarmarkCurrency());
-            transaction.setFeesAmount(message.getTotalFeesAmount().getValue());
-            transaction.setFeesCurrency(message.getTotalFeesCurrency());
-
-            Map<String, Object> values = new HashMap<>();
-            values.put(Fields.KEY, key);
-            values.put(Fields.PROCESS_ID, processId);
-            values.put(Fields.TRANSACTION, transaction);
-            send(input, values);
-
-            LOG.info("[Key: {}][ProcessId: {}]: Card transaction object prepared to save in Scylla.", key, processId);
-
-        }catch(Exception e){
-            LOG.error("Error occurred when preparing card transaction object to save in Scylla. Message: {}", input, e.getMessage(), e);
-            error(e, input);
         }
+        transaction.setWirecardCurrency(message.getTotalWirecardCurrency());
+        if (message.getTotalClientAmount() != null) {
+            transaction.setClientAmount(message.getTotalClientAmount().getValue());
+        }
+        transaction.setClientCurrency(message.getTotalClientCurrency());
+        if (message.getTotalEarmarkAmount() != null) {
+            transaction.setEarmarkAmount(message.getTotalEarmarkAmount().getValue());
+        }
+        transaction.setEarmarkCurrency(message.getTotalEarmarkCurrency());
+        if (message.getTotalFeesAmount() != null) {
+            transaction.setFeesAmount(message.getTotalFeesAmount().getValue());
+        }
+        transaction.setFeesCurrency(message.getTotalFeesCurrency());
+
+        LOG.info("[Key: {}][ProcessId: {}]: Card transaction object prepared to save in Scylla.", key, processId);
+
+        return transaction;
     }
 }

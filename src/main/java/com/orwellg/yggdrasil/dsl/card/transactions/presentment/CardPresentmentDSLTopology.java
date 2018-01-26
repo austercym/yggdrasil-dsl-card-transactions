@@ -3,6 +3,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
 import com.orwellg.umbrella.commons.storm.topology.TopologyFactory;
+import com.orwellg.umbrella.commons.storm.topology.component.base.AbstractTopology;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.EventErrorBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GBolt;
@@ -11,17 +12,13 @@ import com.orwellg.umbrella.commons.storm.topology.generic.grouping.ShuffleGroup
 import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.storm.Config;
-import org.apache.storm.LocalCluster;
-import org.apache.storm.StormSubmitter;
 import org.apache.storm.generated.StormTopology;
 
 import java.util.Arrays;
 
-public class CardPresentmentDSLTopology {
+public class CardPresentmentDSLTopology extends AbstractTopology {
 
     private final static Logger LOG = LogManager.getLogger(CardPresentmentDSLTopology.class);
   
@@ -39,20 +36,13 @@ public class CardPresentmentDSLTopology {
     private final static String BOLT_KAFKA_SUCCESS_PRODUCER = "kafka-success-producer";
     private final static String BOLT_KAFKA_EVENT_ERROR = "kafka-event-error-process";
     private final static String BOLT_KAFKA_ERROR_PRODUCER = "kafka-error-producer";
+    static final String PROPERTIES_FILE = "presentment.topology.properties";
 
-    public static void main(String[] args) throws Exception {
-
-        boolean local = false;
-        if (args.length >= 1 && args[0].equals("local")) {
-            local = true;
-        }
-        loadTopologyInStorm(local);
-    }
-
-    private static void loadTopologyInStorm(boolean local) throws Exception {
+    @Override
+    public StormTopology load() {
         LOG.debug("Creating Card Presentments processing topology");
 
-        TopologyConfig topologyConfig = TopologyConfigFactory.getTopologyConfig("presentment.topology.properties");
+        TopologyConfig topologyConfig = TopologyConfigFactory.getTopologyConfig(PROPERTIES_FILE);
         int hintsSpout = topologyConfig.getKafkaSpoutHints();
         int hintsProcessors = topologyConfig.getActionBoltHints();
 
@@ -114,22 +104,11 @@ public class CardPresentmentDSLTopology {
                 kafkaEventReader,
                 Arrays.asList(kafkaEventProcess, cardAuthorisationBolt, authValidationBolt,
                         getLinkedAccountBolt, validateLinikedAccountBolt, getFeeSchemaBolt, calculateAmountsBolt, kafkaEventSuccessProducer, kafkaEventError, kafkaErrorProducer));
-        LOG.debug("Topology created");
+        return topology;
+    }
 
-        // Create the basic config and upload the topology
-        Config conf = new Config();
-        conf.setDebug(false);
-        conf.setMaxTaskParallelism(30);
-
-        if (local) {
-            LocalCluster cluster = new LocalCluster();
-            cluster.submitTopology(TOPOLOGY_NAME, conf, topology);
-
-            Thread.sleep(3000000);
-            cluster.shutdown();
-            ComponentFactory.getConfigurationParams().close();
-        } else {
-            StormSubmitter.submitTopology(TOPOLOGY_NAME, conf, topology);
-        }
+    @Override
+    public String name() {
+        return TOPOLOGY_NAME;
     }
 }
