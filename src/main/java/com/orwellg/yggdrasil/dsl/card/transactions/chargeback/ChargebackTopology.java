@@ -13,7 +13,7 @@ import com.orwellg.umbrella.commons.storm.topology.generic.grouping.ShuffleGroup
 import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
-import com.orwellg.yggdrasil.dsl.card.transactions.chargeback.bolts.ProcessChargebackBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.ProcessClientCreditMessageBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.EventToTransactionInfoBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.LoadTransactionListBolt;
 import org.apache.logging.log4j.LogManager;
@@ -59,7 +59,7 @@ public class ChargebackTopology extends AbstractTopology {
         GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadTransactionListBolt(), config.getActionBoltHints());
         getDataBolt.addGrouping(new ShuffleGrouping(MAP_EVENT));
 
-        GBolt<?> processBolt = new GRichBolt(PROCESS_MESSAGE, new ProcessChargebackBolt(),
+        GBolt<?> processBolt = new GRichBolt(PROCESS_MESSAGE, new ProcessClientCreditMessageBolt(),
                 config.getActionBoltHints());
         processBolt.addGrouping(new ShuffleGrouping(GET_DATA));
 

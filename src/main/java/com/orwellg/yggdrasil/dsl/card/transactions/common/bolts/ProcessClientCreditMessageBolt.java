@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.chargeback.bolts;
+package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
@@ -18,9 +18,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ProcessChargebackBolt extends BasicRichBolt {
+public class ProcessClientCreditMessageBolt extends BasicRichBolt {
 
-    private static final Logger LOG = LogManager.getLogger(ProcessChargebackBolt.class);
+    private static final Logger LOG = LogManager.getLogger(ProcessClientCreditMessageBolt.class);
 
     @Override
     public void declareFieldsDefinition() {
@@ -38,11 +38,11 @@ public class ProcessChargebackBolt extends BasicRichBolt {
             List<CardTransaction> transactionList = (List<CardTransaction>) input.getValueByField(Fields.TRANSACTION_LIST);
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
-            LOG.debug("{}Chargeback processing", logPrefix);
+            LOG.debug("{}Processing", logPrefix);
             GpsMessageProcessed result = GpsMessageProcessedFactory.from(eventData);
 
             if (transactionList == null || transactionList.isEmpty()) {
-                throw new IllegalArgumentException("Empty transaction list - cannot process chargeback");
+                throw new IllegalArgumentException("Empty transaction list - cannot process");
             }
             CardTransaction lastTransaction = transactionList.get(0);
 
@@ -73,7 +73,7 @@ public class ProcessChargebackBolt extends BasicRichBolt {
             values.put(Fields.RESULT, result);
             send(input, values);
         } catch (Exception e) {
-            LOG.error("{}Chargeback processing error. Message: {},", logPrefix, e.getMessage(), e);
+            LOG.error("{}Processing error. Message: {},", logPrefix, e.getMessage(), e);
             error(e, input);
         }
     }
