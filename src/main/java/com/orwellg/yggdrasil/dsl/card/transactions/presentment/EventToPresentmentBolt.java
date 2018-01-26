@@ -4,8 +4,6 @@ import com.orwellg.umbrella.avro.types.event.Event;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.PresentmentMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.services.PresentmentMessageMapper;
-import com.orwellg.yggdrasil.dsl.card.transactions.topology.bolts.event.KafkaEventProcessBolt;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -18,7 +16,7 @@ import java.util.Map;
 
 public class EventToPresentmentBolt extends com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventProcessBolt {
 
-    private final static Logger LOG = LogManager.getLogger(KafkaEventProcessBolt.class);
+    private final static Logger LOG = LogManager.getLogger(EventToPresentmentBolt.class);
     private PresentmentMessageMapper mapper;
 
     @Override

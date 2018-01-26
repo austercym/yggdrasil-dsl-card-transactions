@@ -4,10 +4,11 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionType;
 
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
-public class PresentmentMessage {
+public class PresentmentMessage implements Serializable {
 
     private Long InternalAccountId;
     private String InternalAccountCurrency;

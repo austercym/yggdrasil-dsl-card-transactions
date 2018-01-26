@@ -1,16 +1,16 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.savetoscylla;
+package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
 
-import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfig;
-import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfigFactory;
+import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
+import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.StormSubmitter;
 
-public class CardSaveScyllaGpsMessageProcessed {
+public class CardPresentment {
 
-    private static final Logger LOG = LogManager.getLogger(CardSaveScyllaGpsMessageProcessed.class);
+    private static final Logger LOG = LogManager.getLogger(CardPresentment.class);
 
     public static void main(String[] args) throws Exception {
         boolean local = false;
@@ -20,7 +20,7 @@ public class CardSaveScyllaGpsMessageProcessed {
             local = true;
         }
 
-        CardSaveScyllaGpsMessageProcessedTopology topology = new CardSaveScyllaGpsMessageProcessedTopology();
+        CardPresentmentDSLTopology topology = new CardPresentmentDSLTopology();
 
         if (local) {
             LocalCluster localCluster = new LocalCluster();
@@ -33,7 +33,7 @@ public class CardSaveScyllaGpsMessageProcessed {
     }
 
     private static Config config() {
-        TopologyConfig config = TopologyConfigFactory.getTopologyConfig(CardSaveScyllaGpsMessageProcessedTopology.PROPERTIES_FILE);
+        TopologyConfig config = TopologyConfigFactory.getTopologyConfig(CardPresentmentDSLTopology.PROPERTIES_FILE);
         Config conf = new Config();
         conf.setDebug(false);
         conf.setMaxTaskParallelism(config.getTopologyMaxTaskParallelism());

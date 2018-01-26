@@ -38,7 +38,7 @@ public class SaveBolt extends BasicRichBolt {
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList(
-                Fields.KEY, Fields.PROCESS_ID, Fields.TRANSACTION));
+                Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA));
     }
 
     @Override
@@ -50,13 +50,13 @@ public class SaveBolt extends BasicRichBolt {
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
             LOG.info("{}Saving card transaction to Scylla", logPrefix);
-            CardTransaction transaction = (CardTransaction) input.getValueByField(Fields.TRANSACTION);
+            CardTransaction transaction = (CardTransaction) input.getValueByField(Fields.EVENT_DATA);
             repository.addTransaction(transaction);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
             values.put(Fields.PROCESS_ID, processId);
-            values.put(Fields.TRANSACTION, transaction);
+            values.put(Fields.EVENT_DATA, transaction);
             send(input, values);
         } catch (Exception e) {
             LOG.error("{}Error occurred when saving card transaction to Scylla. Message: {},", logPrefix, e.getMessage(), e);
