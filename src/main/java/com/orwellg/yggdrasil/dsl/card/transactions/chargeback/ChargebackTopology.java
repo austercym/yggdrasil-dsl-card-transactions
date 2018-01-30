@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.financialreversal;
+package com.orwellg.yggdrasil.dsl.card.transactions.chargeback;
 
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
@@ -13,29 +13,29 @@ import com.orwellg.umbrella.commons.storm.topology.generic.grouping.ShuffleGroup
 import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
+import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.ProcessClientCreditMessageBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.EventToTransactionInfoBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.LoadTransactionListBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.ProcessClientCreditMessageBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.generated.StormTopology;
 
 import java.util.Arrays;
 
-public class FinancialReversalTopology extends AbstractTopology {
+public class ChargebackTopology extends AbstractTopology {
 
-    public static final String PROPERTIES_FILE = "financial-reversal-topology.properties";
-    private static final Logger LOG = LogManager.getLogger(FinancialReversalTopology.class);
-    private static final String TOPOLOGY_NAME = "dsl-card-financial-reversal";
-    private static final String BOLT_NAME_PREFIX = "financialReversal";
+    public static final String PROPERTIES_FILE = "chargeback-topology.properties";
+    private static final Logger LOG = LogManager.getLogger(ChargebackTopology.class);
+    private static final String TOPOLOGY_NAME = "dsl-card-chargeback";
+    private static final String BOLT_NAME_PREFIX = "chargeback";
     private static final String KAFKA_EVENT_READER_COMPONENT = BOLT_NAME_PREFIX + "Reader";
     private static final String MAP_EVENT = BOLT_NAME_PREFIX + "Map";
-    private static final String ERROR_HANDLING = BOLT_NAME_PREFIX + "ErrorHandling";
-    private static final String ERROR_PRODUCER_COMPONENT = BOLT_NAME_PREFIX + "ErrorProducer";
     private static final String GET_DATA = BOLT_NAME_PREFIX + "GetData";
-    private static final String PROCESS_MESSAGE = BOLT_NAME_PREFIX + "ProcessMessage";
+    private static final String PROCESS_MESSAGE = BOLT_NAME_PREFIX + "Process";
     private static final String EVENT_GENERATOR = BOLT_NAME_PREFIX + "EventGenerator";
     private static final String KAFKA_EVENT_SUCCESS_PRODUCER = BOLT_NAME_PREFIX + "SuccessEventProducer";
+    private static final String ERROR_HANDLING = BOLT_NAME_PREFIX + "ErrorHandling";
+    private static final String ERROR_PRODUCER_COMPONENT = BOLT_NAME_PREFIX + "ErrorProducer";
 
     @Override
     public StormTopology load() {
@@ -59,7 +59,8 @@ public class FinancialReversalTopology extends AbstractTopology {
         GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadTransactionListBolt(), config.getActionBoltHints());
         getDataBolt.addGrouping(new ShuffleGrouping(MAP_EVENT));
 
-        GBolt<?> processBolt = new GRichBolt(PROCESS_MESSAGE, new ProcessClientCreditMessageBolt(), config.getActionBoltHints());
+        GBolt<?> processBolt = new GRichBolt(PROCESS_MESSAGE, new ProcessClientCreditMessageBolt(),
+                config.getActionBoltHints());
         processBolt.addGrouping(new ShuffleGrouping(GET_DATA));
 
         GBolt<?> eventGeneratorBolt = new GRichBolt(EVENT_GENERATOR, new KafkaEventGeneratorBolt(), config.getActionBoltHints());

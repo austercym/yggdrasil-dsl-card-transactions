@@ -6,6 +6,7 @@ import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import static org.junit.Assert.*;
 
@@ -43,5 +44,20 @@ public class GpsMessageMapperTest {
         assertTrue(BigDecimal.valueOf(-19.09).compareTo(result.getSettlementAmount()) == 0);
         assertEquals("PLN", result.getSettlementCurrency());
         assertEquals(CreditDebit.DEBIT, result.getCreditDebit());
+    }
+
+    @Test
+    public void mapWhenTxnGPSDatePopulatedShouldMapToGpsTransactionTime() {
+        // arrange
+        Message message = new Message();
+        message.setTxnGPSDate("2015-09-19 07:55:42.053");
+
+        // act
+        TransactionInfo result = mapper.map(message);
+
+        // assert
+        LocalDateTime expected = LocalDateTime.of(2015, 9, 19, 7, 55, 42, 53000000);
+        assertNotNull(result);
+        assertEquals(expected, result.getGpsTransactionTime());
     }
 }

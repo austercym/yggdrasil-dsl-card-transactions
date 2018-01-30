@@ -3,6 +3,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.utils;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 
+import java.time.ZoneOffset;
 import java.util.Date;
 
 public final class GpsMessageProcessedFactory {
@@ -16,6 +17,10 @@ public final class GpsMessageProcessedFactory {
             result.setDebitCardId(transaction.getDebitCardId());
             result.setSpendGroup(transaction.getSpendGroup());
             result.setTransactionTimestamp(new Date().getTime());
+            if (transaction.getGpsTransactionTime() != null) {
+                result.setGpsTransactionTime(
+                        transaction.getGpsTransactionTime().toInstant(ZoneOffset.UTC).toEpochMilli());
+            }
         }
         return result;
     }

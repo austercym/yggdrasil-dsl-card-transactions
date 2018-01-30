@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.financialreversal.bolts;
+package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
@@ -18,9 +18,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ProcessFinancialReversalBolt extends BasicRichBolt {
+public class ProcessClientCreditMessageBolt extends BasicRichBolt {
 
-    private static final Logger LOG = LogManager.getLogger(ProcessFinancialReversalBolt.class);
+    private static final Logger LOG = LogManager.getLogger(ProcessClientCreditMessageBolt.class);
 
     @Override
     public void declareFieldsDefinition() {
@@ -38,11 +38,11 @@ public class ProcessFinancialReversalBolt extends BasicRichBolt {
             List<CardTransaction> transactionList = (List<CardTransaction>) input.getValueByField(Fields.TRANSACTION_LIST);
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
-            LOG.debug("{}Financial Reversal processing", logPrefix);
+            LOG.debug("{}Processing", logPrefix);
             GpsMessageProcessed result = GpsMessageProcessedFactory.from(eventData);
 
-            if (transactionList == null || transactionList.isEmpty()){
-                throw new IllegalArgumentException("Empty transaction list - cannot process financial reversal");
+            if (transactionList == null || transactionList.isEmpty()) {
+                throw new IllegalArgumentException("Empty transaction list - cannot process");
             }
             CardTransaction lastTransaction = transactionList.get(0);
 
@@ -52,10 +52,12 @@ public class ProcessFinancialReversalBolt extends BasicRichBolt {
             result.setClientCurrency(lastTransaction.getInternalAccountCurrency());
 
             result.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(
-                    lastTransaction.getWirecardAmount().subtract(eventData.getSettlementAmount())));
+                    ObjectUtils.firstNonNull(lastTransaction.getWirecardAmount(), BigDecimal.ZERO)
+                            .subtract(eventData.getSettlementAmount())));
             result.setTotalWirecardCurrency(eventData.getSettlementCurrency());
             result.setTotalClientAmount(DecimalTypeUtils.toDecimal(
-                    lastTransaction.getClientAmount().add(eventData.getSettlementAmount())));
+                    ObjectUtils.firstNonNull(lastTransaction.getClientAmount(), BigDecimal.ZERO)
+                            .add(eventData.getSettlementAmount())));
             result.setTotalClientCurrency(lastTransaction.getInternalAccountCurrency());
             result.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(
                     ObjectUtils.firstNonNull(lastTransaction.getEarmarkAmount(), BigDecimal.ZERO)));
@@ -71,7 +73,7 @@ public class ProcessFinancialReversalBolt extends BasicRichBolt {
             values.put(Fields.RESULT, result);
             send(input, values);
         } catch (Exception e) {
-            LOG.error("{}Financial Reversal processing error. Message: {},", logPrefix, e.getMessage(), e);
+            LOG.error("{}Processing error. Message: {},", logPrefix, e.getMessage(), e);
             error(e, input);
         }
     }

@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.financialreversal.bolts;
+package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
@@ -15,13 +15,13 @@ import java.util.List;
 
 import static org.mockito.Mockito.*;
 
-public class ProcessFinancialReversalBoltTest {
+public class ProcessClientCreditMessageBoltTest {
 
-    private ProcessFinancialReversalBolt bolt;
+    private ProcessClientCreditMessageBolt bolt;
 
     @Before
     public void setUp() {
-        bolt = new ProcessFinancialReversalBolt();
+        bolt = new ProcessClientCreditMessageBolt();
         bolt.declareFieldsDefinition();
     }
 
