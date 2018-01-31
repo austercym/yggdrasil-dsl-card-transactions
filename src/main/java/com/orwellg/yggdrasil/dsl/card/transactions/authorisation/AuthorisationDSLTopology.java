@@ -4,6 +4,7 @@ import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
 import com.orwellg.umbrella.commons.storm.topology.TopologyFactory;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.EventErrorBolt;
+import com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventGeneratorBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GBolt;
 import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GRichBolt;
@@ -34,6 +35,7 @@ public class AuthorisationDSLTopology {
     private static final String GET_DATA = "get-data";
     private static final String PROCESS_VALIDATION = "process-validation";
     private static final String RESPONSE_GENERATOR = "response-generator";
+    private static final String EVENT_GENERATOR = "authorisationEventGenerator";
     private static final String KAFKA_EVENT_SUCCESS_PRODUCER = "kafka-event-success-producer";
 
     public static final String KAFKA_ERROR_PRODUCER_COMPONENT_ID = "get-kafka-error-producer";
@@ -75,9 +77,12 @@ public class AuthorisationDSLTopology {
         GBolt<?> responseGeneratorBolt = new GRichBolt(RESPONSE_GENERATOR, new ResponseGeneratorBolt(), config.getActionBoltHints());
         responseGeneratorBolt.addGrouping(new ShuffleGrouping(PROCESS_VALIDATION));
 
+        GBolt<?> eventGeneratorBolt = new GRichBolt(EVENT_GENERATOR, new KafkaEventGeneratorBolt(), config.getActionBoltHints());
+        eventGeneratorBolt.addGrouping(new ShuffleGrouping(RESPONSE_GENERATOR));
+
         // Send a event with the result
         GBolt<?> kafkaEventSuccessProducer = new GRichBolt(KAFKA_EVENT_SUCCESS_PRODUCER, new KafkaBoltWrapper(config.getKafkaPublisherBoltConfig(), String.class, String.class).getKafkaBolt(), config.getEventResponseHints());
-        kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping(RESPONSE_GENERATOR));
+        kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping(EVENT_GENERATOR));
 
         ///////
         // GBolt for work with the errors
@@ -94,7 +99,7 @@ public class AuthorisationDSLTopology {
         // Build the topology
         StormTopology topology = TopologyFactory.generateTopology(
                 kafkaEventReader,
-                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, getDataBolt, processValidationBolt, responseGeneratorBolt, kafkaEventSuccessProducer));
+                Arrays.asList(kafkaEventProcess, kafkaEventError, kafkaErrorProducer, getDataBolt, processValidationBolt, responseGeneratorBolt, eventGeneratorBolt, kafkaEventSuccessProducer));
         LOG.info("GPS Authorisation message processing topology created");
 
         // Create the basic config and upload the topology
