@@ -1,10 +1,10 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.savetoscylla;
 
-import com.orwellg.yggdrasil.dsl.card.transactions.common.TopologyLoader;
+import com.orwellg.yggdrasil.dsl.card.transactions.common.TopologySubmitter;
 
 public class CardSaveScyllaGpsMessageProcessed {
 
     public static void main(String[] args) throws Exception {
-        TopologyLoader.submitTopology(CardSaveScyllaGpsMessageProcessedTopology::new, CardSaveScyllaGpsMessageProcessedTopology.PROPERTIES_FILE, args);
+        TopologySubmitter.submit(CardSaveScyllaGpsMessageProcessedTopology::new, CardSaveScyllaGpsMessageProcessedTopology.PROPERTIES_FILE, args);
     }
 }

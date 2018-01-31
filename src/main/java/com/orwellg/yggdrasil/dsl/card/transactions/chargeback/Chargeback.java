@@ -1,10 +1,10 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.chargeback;
 
-import com.orwellg.yggdrasil.dsl.card.transactions.common.TopologyLoader;
+import com.orwellg.yggdrasil.dsl.card.transactions.common.TopologySubmitter;
 
 public class Chargeback {
 
     public static void main(String[] args) throws Exception {
-        TopologyLoader.submitTopology(ChargebackTopology::new, ChargebackTopology.PROPERTIES_FILE, args);
+        TopologySubmitter.submit(ChargebackTopology::new, ChargebackTopology.PROPERTIES_FILE, args);
     }
 }

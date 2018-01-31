@@ -14,11 +14,11 @@ import org.apache.storm.generated.InvalidTopologyException;
 
 import java.util.function.Supplier;
 
-public final class TopologyLoader {
+public final class TopologySubmitter {
 
-    private static final Logger LOG = LogManager.getLogger(TopologyLoader.class);
+    private static final Logger LOG = LogManager.getLogger(TopologySubmitter.class);
 
-    public static <TTopology extends AbstractTopology> void submitTopology(Supplier<TTopology> supplier, String propertiesFile, String[] args) throws InterruptedException, AlreadyAliveException, InvalidTopologyException, AuthorizationException {
+    public static <TTopology extends AbstractTopology> void submit(Supplier<TTopology> supplier, String propertiesFile, String[] args) throws InterruptedException, AlreadyAliveException, InvalidTopologyException, AuthorizationException {
         boolean local = false;
 
         if (args.length >= 1 && args[0].equals("local")) {
