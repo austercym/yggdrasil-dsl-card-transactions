@@ -18,9 +18,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ProcessClientCreditMessageBolt extends BasicRichBolt {
+public class GenericMessageProcessingBolt extends BasicRichBolt {
 
-    private static final Logger LOG = LogManager.getLogger(ProcessClientCreditMessageBolt.class);
+    private static final Logger LOG = LogManager.getLogger(GenericMessageProcessingBolt.class);
 
     @Override
     public void declareFieldsDefinition() {
