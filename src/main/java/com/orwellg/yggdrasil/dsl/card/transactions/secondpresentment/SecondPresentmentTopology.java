@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.chargeback;
+package com.orwellg.yggdrasil.dsl.card.transactions.secondpresentment;
 
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
@@ -13,21 +13,21 @@ import com.orwellg.umbrella.commons.storm.topology.generic.grouping.ShuffleGroup
 import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
-import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.GenericMessageProcessingBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.EventToTransactionInfoBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.LoadTransactionListBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.GenericMessageProcessingBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.generated.StormTopology;
 
 import java.util.Arrays;
 
-public class ChargebackTopology extends AbstractTopology {
+public class SecondPresentmentTopology extends AbstractTopology {
 
-    public static final String PROPERTIES_FILE = "chargeback-topology.properties";
-    private static final Logger LOG = LogManager.getLogger(ChargebackTopology.class);
-    private static final String TOPOLOGY_NAME = "dsl-card-chargeback";
-    private static final String BOLT_NAME_PREFIX = "chargeback";
+    public static final String PROPERTIES_FILE = "second-presentment-topology.properties";
+    private static final Logger LOG = LogManager.getLogger(SecondPresentmentTopology.class);
+    private static final String TOPOLOGY_NAME = "dsl-card-second-presentment";
+    private static final String BOLT_NAME_PREFIX = "secondPresentment";
     private static final String KAFKA_EVENT_READER_COMPONENT = BOLT_NAME_PREFIX + "Reader";
     private static final String MAP_EVENT = BOLT_NAME_PREFIX + "Map";
     private static final String GET_DATA = BOLT_NAME_PREFIX + "GetData";
