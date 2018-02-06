@@ -44,27 +44,14 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
             if (transactionList == null || transactionList.isEmpty()) {
                 throw new IllegalArgumentException("Empty transaction list - cannot process");
             }
+
             CardTransaction lastTransaction = transactionList.get(0);
-
-            result.setWirecardAmount(DecimalTypeUtils.toDecimal(eventData.getSettlementAmount().negate()));
-            result.setWirecardCurrency(eventData.getSettlementCurrency());
-            result.setClientAmount(DecimalTypeUtils.toDecimal(eventData.getSettlementAmount()));
-            result.setClientCurrency(lastTransaction.getInternalAccountCurrency());
-
-            result.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(
-                    ObjectUtils.firstNonNull(lastTransaction.getWirecardAmount(), BigDecimal.ZERO)
-                            .subtract(eventData.getSettlementAmount())));
-            result.setTotalWirecardCurrency(eventData.getSettlementCurrency());
-            result.setTotalClientAmount(DecimalTypeUtils.toDecimal(
-                    ObjectUtils.firstNonNull(lastTransaction.getClientAmount(), BigDecimal.ZERO)
-                            .add(eventData.getSettlementAmount())));
-            result.setTotalClientCurrency(lastTransaction.getInternalAccountCurrency());
-            result.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(
-                    ObjectUtils.firstNonNull(lastTransaction.getEarmarkAmount(), BigDecimal.ZERO)));
-            result.setTotalEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
-            result.setTotalFeesAmount(DecimalTypeUtils.toDecimal(
-                    ObjectUtils.firstNonNull(lastTransaction.getFeesAmount(), BigDecimal.ZERO)));
-            result.setTotalFeesCurrency(lastTransaction.getInternalAccountCurrency());
+            if (isDuplicatedMessage(eventData, transactionList)) {
+                LOG.info("{}Ignore message with GpsTxnId {}. It has been already processed.", logPrefix);
+                copyValuesFromLatestTransaction(eventData, result, lastTransaction);
+            } else {
+                calculateNewValues(eventData, result, lastTransaction);
+            }
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
@@ -76,5 +63,52 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
             LOG.error("{}Processing error. Message: {},", logPrefix, e.getMessage(), e);
             error(e, input);
         }
+    }
+
+    private void calculateNewValues(TransactionInfo eventData, GpsMessageProcessed result, CardTransaction lastTransaction) {
+        result.setWirecardAmount(DecimalTypeUtils.toDecimal(eventData.getSettlementAmount().negate()));
+        result.setWirecardCurrency(eventData.getSettlementCurrency());
+        result.setClientAmount(DecimalTypeUtils.toDecimal(eventData.getSettlementAmount()));
+        result.setClientCurrency(lastTransaction.getInternalAccountCurrency());
+
+        result.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(
+                ObjectUtils.firstNonNull(lastTransaction.getWirecardAmount(), BigDecimal.ZERO)
+                        .subtract(eventData.getSettlementAmount())));
+        result.setTotalWirecardCurrency(eventData.getSettlementCurrency());
+        result.setTotalClientAmount(DecimalTypeUtils.toDecimal(
+                ObjectUtils.firstNonNull(lastTransaction.getClientAmount(), BigDecimal.ZERO)
+                        .add(eventData.getSettlementAmount())));
+        result.setTotalClientCurrency(lastTransaction.getInternalAccountCurrency());
+        result.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(
+                ObjectUtils.firstNonNull(lastTransaction.getEarmarkAmount(), BigDecimal.ZERO)));
+        result.setTotalEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
+        result.setTotalFeesAmount(DecimalTypeUtils.toDecimal(
+                ObjectUtils.firstNonNull(lastTransaction.getFeesAmount(), BigDecimal.ZERO)));
+        result.setTotalFeesCurrency(lastTransaction.getInternalAccountCurrency());
+    }
+
+    private void copyValuesFromLatestTransaction(TransactionInfo eventData, GpsMessageProcessed result, CardTransaction lastTransaction) {
+        result.setWirecardAmount(DecimalTypeUtils.toDecimal(BigDecimal.ZERO));
+        result.setWirecardCurrency(eventData.getSettlementCurrency());
+        result.setClientAmount(DecimalTypeUtils.toDecimal(BigDecimal.ZERO));
+        result.setClientCurrency(lastTransaction.getInternalAccountCurrency());
+
+        result.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(
+                ObjectUtils.firstNonNull(lastTransaction.getWirecardAmount(), BigDecimal.ZERO)));
+        result.setTotalWirecardCurrency(lastTransaction.getWirecardCurrency());
+        result.setTotalClientAmount(DecimalTypeUtils.toDecimal(
+                ObjectUtils.firstNonNull(lastTransaction.getClientAmount(), BigDecimal.ZERO)));
+        result.setTotalClientCurrency(lastTransaction.getClientCurrency());
+        result.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(
+                ObjectUtils.firstNonNull(lastTransaction.getEarmarkAmount(), BigDecimal.ZERO)));
+        result.setTotalEarmarkCurrency(lastTransaction.getEarmarkCurrency());
+        result.setTotalFeesAmount(DecimalTypeUtils.toDecimal(
+                ObjectUtils.firstNonNull(lastTransaction.getFeesAmount(), BigDecimal.ZERO)));
+        result.setTotalFeesCurrency(lastTransaction.getFeesCurrency());
+    }
+
+    private boolean isDuplicatedMessage(TransactionInfo eventData, List<CardTransaction> transactionList) {
+        return transactionList.stream().anyMatch(
+                t -> eventData.getGpsTransactionId().equals(t.getGpsTransactionId()));
     }
 }
