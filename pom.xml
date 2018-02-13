@@ -30,21 +30,6 @@
 		<!-- orwell -->
 		<dependency>
 			<groupId>com.orwellg.umbrella</groupId>
-			<artifactId>umbrella-commons-nosql</artifactId>
-			<version>0.0.1</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-log4j12</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>log4j</groupId>
-					<artifactId>log4j</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>com.orwellg.umbrella</groupId>
 			<artifactId>umbrella-commons-types</artifactId>
 			<version>0.0.6-SNAPSHOT</version>
 			<exclusions>
@@ -107,6 +92,21 @@
 			<groupId>com.orwellg.yggdrasil</groupId>
 			<artifactId>yggdrasil-network-client</artifactId>
 			<version>0.0.2-SNAPSHOT</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.orwellg.umbrella</groupId>
+			<artifactId>umbrella-commons-nosql</artifactId>
+			<version>0.0.1</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
