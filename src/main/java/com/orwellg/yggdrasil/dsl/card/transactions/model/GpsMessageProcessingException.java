@@ -1,7 +1,5 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.model;
 
-import org.apache.log4j.spi.ErrorCode;
-
 public class GpsMessageProcessingException extends Exception {
 
 
