@@ -1,13 +1,14 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.config;
 
 import com.orwellg.umbrella.commons.beans.config.kafka.SubscriberKafkaConfiguration;
+import com.orwellg.yggdrasil.commons.config.topology.DSLTopologyConfig;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class TopologyConfig extends com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig {
+public class TopologyConfig extends DSLTopologyConfig {
 
 
     public TopologyConfig() {
