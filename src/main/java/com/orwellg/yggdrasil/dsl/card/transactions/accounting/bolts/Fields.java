@@ -1,0 +1,7 @@
+package com.orwellg.yggdrasil.dsl.card.transactions.accounting.bolts;
+
+public class Fields extends com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.Fields {
+    public static final String COMMAND_NAME = "commandName";
+    public static final String COMMAND_KEY = "commandKey";
+    public static final String TOPIC = "topic";
+}

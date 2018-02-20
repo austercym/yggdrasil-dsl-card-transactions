@@ -97,7 +97,7 @@ public class ConfigurationParams extends ZkConfigurationParams implements Serial
     }
 
     @Override
-    public void close() {
+    public void close() throws Exception {
         networkConfig.close();
         super.close();
     }
