@@ -1,8 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.accounting;
 
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
-import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
-import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
+import com.orwellg.umbrella.commons.beans.config.kafka.SubscriberKafkaConfiguration;
 import com.orwellg.umbrella.commons.storm.topology.TopologyFactory;
 import com.orwellg.umbrella.commons.storm.topology.component.base.AbstractTopology;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.EventErrorBolt;
@@ -17,11 +16,15 @@ import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
 import com.orwellg.yggdrasil.dsl.card.transactions.accounting.bolts.AccountingCommandBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.GenericEventProcessBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfig;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.generated.StormTopology;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class AccountingTopology extends AbstractTopology {
 
@@ -31,7 +34,7 @@ public class AccountingTopology extends AbstractTopology {
     public static final String NO_ACCOUNTING_STREAM = "NoAccounting";
     private static final String TOPOLOGY_NAME = "dsl-cards-accounting";
     private static final String BOLT_NAME_PREFIX = "accounting";
-    private static final String KAFKA_EVENT_READER_COMPONENT = BOLT_NAME_PREFIX + "Reader";
+    private static final String KAFKA_EVENT_READER_FORMAT = BOLT_NAME_PREFIX + "Reader%d";
     private static final String PROCESS_COMPONENT = BOLT_NAME_PREFIX + "Process";
     private static final String COMMAND_GENERATOR = BOLT_NAME_PREFIX + "CommandGenerator";
     private static final String ERROR_HANDLING = BOLT_NAME_PREFIX + "ErrorHandling";
@@ -45,19 +48,26 @@ public class AccountingTopology extends AbstractTopology {
         TopologyConfig config = TopologyConfigFactory.getTopologyConfig(PROPERTIES_FILE);
 
         // -------------------------------------------------------
-        // Create the spout that read events from Kafka
+        // Create the spouts that read events from Kafka
         // -------------------------------------------------------
-        // TODO: Subscribe to all topics
-        GSpout kafkaEventReader = new GSpout(KAFKA_EVENT_READER_COMPONENT,
-                new KafkaSpoutWrapper(config.getKafkaSubscriberSpoutConfig(), String.class, String.class).getKafkaSpout(),
-                config.getKafkaSpoutHints());
+        List<SubscriberKafkaConfiguration> kafkaSubscriberSpoutConfigs = config.getKafkaSubscriberSpoutConfigs();
+        List<GSpout> kafkaEventReaders = new ArrayList<>();
+        List<String> spoutNames = new ArrayList<>();
+        for (int i = 0; i < kafkaSubscriberSpoutConfigs.size(); i++) {
+            SubscriberKafkaConfiguration subscriberConfig = kafkaSubscriberSpoutConfigs.get(i);
+            String spoutName = String.format(KAFKA_EVENT_READER_FORMAT, i);
+            GSpout kafkaEventReader = new GSpout(spoutName, new KafkaSpoutWrapper(subscriberConfig, String.class, String.class).getKafkaSpout(), config.getKafkaSpoutHints());
+            kafkaEventReaders.add(kafkaEventReader);
+            spoutNames.add(spoutName);
+        }
 
         // -------------------------------------------------------
         // Process events
         // -------------------------------------------------------
-        GBolt<?> processBolt = new GRichBolt(PROCESS_COMPONENT, new GenericEventProcessBolt<>(GpsMessageProcessed.class),
-                config.getActionBoltHints());
-        processBolt.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER_COMPONENT, KafkaSpout.EVENT_SUCCESS_STREAM));
+        GBolt<?> processBolt = new GRichBolt(PROCESS_COMPONENT, new GenericEventProcessBolt<>(GpsMessageProcessed.class), config.getActionBoltHints());
+        for (String spoutName : spoutNames) {
+            processBolt.addGrouping(new ShuffleGrouping(spoutName, KafkaSpout.EVENT_SUCCESS_STREAM));
+        }
 
         GBolt<?> commandGeneratorBolt = new GRichBolt(COMMAND_GENERATOR, new AccountingCommandBolt(), config.getActionBoltHints());
         commandGeneratorBolt.addGrouping(new ShuffleGrouping(PROCESS_COMPONENT));
@@ -74,14 +84,16 @@ public class AccountingTopology extends AbstractTopology {
         // Topology Error Handling
         // -------------------------------------------------------
         GBolt<?> errorHandlingBolt = new GRichBolt(ERROR_HANDLING, new EventErrorBolt(), config.getActionBoltHints());
-        errorHandlingBolt.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER_COMPONENT, KafkaSpout.EVENT_ERROR_STREAM));
+        for (String spoutName : spoutNames) {
+            errorHandlingBolt.addGrouping(new ShuffleGrouping(spoutName, KafkaSpout.EVENT_ERROR_STREAM));
+        }
 
         GBolt<?> kafkaEventErrorProducer = new GRichBolt(ERROR_PRODUCER_COMPONENT, new KafkaBoltWrapper(config.getKafkaPublisherErrorBoltConfig(), String.class, String.class).getKafkaBolt(), config.getActionBoltHints());
         kafkaEventErrorProducer.addGrouping(new ShuffleGrouping(ERROR_HANDLING));
         // -------------------------------------------------------
 
         // Topology
-        StormTopology topology = TopologyFactory.generateTopology(kafkaEventReader,
+        StormTopology topology = TopologyFactory.generateTopology(kafkaEventReaders,
                 Arrays.asList(processBolt, commandGeneratorBolt, eventAccountingCommandGeneratorBolt, kafkaAccountingCommandProducerBolt, errorHandlingBolt, kafkaEventErrorProducer));
 
         LOG.info("{} Topology created, submitting it to storm...", TOPOLOGY_NAME);
