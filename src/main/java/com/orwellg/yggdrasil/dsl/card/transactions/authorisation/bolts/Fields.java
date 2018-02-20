@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.authorisation;
+package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.bolts;
 
 class Fields extends com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.Fields {
     static final String CARD_SETTINGS = "cardSettings";
