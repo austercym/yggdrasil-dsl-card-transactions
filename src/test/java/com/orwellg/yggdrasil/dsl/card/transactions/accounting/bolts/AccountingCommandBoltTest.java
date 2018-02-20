@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.earmarking.bolts;
+package com.orwellg.yggdrasil.dsl.card.transactions.accounting.bolts;
 
 import com.orwellg.umbrella.avro.types.command.accounting.AccountingCommandData;
 import com.orwellg.umbrella.avro.types.command.accounting.BalanceUpdateType;
@@ -10,7 +10,7 @@ import com.orwellg.umbrella.commons.utils.enums.Systems;
 import com.orwellg.yggdrasil.commons.net.Cluster;
 import com.orwellg.yggdrasil.commons.net.Node;
 import com.orwellg.yggdrasil.commons.utils.enums.SpecialAccountTypes;
-import com.orwellg.yggdrasil.dsl.card.transactions.earmarking.EarmarkingTopology;
+import com.orwellg.yggdrasil.dsl.card.transactions.accounting.AccountingTopology;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.tuple.Tuple;
 import org.junit.Before;
@@ -23,26 +23,26 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-public class EarmarkingCommandBoltTest {
+public class AccountingCommandBoltTest {
 
-    EarmarkingCommandBolt bolt;
+    private AccountingCommandBolt bolt;
 
     @Before
     public void setUp() {
-        bolt = new EarmarkingCommandBolt();
+        bolt = new AccountingCommandBolt();
         bolt.declareFieldsDefinition();
     }
 
     @Test
-    public void executeWhenNoEarmarkRequiredShouldMoveProcessingToDifferentStream() {
+    public void executeWhenNoAccountingRequiredShouldMoveProcessingToDifferentStream() {
         // arrange
         GpsMessageProcessed processed = new GpsMessageProcessed();
-        processed.setEarmarkAmount(DecimalTypeUtils.toDecimal(0));
-        processed.setClientAmount(DecimalTypeUtils.toDecimal(19.09));
-        processed.setWirecardAmount(DecimalTypeUtils.toDecimal(-19.09));
+        processed.setEarmarkAmount(DecimalTypeUtils.toDecimal(19.09));
+        processed.setClientAmount(DecimalTypeUtils.toDecimal(0));
+        processed.setWirecardAmount(DecimalTypeUtils.toDecimal(0));
 
         Tuple input = mock(Tuple.class);
-        when(input.getValueByField(com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.Fields.EVENT_DATA)).thenReturn(processed);
+        when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(processed);
 
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
@@ -51,19 +51,21 @@ public class EarmarkingCommandBoltTest {
         bolt.execute(input);
 
         // assert
-        verify(collector).emit(eq(EarmarkingTopology.NO_EARMARKING_STREAM), any(Tuple.class), any());
+        verify(collector).emit(eq(AccountingTopology.NO_ACCOUNTING_STREAM), any(Tuple.class), any());
     }
 
     @Test
-    public void executeWhenPutEarmarkRequiredShouldCreateAccountingCommand() {
+    public void executeWhenClientDebitShouldCreateAccountingCommand() {
         // arrange
         GpsMessageProcessed processed = new GpsMessageProcessed();
-        processed.setEarmarkAmount(DecimalTypeUtils.toDecimal(-19.09));
-        processed.setEarmarkCurrency("bar");
+        processed.setClientAmount(DecimalTypeUtils.toDecimal(-19.09));
+        processed.setClientCurrency("bar");
+        processed.setWirecardAmount(DecimalTypeUtils.toDecimal(19.09));
+        processed.setWirecardCurrency("bar");
         processed.setInternalAccountId(42L);
 
         Tuple input = mock(Tuple.class);
-        when(input.getValueByField(com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.Fields.EVENT_DATA)).thenReturn(processed);
+        when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(processed);
 
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
@@ -87,10 +89,10 @@ public class EarmarkingCommandBoltTest {
                         .anyMatch(item -> item.getAccountingInfo() != null
                                 && item.getAccountingInfo().getDebitAccount() != null
                                 && "42".equals(item.getAccountingInfo().getDebitAccount().getAccountId())
-                                && BalanceUpdateType.AVAILABLE.equals(item.getAccountingInfo().getDebitBalanceUpdate())
+                                && BalanceUpdateType.ALL.equals(item.getAccountingInfo().getDebitBalanceUpdate())
                                 && item.getAccountingInfo().getCreditAccount() != null
                                 && "foo".equals(item.getAccountingInfo().getCreditAccount().getAccountId())
-                                && BalanceUpdateType.NONE.equals(item.getAccountingInfo().getCreditBalanceUpdate())
+                                && BalanceUpdateType.ALL.equals(item.getAccountingInfo().getCreditBalanceUpdate())
                                 && item.getTransactionInfo() != null
                                 && item.getTransactionInfo().getAmount().getValue().compareTo(BigDecimal.valueOf(19.09)) == 0
                                 && "bar".equals(item.getTransactionInfo().getCurrency())
@@ -101,15 +103,17 @@ public class EarmarkingCommandBoltTest {
     }
 
     @Test
-    public void executeWhenReleaseEarmarkRequiredShouldCreateAccountingCommand() {
+    public void executeWhenClientCreditShouldCreateAccountingCommand() {
         // arrange
         GpsMessageProcessed processed = new GpsMessageProcessed();
-        processed.setEarmarkAmount(DecimalTypeUtils.toDecimal(19.09));
-        processed.setEarmarkCurrency("bar");
+        processed.setClientAmount(DecimalTypeUtils.toDecimal(19.09));
+        processed.setClientCurrency("bar");
+        processed.setWirecardAmount(DecimalTypeUtils.toDecimal(-19.09));
+        processed.setWirecardCurrency("bar");
         processed.setInternalAccountId(42L);
 
         Tuple input = mock(Tuple.class);
-        when(input.getValueByField(com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.Fields.EVENT_DATA)).thenReturn(processed);
+        when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(processed);
 
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
@@ -133,10 +137,10 @@ public class EarmarkingCommandBoltTest {
                         .anyMatch(item -> item.getAccountingInfo() != null
                                 && item.getAccountingInfo().getCreditAccount() != null
                                 && "42".equals(item.getAccountingInfo().getCreditAccount().getAccountId())
-                                && BalanceUpdateType.AVAILABLE.equals(item.getAccountingInfo().getCreditBalanceUpdate())
+                                && BalanceUpdateType.ALL.equals(item.getAccountingInfo().getCreditBalanceUpdate())
                                 && item.getAccountingInfo().getDebitAccount() != null
                                 && "foo".equals(item.getAccountingInfo().getDebitAccount().getAccountId())
-                                && BalanceUpdateType.NONE.equals(item.getAccountingInfo().getDebitBalanceUpdate())
+                                && BalanceUpdateType.ALL.equals(item.getAccountingInfo().getDebitBalanceUpdate())
                                 && item.getTransactionInfo() != null
                                 && item.getTransactionInfo().getAmount().getValue().compareTo(BigDecimal.valueOf(19.09)) == 0
                                 && "bar".equals(item.getTransactionInfo().getCurrency())
