@@ -1,12 +1,12 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
+package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
 
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.PresentmentMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.presentment.CardPresentmentTopology;
 import com.orwellg.yggdrasil.dsl.card.transactions.presentment.services.AuthorisationValidationService;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -29,7 +29,7 @@ public class CheckAuthorisationBolt extends BasicRichBolt {
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "gpsMessage"));
-        addFielsDefinition(CardPresentmentDSLTopology.OFFLINE_PRESENTMENT_STREAM, Arrays.asList("key", "processId", "eventData", "gpsMessage"));
+        addFielsDefinition(CardPresentmentTopology.OFFLINE_PRESENTMENT_STREAM, Arrays.asList("key", "processId", "eventData", "gpsMessage"));
     }
 
     @Override
@@ -58,7 +58,7 @@ public class CheckAuthorisationBolt extends BasicRichBolt {
             else {
                 LOG.info("Key: {} | ProcessId: {} | Processing Offline Presentment. GpsTransactionId: {}, GpsTransactionLink: {}. Continuing with Offline PresentmentMessage flow", key, originalProcessId, eventData.getTXnID(), eventData.getTransLink());
                 Map<String, Object> values = getReturnValues(key, originalProcessId, eventData, message);
-                send(CardPresentmentDSLTopology.OFFLINE_PRESENTMENT_STREAM, tuple, values);
+                send(CardPresentmentTopology.OFFLINE_PRESENTMENT_STREAM, tuple, values);
             }
 
         }catch (Exception e) {

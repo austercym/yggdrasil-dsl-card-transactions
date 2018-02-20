@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
+package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
 import com.orwellg.umbrella.avro.types.event.EntityIdentifierType;
 import com.orwellg.umbrella.avro.types.event.Event;

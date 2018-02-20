@@ -1,6 +1,5 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.presentment;
+package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.repositories.scylla.FeeHistoryRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.FeeHistoryReposotoryImpl;
@@ -8,7 +7,6 @@ import com.orwellg.umbrella.commons.storm.topology.component.bolt.generics.scyll
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.FeeSchema;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.PresentmentMessage;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;

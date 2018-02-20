@@ -12,15 +12,16 @@ import com.orwellg.umbrella.commons.storm.topology.generic.grouping.ShuffleGroup
 import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
+import com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.generated.StormTopology;
 
 import java.util.Arrays;
 
-public class CardPresentmentDSLTopology extends AbstractTopology {
+public class CardPresentmentTopology extends AbstractTopology {
 
-    private final static Logger LOG = LogManager.getLogger(CardPresentmentDSLTopology.class);
+    private final static Logger LOG = LogManager.getLogger(CardPresentmentTopology.class);
   
     public final static String OFFLINE_PRESENTMENT_STREAM = "offline-presentment-stream";
     public static final String TOPOLOGY_NAME = "dsl-card-presentment";
