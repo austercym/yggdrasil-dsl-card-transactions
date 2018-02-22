@@ -5,14 +5,19 @@ import com.orwellg.umbrella.commons.repositories.scylla.LinkedAccountRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.LinkedAccountRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.PresentmentMessage;
+import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.tuple.Tuple;
-import java.util.*;
-import org.apache.logging.log4j.Logger;
+
+import java.time.ZoneOffset;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class GetLinkedAccount extends BasicRichBolt {
 
@@ -30,10 +35,11 @@ public class GetLinkedAccount extends BasicRichBolt {
         setScyllaKeyspace(ComponentFactory.getConfigurationParams().getCardsScyllaParams().getKeyspace());
     }
 
-    protected List<LinkedAccount> retrieve(Message message, PresentmentMessage presentment) {
+    protected List<LinkedAccount> retrieve(Message message, TransactionInfo presentment) {
         long cardTransactionId = Long.parseLong(message.getCustRef());
-        List<LinkedAccount> linkedAccount = repository.getLinkedAccountByDate(cardTransactionId,
-                    presentment.getTransactionTimestamp());
+        List<LinkedAccount> linkedAccount = repository.getLinkedAccountByDate(
+                cardTransactionId,
+                presentment.getTransactionDateTime().toInstant(ZoneOffset.UTC));
         return linkedAccount;
     }
 
@@ -52,7 +58,7 @@ public class GetLinkedAccount extends BasicRichBolt {
             values.put("processId", processId);
             values.put("eventData", input.getValueByField("eventData"));
             values.put("gpsMessage", input.getValueByField("gpsMessage"));
-            values.put("retrieveValue", retrieve((Message)input.getValueByField("eventData"),(PresentmentMessage) input.getValueByField("gpsMessage")));
+            values.put("retrieveValue", retrieve((Message) input.getValueByField("eventData"), (TransactionInfo) input.getValueByField("gpsMessage")));
             send(input, values);
 
         } catch (Exception e) {

@@ -25,6 +25,7 @@ public class TransactionInfo implements Serializable {
     private String transactionCurrency;
     private CreditDebit creditDebit;
     private Boolean isBalanceEnquiry;
+    private LocalDateTime transactionDateTime;
 
     public Message getMessage() {
         return message;
@@ -154,6 +155,14 @@ public class TransactionInfo implements Serializable {
         this.gpsTransactionTime = gpsTransactionTime;
     }
 
+    public LocalDateTime getTransactionDateTime() {
+        return transactionDateTime;
+    }
+
+    public void setTransactionDateTime(LocalDateTime transactionDateTime) {
+        this.transactionDateTime = transactionDateTime;
+    }
+
     @Override
     public String toString() {
         return "TransactionInfo{" +
@@ -164,6 +173,7 @@ public class TransactionInfo implements Serializable {
                 ", transactionCurrency='" + transactionCurrency + '\'' +
                 ", creditDebit=" + creditDebit +
                 ", transactionType=" + transactionType +
+                ", transactionDateTime=" + transactionDateTime +
                 '}';
     }
 }
