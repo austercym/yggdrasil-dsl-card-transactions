@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class ResponseGeneratorBolt extends BasicRichBolt {
 
@@ -48,7 +49,6 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
                     (ValidationResult) input.getValueByField(Fields.VELOCITY_LIMITS_VALIDATION_RESULT);
             ValidationResult balanceValidationResult =
                     (ValidationResult) input.getValueByField(Fields.BALANCE_VALIDATION_RESULT);
-            String responseKey = input.getStringByField(Fields.RESPONSE_KEY);
 
             String logPrefix = String.format(
                     "[Key: %s, TransLink: %s, TxnId: %s, DebitCardId: %s, Token: %s, Amount: %s %s] ",
@@ -85,16 +85,13 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
                 earmarkCurrency = event.getSettlementCurrency();
 
                 if (accountTransactionLog != null) {
-                    double availableBalance =
-                            accountTransactionLog.getActualBalance() == null
-                            ? event.getSettlementAmount().negate().doubleValue()
-                            : accountTransactionLog.getActualBalance().subtract(event.getSettlementAmount()).doubleValue();
-                    double currentBalance = accountTransactionLog.getLedgerBalance() == null
-                            ? 0
-                            : accountTransactionLog.getLedgerBalance().doubleValue();
-
-                    response.setAvlBalance(availableBalance);
-                    response.setCurBalance(currentBalance);
+                    response.setAvlBalance(Optional.ofNullable(accountTransactionLog.getActualBalance())
+                            .orElse(BigDecimal.ZERO)
+                            .subtract(event.getSettlementAmount().abs())
+                            .doubleValue());
+                    response.setCurBalance(Optional.ofNullable(accountTransactionLog.getLedgerBalance())
+                            .orElse(BigDecimal.ZERO)
+                            .doubleValue());
                 }
             }
 
@@ -124,11 +121,19 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
 
         LOG.debug("Generating gpsMessageProcessed message");
         GpsMessageProcessed gpsMessageProcessed = GpsMessageProcessedFactory.from(authorisation);
-        gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(authorisation.getSettlementAmount().abs()));
-        gpsMessageProcessed.setWirecardCurrency(authorisation.getSettlementCurrency());
         gpsMessageProcessed.setEhiResponse(response);
         gpsMessageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(earmarkAmount));
         gpsMessageProcessed.setEarmarkCurrency(earmarkCurrency);
+        gpsMessageProcessed.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(earmarkAmount));
+        gpsMessageProcessed.setTotalEarmarkCurrency(earmarkCurrency);
+        gpsMessageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(0));
+        gpsMessageProcessed.setClientCurrency(earmarkCurrency);
+        gpsMessageProcessed.setTotalClientAmount(DecimalTypeUtils.toDecimal(0));
+        gpsMessageProcessed.setTotalClientCurrency(earmarkCurrency);
+        gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(0));
+        gpsMessageProcessed.setWirecardCurrency(authorisation.getSettlementCurrency());
+        gpsMessageProcessed.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(0));
+        gpsMessageProcessed.setTotalWirecardCurrency(authorisation.getSettlementCurrency());
         if (settings != null) {
             gpsMessageProcessed.setInternalAccountCurrency(settings.getLinkedAccountCurrency());
             gpsMessageProcessed.setInternalAccountId(settings.getLinkedAccountId());

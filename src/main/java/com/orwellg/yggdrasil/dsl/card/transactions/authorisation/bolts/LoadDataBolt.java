@@ -15,19 +15,16 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmo
 import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
-import com.orwellg.yggdrasil.net.client.producer.CommandProducerConfig;
-import com.orwellg.yggdrasil.net.client.producer.GeneratorIdCommandProducer;
-import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.common.protocol.SecurityProtocol;
-import org.apache.kafka.common.utils.Time;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.tuple.Tuple;
 
-import java.time.Instant;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
@@ -41,9 +38,6 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
     private SpendingTotalAmountsRepository totalAmountsRepository;
 
     private AccountTransactionLogRepository accountTransactionLogRepository;
-
-    private GeneratorIdCommandProducer idGeneratorClient;
-
 
     public LoadDataBolt(String joinId) {
         super(joinId);
@@ -66,7 +60,6 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
 
         initializeCardRepositories();
         initializeTransactionRepositories();
-        initializeIdGeneratorClient();
     }
 
     private void initializeCardRepositories() {
@@ -84,21 +77,11 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
         accountTransactionLogRepository = new AccountTransactionLogRepositoryImpl(nodeList, keyspace);
     }
 
-    private void initializeIdGeneratorClient() {
-        Properties props = new Properties();
-        props.setProperty(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, SecurityProtocol.PLAINTEXT.name());
-        props.setProperty(CommandProducerConfig.BOOTSTRAP_SERVERS_CONFIG, ComponentFactory.getConfigurationParams().getZookeeperConnection());
-        props.setProperty(CommandProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
-        props.setProperty(CommandProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
-
-        idGeneratorClient = new GeneratorIdCommandProducer(new CommandProducerConfig(props), 1, Time.SYSTEM);
-    }
-
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList(
                 Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA,
-                Fields.CARD_SETTINGS, Fields.TRANSACTION_LOG, Fields.SPENDING_TOTALS, Fields.RESPONSE_KEY));
+                Fields.CARD_SETTINGS, Fields.TRANSACTION_LOG, Fields.SPENDING_TOTALS));
     }
 
     @Override
@@ -119,7 +102,6 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
                     eventData.getIsBalanceEnquiry()
                             ? CompletableFuture.completedFuture(null)
                             : retrieveTotalAmounts(cardId, totalType, new Date(), logPrefix);
-            CompletableFuture<String> responseKeyFuture = retrieveResponseKey();
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
@@ -128,7 +110,6 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
             values.put(Fields.CARD_SETTINGS, settingsFuture.get());
             values.put(Fields.TRANSACTION_LOG, accountTransactionLogFuture.get());
             values.put(Fields.SPENDING_TOTALS, totalFuture.get());
-            values.put(Fields.RESPONSE_KEY, responseKeyFuture.get());
 
             send(input, values);
 
@@ -173,19 +154,5 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
                             logPrefix, cardId, totalType, totalAmounts);
                     return totalAmounts;
                 });
-    }
-
-    private CompletableFuture<String> retrieveResponseKey() {
-        return CompletableFuture.supplyAsync(() -> {
-            LOG.debug("Retrieving response message key ...");
-            String id;
-            try {
-                id = idGeneratorClient.getGeneralUniqueId();
-            } catch (Exception e) {
-                LOG.error("Id generator client exception (a random id has been generated locally) - {}", e.getMessage(), e);
-                id = UUID.randomUUID().toString() + "_" + Instant.now().hashCode();
-            }
-            return id;
-        });
     }
 }
