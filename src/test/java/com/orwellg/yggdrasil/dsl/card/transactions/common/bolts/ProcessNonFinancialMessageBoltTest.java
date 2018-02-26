@@ -85,12 +85,7 @@ public class ProcessNonFinancialMessageBoltTest {
                                 item.getTotalEarmarkAmount().getValue().compareTo(BigDecimal.ZERO) == 0
                                 &&
                                 "BAR".equals(item.getTotalEarmarkCurrency())
-                                &&
-                                item.getTotalFeesAmount() != null
-                                &&
-                                item.getTotalFeesAmount().getValue().compareTo(BigDecimal.ZERO) == 0
-                                &&
-                                "BAR".equals(item.getTotalFeesCurrency()))));
+                        )));
     }
 
     @Test
