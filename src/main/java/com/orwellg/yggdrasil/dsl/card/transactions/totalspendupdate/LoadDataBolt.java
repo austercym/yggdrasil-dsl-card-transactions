@@ -2,14 +2,14 @@ package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.TransactionEarmarksRepository;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
-import com.orwellg.umbrella.commons.repositories.scylla.impl.TransactionEarmarksRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionEarmark;
 import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
@@ -20,6 +20,7 @@ import org.apache.storm.tuple.Tuple;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -31,7 +32,7 @@ public class LoadDataBolt extends JoinFutureBolt<GpsMessageProcessed> {
 
     private SpendingTotalAmountsRepository amountsRepository;
 
-    private TransactionEarmarksRepository ermarksRepository;
+    private CardTransactionRepository cardTransactionRepository;
 
 
     public LoadDataBolt(String joinId) {
@@ -60,13 +61,13 @@ public class LoadDataBolt extends JoinFutureBolt<GpsMessageProcessed> {
         String nodeList = scyllaParams.getNodeList();
         String keyspace = scyllaParams.getKeyspace();
         amountsRepository = new SpendingTotalAmountsRepositoryImpl(nodeList, keyspace);
-        ermarksRepository = new TransactionEarmarksRepositoryImpl(nodeList, keyspace);
+        cardTransactionRepository = new CardTransactionRepositoryImpl(nodeList, keyspace);
     }
 
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList(
-                Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.TOTAL_AMOUNTS, Fields.EARMARK));
+                Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.TOTAL_AMOUNTS, Fields.AUTHORISATION));
     }
 
     @Override
@@ -79,8 +80,8 @@ public class LoadDataBolt extends JoinFutureBolt<GpsMessageProcessed> {
         try {
             CompletableFuture<SpendingTotalAmounts> totalAmountsFuture = retrieveTotalAmounts(
                     eventData.getDebitCardId(), eventData.getSpendGroup(), logPrefix);
-            CompletableFuture<TransactionEarmark> earmarkFuture = "P".equalsIgnoreCase(eventData.getGpsMessageType())
-                    ? retrieveEarmark(eventData.getGpsTransactionLink(), logPrefix)
+            CompletableFuture<CardTransaction> cardTransactionFuture = "P".equalsIgnoreCase(eventData.getGpsMessageType())
+                    ? retrieveCardTransaction(eventData.getGpsTransactionLink(), logPrefix)
                     : CompletableFuture.completedFuture(null);
 
             Map<String, Object> values = new HashMap<>();
@@ -88,7 +89,7 @@ public class LoadDataBolt extends JoinFutureBolt<GpsMessageProcessed> {
             values.put(Fields.PROCESS_ID, processId);
             values.put(Fields.EVENT_DATA, eventData);
             values.put(Fields.TOTAL_AMOUNTS, totalAmountsFuture.get());
-            values.put(Fields.EARMARK, earmarkFuture.get());
+            values.put(Fields.AUTHORISATION, cardTransactionFuture.get());
 
             send(input, values);
 
@@ -98,13 +99,19 @@ public class LoadDataBolt extends JoinFutureBolt<GpsMessageProcessed> {
         }
     }
 
-    private CompletableFuture<TransactionEarmark> retrieveEarmark(String gpsTransactionLink, String logPrefix) {
+    private CompletableFuture<CardTransaction> retrieveCardTransaction(String gpsTransactionLink, String logPrefix) {
         return CompletableFuture.supplyAsync(
                 () -> {
-                    LOG.info("{}Retrieving earmark for GpsTransactionLink={} ...", logPrefix, gpsTransactionLink);
-                    TransactionEarmark earmark = ermarksRepository.getEarmark(gpsTransactionLink);
-                    LOG.info("{}Earmark retrieved for GpsTransactionLink={}: {}", logPrefix, gpsTransactionLink, earmark);
-                    return earmark;
+                    LOG.info("{}Retrieving card transactions for GpsTransactionLink={} ...", logPrefix, gpsTransactionLink);
+                    List<CardTransaction> cardTransactions = cardTransactionRepository.getCardTransaction(gpsTransactionLink);
+                    LOG.info("{}Card transactions retrieved for GpsTransactionLink={}: {}", logPrefix, gpsTransactionLink, cardTransactions);
+                    if (cardTransactions == null || cardTransactions.isEmpty()) {
+                        return null;
+                    }
+                    return cardTransactions.stream()
+                            .filter(i -> "A".equalsIgnoreCase(i.getGpsMessageType()))
+                            .findFirst()
+                            .get();
                 });
     }
 

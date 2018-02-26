@@ -3,51 +3,27 @@ package com.orwellg.yggdrasil.dsl.card.transactions.authorisationreversal.bolts;
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionEarmark;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.GpsMessageProcessedFactory;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
-import com.orwellg.yggdrasil.net.client.producer.CommandProducerConfig;
-import com.orwellg.yggdrasil.net.client.producer.GeneratorIdCommandProducer;
-import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.common.protocol.SecurityProtocol;
-import org.apache.kafka.common.utils.Time;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.storm.task.OutputCollector;
-import org.apache.storm.task.TopologyContext;
 import org.apache.storm.tuple.Tuple;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class GenerateProcessedMessageBolt extends BasicRichBolt {
 
     private static final Logger LOG = LogManager.getLogger(GenerateProcessedMessageBolt.class);
 
-    private GeneratorIdCommandProducer idGeneratorClient;
-
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList(
                 Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_NAME, Fields.RESULT));
-    }
-
-    @Override
-    public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
-        super.prepare(stormConf, context, collector);
-        initializeIdGeneratorClient();
-    }
-
-    private void initializeIdGeneratorClient() {
-        Properties props = new Properties();
-        props.setProperty(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, SecurityProtocol.PLAINTEXT.name());
-        props.setProperty(CommandProducerConfig.BOOTSTRAP_SERVERS_CONFIG, ComponentFactory.getConfigurationParams().getZookeeperConnection());
-        props.setProperty(CommandProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
-        props.setProperty(CommandProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
-
-        idGeneratorClient = new GeneratorIdCommandProducer(new CommandProducerConfig(props), 1, Time.SYSTEM);
     }
 
     @Override
@@ -60,25 +36,20 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
 
         try {
             TransactionInfo event = (TransactionInfo) input.getValueByField(Fields.EVENT_DATA);
-            TransactionEarmark earmark = (TransactionEarmark) input.getValueByField(Fields.EARMARK);
             List<CardTransaction> transactionList = (List<CardTransaction>) input.getValueByField(Fields.TRANSACTION_LIST);
-            String responseKey = idGeneratorClient.getGeneralUniqueId();
 
-            if (earmark == null) {
-                throw new IllegalArgumentException("No earmark information found - cannot process authorisation reversal");
-            }
-            if (event.getSettlementAmount().compareTo(earmark.getAmount().abs()) > 0) {
-                throw new IllegalArgumentException("Authorisation reversal amount is greater than earmarked amount");
-            }
             if (transactionList == null || transactionList.isEmpty()){
                 throw new IllegalArgumentException("Empty transaction list - cannot process authorisation reversal");
             }
             CardTransaction lastTransaction = transactionList.get(0);
+            if (event.getSettlementAmount().compareTo(lastTransaction.getEarmarkAmount().abs()) > 0) {
+                throw new IllegalArgumentException("Authorisation reversal amount is greater than earmarked amount");
+            }
             if (event.getSettlementAmount().compareTo(lastTransaction.getWirecardAmount().abs()) < 0) {
                 throw new IllegalArgumentException("Authorisation reversal amount is greater than amount sent to Wirecard");
             }
 
-            GpsMessageProcessed processedMessage = generateMessageProcessed(event, earmark, lastTransaction, logPrefix);
+            GpsMessageProcessed processedMessage = generateMessageProcessed(event, lastTransaction, logPrefix);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
@@ -93,7 +64,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
     }
 
     private GpsMessageProcessed generateMessageProcessed(
-            TransactionInfo transactionInfo, TransactionEarmark lastEarmark, CardTransaction lastTransaction,
+            TransactionInfo transactionInfo, CardTransaction lastTransaction,
             String logPrefix) {
 
         LOG.debug("{}Generating GPS message processed", logPrefix);
@@ -101,19 +72,19 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
         GpsMessageProcessed gpsMessageProcessed = GpsMessageProcessedFactory.from(transactionInfo);
 
         gpsMessageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(transactionInfo.getSettlementAmount()));
-        gpsMessageProcessed.setEarmarkCurrency(lastEarmark.getInternalAccountCurrency());
+        gpsMessageProcessed.setEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
         gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(transactionInfo.getSettlementAmount().negate()));
         gpsMessageProcessed.setWirecardCurrency(transactionInfo.getSettlementCurrency());
 
         gpsMessageProcessed.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(
-                lastEarmark.getAmount().add(transactionInfo.getSettlementAmount())));
-        gpsMessageProcessed.setTotalEarmarkCurrency(lastEarmark.getInternalAccountCurrency());
+                lastTransaction.getEarmarkAmount().add(transactionInfo.getSettlementAmount())));
+        gpsMessageProcessed.setTotalEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
         gpsMessageProcessed.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(
                 lastTransaction.getWirecardAmount().subtract(transactionInfo.getSettlementAmount())));
         gpsMessageProcessed.setTotalWirecardCurrency(transactionInfo.getSettlementCurrency());
 
-        gpsMessageProcessed.setInternalAccountCurrency(lastEarmark.getInternalAccountCurrency());
-        gpsMessageProcessed.setInternalAccountId(lastEarmark.getInternalAccountId());
+        gpsMessageProcessed.setInternalAccountCurrency(lastTransaction.getInternalAccountCurrency());
+        gpsMessageProcessed.setInternalAccountId(lastTransaction.getInternalAccountId());
 
         LOG.debug("{}GPS message processed generated: {}", logPrefix, gpsMessageProcessed);
         return gpsMessageProcessed;
