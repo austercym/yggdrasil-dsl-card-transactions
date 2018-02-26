@@ -2,12 +2,9 @@ package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
 import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.TransactionEarmarksRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
-import com.orwellg.umbrella.commons.repositories.scylla.impl.TransactionEarmarksRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionEarmark;
 import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
@@ -25,7 +22,6 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
     private static final Logger LOG = LogManager.getLogger(SaveTotalSpendAmountsBolt.class);
 
     private SpendingTotalAmountsRepository amountsRepository;
-    private TransactionEarmarksRepository earmarksRepository;
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -38,7 +34,6 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
         String nodeList = scyllaParams.getNodeList();
         String keyspace = scyllaParams.getKeyspace();
         amountsRepository = new SpendingTotalAmountsRepositoryImpl(nodeList, keyspace);
-        earmarksRepository = new TransactionEarmarksRepositoryImpl(nodeList, keyspace);
     }
 
     @Override
@@ -58,13 +53,6 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
         try {
             GpsMessageProcessed eventData = (GpsMessageProcessed) input.getValueByField(Fields.EVENT_DATA);
             SpendingTotalAmounts newSpendAmounts = (SpendingTotalAmounts) input.getValueByField(Fields.NEW_TOTAL_SPEND_AMOUNTS);
-            TransactionEarmark newEarmark = (TransactionEarmark) input.getValueByField(Fields.NEW_EARMARK);
-
-            if (newEarmark == null) {
-                LOG.info("{}No new earmark to save", logPrefix);
-            } else {
-                earmarksRepository.addEarmark(newEarmark);
-            }
 
             if (newSpendAmounts == null) {
                 LOG.info("{}No new spend amounts to save", logPrefix);

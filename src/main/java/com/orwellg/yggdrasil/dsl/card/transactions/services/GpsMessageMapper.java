@@ -8,7 +8,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Currency;
@@ -62,6 +62,8 @@ public class GpsMessageMapper {
         if (StringUtils.isNotBlank(message.getTxnGPSDate())) {
             model.setGpsTransactionTime(parseDateTime(message.getTxnGPSDate()));
         }
+        model.setTransactionDateTime(getTransactionDateTime(
+                message.getPOSTimeDE12(), message.getTxnCtry(), message.getTXNTimeDE07(), model.getGpsTransactionTime()));
         return model;
     }
 
@@ -82,5 +84,37 @@ public class GpsMessageMapper {
 
     private Boolean isBalanceEnquiry(String procCode){
         return procCode != null && procCode.startsWith(BALANCE_INQUIRY_SERVICE);
+    }
+
+
+    private LocalDateTime getTransactionDateTime(String postimede12, String countryCode, String txntime07, LocalDateTime gpsTransactionTime) {
+
+        //todo: this is in local time!
+        //need to convert it to utc time zone using txn ctry code
+        //135703
+        //yyMMddHHmmss
+        if (StringUtils.isNotBlank(postimede12) && postimede12.length() == 12) {
+            DateTimeFormatter parser = DateTimeFormatter.ofPattern("yyMMddHHmmss");
+            LocalDateTime date = LocalDateTime.parse(postimede12, parser);
+            return date;
+        }
+
+        //this is in utc
+        //0912115703
+        if (StringUtils.isNotBlank(txntime07)) {
+            //get year from gpsDate
+            int year = gpsTransactionTime == null ? LocalDate.now().getYear() : gpsTransactionTime.getYear();
+            String fulldate = "" + year + txntime07;
+            DateTimeFormatter parser = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+            LocalDateTime date = LocalDateTime.parse(fulldate, parser);
+            return date;
+        }
+
+        // this is in GMT/BST
+        if (gpsTransactionTime != null) {
+            ZoneId zone = ZoneId.of("Europe/London");
+            return ZonedDateTime.of(gpsTransactionTime, zone).withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+        }
+        return LocalDateTime.now();
     }
 }

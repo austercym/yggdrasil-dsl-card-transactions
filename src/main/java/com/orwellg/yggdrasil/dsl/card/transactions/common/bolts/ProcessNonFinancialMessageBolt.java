@@ -58,9 +58,6 @@ public class ProcessNonFinancialMessageBolt extends BasicRichBolt {
             result.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(
                     ObjectUtils.firstNonNull(lastTransaction.getEarmarkAmount(), BigDecimal.ZERO)));
             result.setTotalEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
-            result.setTotalFeesAmount(DecimalTypeUtils.toDecimal(
-                    ObjectUtils.firstNonNull(lastTransaction.getFeesAmount(), BigDecimal.ZERO)));
-            result.setTotalFeesCurrency(lastTransaction.getInternalAccountCurrency());
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);

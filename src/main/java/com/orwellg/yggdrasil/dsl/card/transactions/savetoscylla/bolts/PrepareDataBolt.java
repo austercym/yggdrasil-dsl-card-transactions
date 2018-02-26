@@ -42,10 +42,6 @@ public class PrepareDataBolt extends GenericEventProcessBolt<GpsMessageProcessed
             transaction.setEarmarkAmount(message.getTotalEarmarkAmount().getValue());
         }
         transaction.setEarmarkCurrency(message.getTotalEarmarkCurrency());
-        if (message.getTotalFeesAmount() != null) {
-            transaction.setFeesAmount(message.getTotalFeesAmount().getValue());
-        }
-        transaction.setFeesCurrency(message.getTotalFeesCurrency());
 
         LOG.info("[Key: {}][ProcessId: {}]: Card transaction object prepared to save in Scylla.", key, processId);
 
