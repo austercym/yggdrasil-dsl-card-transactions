@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class GpsMessageMapper {
+public class CardMessageMapper {
 
     static final String BALANCE_INQUIRY_SERVICE = "30";
     private final CardPresenceResolver cardPresenceResolver;
@@ -24,7 +24,7 @@ public class GpsMessageMapper {
     private final Map<String, String> availableCurrencies;
     private List<String> historicalCurrencyCurrencyCodes = Arrays.asList("YUM", "ROL", "CSD", "XFU", "XFO");
 
-    public GpsMessageMapper() {
+    public CardMessageMapper() {
         cardPresenceResolver = new CardPresenceResolver();
         transactionTypeResolver = new TransactionTypeResolver();
         availableCurrencies = Currency.getAvailableCurrencies().stream()

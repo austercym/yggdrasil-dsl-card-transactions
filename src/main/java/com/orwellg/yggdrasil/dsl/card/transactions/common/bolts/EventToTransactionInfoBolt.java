@@ -1,7 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
 import com.orwellg.umbrella.avro.types.gps.Message;
-import com.orwellg.yggdrasil.dsl.card.transactions.services.GpsMessageMapper;
+import com.orwellg.yggdrasil.dsl.card.transactions.services.CardMessageMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -16,7 +16,7 @@ public class EventToTransactionInfoBolt extends GenericEventProcessBolt<Message>
 
 	private final static Logger LOG = LogManager.getLogger(EventToTransactionInfoBolt.class);
 
-	private GpsMessageMapper mapper;
+	private CardMessageMapper mapper;
 
 	public EventToTransactionInfoBolt() {
 		super(Message.class);
@@ -25,7 +25,7 @@ public class EventToTransactionInfoBolt extends GenericEventProcessBolt<Message>
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		super.prepare(stormConf, context, collector);
-		mapper = new GpsMessageMapper();
+		mapper = new CardMessageMapper();
 	}
 
 	@Override

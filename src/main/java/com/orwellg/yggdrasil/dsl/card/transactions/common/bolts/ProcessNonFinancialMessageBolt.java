@@ -1,12 +1,12 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.GpsMessageProcessedFactory;
+import com.orwellg.yggdrasil.dsl.card.transactions.utils.CardMessageProcessedFactory;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,7 +39,7 @@ public class ProcessNonFinancialMessageBolt extends BasicRichBolt {
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
             LOG.debug("{}Processing", logPrefix);
-            GpsMessageProcessed result = GpsMessageProcessedFactory.from(eventData);
+            CardMessageProcessed result = CardMessageProcessedFactory.from(eventData);
 
             if (eventData.getSettlementAmount().compareTo(BigDecimal.ZERO) != 0) {
                 throw new IllegalArgumentException("Settlement amount cannot be non zero for a non financial transaction");

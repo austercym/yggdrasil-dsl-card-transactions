@@ -1,10 +1,10 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.accounting.bolts;
 
+import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
 import com.orwellg.umbrella.avro.types.command.accounting.AccountingCommandData;
 import com.orwellg.umbrella.avro.types.command.accounting.BalanceUpdateType;
 import com.orwellg.umbrella.avro.types.command.accounting.TransactionDirection;
 import com.orwellg.umbrella.avro.types.commons.TransactionType;
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.Systems;
 import com.orwellg.yggdrasil.commons.net.Cluster;
@@ -36,7 +36,7 @@ public class AccountingCommandBoltTest {
     @Test
     public void executeWhenNoAccountingRequiredShouldMoveProcessingToDifferentStream() {
         // arrange
-        GpsMessageProcessed processed = new GpsMessageProcessed();
+        CardMessageProcessed processed = new CardMessageProcessed();
         processed.setEarmarkAmount(DecimalTypeUtils.toDecimal(19.09));
         processed.setClientAmount(DecimalTypeUtils.toDecimal(0));
         processed.setWirecardAmount(DecimalTypeUtils.toDecimal(0));
@@ -57,7 +57,7 @@ public class AccountingCommandBoltTest {
     @Test
     public void executeWhenClientDebitShouldCreateAccountingCommand() {
         // arrange
-        GpsMessageProcessed processed = new GpsMessageProcessed();
+        CardMessageProcessed processed = new CardMessageProcessed();
         processed.setClientAmount(DecimalTypeUtils.toDecimal(-19.09));
         processed.setClientCurrency("bar");
         processed.setWirecardAmount(DecimalTypeUtils.toDecimal(19.09));
@@ -105,7 +105,7 @@ public class AccountingCommandBoltTest {
     @Test
     public void executeWhenClientCreditShouldCreateAccountingCommand() {
         // arrange
-        GpsMessageProcessed processed = new GpsMessageProcessed();
+        CardMessageProcessed processed = new CardMessageProcessed();
         processed.setClientAmount(DecimalTypeUtils.toDecimal(19.09));
         processed.setClientCurrency("bar");
         processed.setWirecardAmount(DecimalTypeUtils.toDecimal(-19.09));

@@ -1,8 +1,8 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.earmarking.bolts;
 
+import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
 import com.orwellg.umbrella.avro.types.command.accounting.*;
 import com.orwellg.umbrella.avro.types.commons.TransactionType;
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CommandTypes;
@@ -59,7 +59,7 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
         try {
             String key = input.getStringByField(Fields.KEY);
             String processId = input.getStringByField(Fields.PROCESS_ID);
-            GpsMessageProcessed processed = (GpsMessageProcessed) input.getValueByField(Fields.EVENT_DATA);
+            CardMessageProcessed processed = (CardMessageProcessed) input.getValueByField(Fields.EVENT_DATA);
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
             if (isEarmarkingOperation(processed)) {
@@ -118,23 +118,23 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
         }
     }
 
-    private boolean isEarmarkingOperation(GpsMessageProcessed processed) {
+    private boolean isEarmarkingOperation(CardMessageProcessed processed) {
         return processed.getEarmarkAmount() != null
                 && processed.getEarmarkAmount().getValue().compareTo(BigDecimal.ZERO) != 0;
     }
 
-    private boolean isPutEarmark(GpsMessageProcessed processed) {
+    private boolean isPutEarmark(CardMessageProcessed processed) {
         return processed.getEarmarkAmount() != null
                 && processed.getEarmarkAmount().getValue().compareTo(BigDecimal.ZERO) < 0;
     }
 
-    private boolean isReleaseEarmark(GpsMessageProcessed processed) {
+    private boolean isReleaseEarmark(CardMessageProcessed processed) {
         return processed.getEarmarkAmount() != null
                 && processed.getEarmarkAmount().getValue().compareTo(BigDecimal.ZERO) > 0;
     }
 
     private AccountingCommandData generateCommand(
-            GpsMessageProcessed processed,
+            CardMessageProcessed processed,
             String debitAccount, BalanceUpdateType debitAccountUpdateType,
             String creditAccount, BalanceUpdateType creditAccountUpdateType,
             TransactionType transactionType, String processId) {

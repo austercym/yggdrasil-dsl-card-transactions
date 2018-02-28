@@ -1,14 +1,12 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.bolts;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTransactionLog;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.ResponseCode;
 import com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services.ValidationResult;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
-import com.orwellg.yggdrasil.dsl.card.transactions.authorisation.bolts.Fields;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.tuple.Tuple;
 import org.junit.Before;
@@ -17,12 +15,9 @@ import org.junit.Test;
 import java.math.BigDecimal;
 
 import static com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils.isEqual;
-import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class ResponseGeneratorBoltTest {
 
@@ -70,8 +65,8 @@ public class ResponseGeneratorBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(GpsMessageProcessed.class::isInstance)
-                        .map(GpsMessageProcessed.class::cast)
+                        .filter(CardMessageProcessed.class::isInstance)
+                        .map(CardMessageProcessed.class::cast)
                         .anyMatch(item -> isEqual(item.getEarmarkAmount(), -19.09)
                                 && "foo".equals(item.getEarmarkCurrency())
                                 && isEqual(item.getTotalEarmarkAmount(), -19.09)

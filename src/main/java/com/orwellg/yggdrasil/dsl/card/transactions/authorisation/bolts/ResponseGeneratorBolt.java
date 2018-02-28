@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.bolts;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.ResponseMsg;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTransactionLog;
@@ -10,7 +10,7 @@ import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services.ValidationResult;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.GpsMessageProcessedFactory;
+import com.orwellg.yggdrasil.dsl.card.transactions.utils.CardMessageProcessedFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
@@ -98,7 +98,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
             response.setAcknowledgement("1");
             response.setResponsestatus(responseCode.getCode());
 
-            GpsMessageProcessed processedMessage = generateMessageProcessed(event, response, settings, earmarkAmount, earmarkCurrency);
+            CardMessageProcessed processedMessage = generateMessageProcessed(event, response, settings, earmarkAmount, earmarkCurrency);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, input.getStringByField(Fields.KEY));
@@ -117,29 +117,29 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
         }
     }
 
-    private GpsMessageProcessed generateMessageProcessed(TransactionInfo authorisation, ResponseMsg response, CardSettings settings, BigDecimal earmarkAmount, String earmarkCurrency) {
+    private CardMessageProcessed generateMessageProcessed(TransactionInfo authorisation, ResponseMsg response, CardSettings settings, BigDecimal earmarkAmount, String earmarkCurrency) {
 
-        LOG.debug("Generating gpsMessageProcessed message");
-        GpsMessageProcessed gpsMessageProcessed = GpsMessageProcessedFactory.from(authorisation);
-        gpsMessageProcessed.setEhiResponse(response);
-        gpsMessageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(earmarkAmount));
-        gpsMessageProcessed.setEarmarkCurrency(earmarkCurrency);
-        gpsMessageProcessed.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(earmarkAmount));
-        gpsMessageProcessed.setTotalEarmarkCurrency(earmarkCurrency);
-        gpsMessageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(0));
-        gpsMessageProcessed.setClientCurrency(earmarkCurrency);
-        gpsMessageProcessed.setTotalClientAmount(DecimalTypeUtils.toDecimal(0));
-        gpsMessageProcessed.setTotalClientCurrency(earmarkCurrency);
-        gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(0));
-        gpsMessageProcessed.setWirecardCurrency(authorisation.getSettlementCurrency());
-        gpsMessageProcessed.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(0));
-        gpsMessageProcessed.setTotalWirecardCurrency(authorisation.getSettlementCurrency());
+        LOG.debug("Generating CardMessageProcessed message");
+        CardMessageProcessed CardMessageProcessed = CardMessageProcessedFactory.from(authorisation);
+        CardMessageProcessed.setEhiResponse(response);
+        CardMessageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(earmarkAmount));
+        CardMessageProcessed.setEarmarkCurrency(earmarkCurrency);
+        CardMessageProcessed.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(earmarkAmount));
+        CardMessageProcessed.setTotalEarmarkCurrency(earmarkCurrency);
+        CardMessageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(0));
+        CardMessageProcessed.setClientCurrency(earmarkCurrency);
+        CardMessageProcessed.setTotalClientAmount(DecimalTypeUtils.toDecimal(0));
+        CardMessageProcessed.setTotalClientCurrency(earmarkCurrency);
+        CardMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(0));
+        CardMessageProcessed.setWirecardCurrency(authorisation.getSettlementCurrency());
+        CardMessageProcessed.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(0));
+        CardMessageProcessed.setTotalWirecardCurrency(authorisation.getSettlementCurrency());
         if (settings != null) {
-            gpsMessageProcessed.setInternalAccountCurrency(settings.getLinkedAccountCurrency());
-            gpsMessageProcessed.setInternalAccountId(settings.getLinkedAccountId());
+            CardMessageProcessed.setInternalAccountCurrency(settings.getLinkedAccountCurrency());
+            CardMessageProcessed.setInternalAccountId(settings.getLinkedAccountId());
         }
-        LOG.debug("Message generated. Parameters: {}", gpsMessageProcessed);
-        return gpsMessageProcessed;
+        LOG.debug("Message generated. Parameters: {}", CardMessageProcessed);
+        return CardMessageProcessed;
     }
 
     @Override

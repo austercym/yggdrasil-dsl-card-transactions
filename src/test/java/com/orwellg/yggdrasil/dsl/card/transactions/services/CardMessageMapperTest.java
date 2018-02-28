@@ -11,9 +11,9 @@ import java.time.LocalDateTime;
 import static org.junit.Assert.*;
 
 
-public class GpsMessageMapperTest {
+public class CardMessageMapperTest {
 
-    private GpsMessageMapper mapper = new GpsMessageMapper();
+    private CardMessageMapper mapper = new CardMessageMapper();
 
     @Test
     public void mapShouldMapCurrencyCodes() {

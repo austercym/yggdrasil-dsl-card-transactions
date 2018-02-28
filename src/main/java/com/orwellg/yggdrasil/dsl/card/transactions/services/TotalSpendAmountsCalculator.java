@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
@@ -28,7 +28,7 @@ public class TotalSpendAmountsCalculator {
         this.dateTimeService = dateTimeService;
     }
 
-    public SpendingTotalAmounts recalculate(GpsMessageProcessed messageProcessed, SpendingTotalAmounts lastSpendingTotalAmounts, CardTransaction authorisation) {
+    public SpendingTotalAmounts recalculate(CardMessageProcessed messageProcessed, SpendingTotalAmounts lastSpendingTotalAmounts, CardTransaction authorisation) {
 
         Instant now = dateTimeService.now();
         LocalDate today = now.atZone(ZoneId.of("UTC")).toLocalDate();

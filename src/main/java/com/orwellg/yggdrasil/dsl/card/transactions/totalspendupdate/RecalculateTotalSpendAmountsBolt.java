@@ -1,7 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
+import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
 import com.orwellg.umbrella.avro.types.commons.Decimal;
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
@@ -49,7 +49,7 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
         LOG.info("{}Recalculating total spend amounts", logPrefix, key, processId);
 
         try {
-            GpsMessageProcessed eventData = (GpsMessageProcessed) input.getValueByField(Fields.EVENT_DATA);
+            CardMessageProcessed eventData = (CardMessageProcessed) input.getValueByField(Fields.EVENT_DATA);
             SpendingTotalAmounts spendAmounts = (SpendingTotalAmounts) input.getValueByField(Fields.TOTAL_AMOUNTS);
             CardTransaction authorisation = (CardTransaction) input.getValueByField(Fields.AUTHORISATION);
             SpendingTotalAmounts newSpendAmounts = null;
@@ -76,7 +76,7 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
         }
     }
 
-    private boolean isAcceptedAuthorisation(GpsMessageProcessed eventData) {
+    private boolean isAcceptedAuthorisation(CardMessageProcessed eventData) {
         return eventData != null && eventData.getEhiResponse() != null
                 &&
                 "A".equalsIgnoreCase(eventData.getGpsMessageType())
@@ -84,7 +84,7 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
                 "00".equals(eventData.getEhiResponse().getResponsestatus());
     }
 
-    private boolean isDebitPresentment(GpsMessageProcessed eventData) {
+    private boolean isDebitPresentment(CardMessageProcessed eventData) {
         return eventData != null
                 &&
                 "P".equalsIgnoreCase(eventData.getGpsMessageType())

@@ -1,7 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
+import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-public class LoadDataBolt extends JoinFutureBolt<GpsMessageProcessed> {
+public class LoadDataBolt extends JoinFutureBolt<CardMessageProcessed> {
 
     private static final long serialVersionUID = 1L;
 
@@ -71,7 +71,7 @@ public class LoadDataBolt extends JoinFutureBolt<GpsMessageProcessed> {
     }
 
     @Override
-    protected void join(Tuple input, String key, String processId, GpsMessageProcessed eventData) {
+    protected void join(Tuple input, String key, String processId, CardMessageProcessed eventData) {
 
         String logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 

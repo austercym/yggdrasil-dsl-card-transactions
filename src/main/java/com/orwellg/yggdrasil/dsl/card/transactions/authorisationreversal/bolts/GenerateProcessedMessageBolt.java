@@ -1,12 +1,12 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisationreversal.bolts;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.GpsMessageProcessedFactory;
+import com.orwellg.yggdrasil.dsl.card.transactions.utils.CardMessageProcessedFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
@@ -49,7 +49,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
                 throw new IllegalArgumentException("Authorisation reversal amount is greater than amount sent to Wirecard");
             }
 
-            GpsMessageProcessed processedMessage = generateMessageProcessed(event, lastTransaction, logPrefix);
+            CardMessageProcessed processedMessage = generateMessageProcessed(event, lastTransaction, logPrefix);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
@@ -63,30 +63,30 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
         }
     }
 
-    private GpsMessageProcessed generateMessageProcessed(
+    private CardMessageProcessed generateMessageProcessed(
             TransactionInfo transactionInfo, CardTransaction lastTransaction,
             String logPrefix) {
 
         LOG.debug("{}Generating GPS message processed", logPrefix);
 
-        GpsMessageProcessed gpsMessageProcessed = GpsMessageProcessedFactory.from(transactionInfo);
+        CardMessageProcessed CardMessageProcessed = CardMessageProcessedFactory.from(transactionInfo);
 
-        gpsMessageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(transactionInfo.getSettlementAmount()));
-        gpsMessageProcessed.setEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
-        gpsMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(transactionInfo.getSettlementAmount().negate()));
-        gpsMessageProcessed.setWirecardCurrency(transactionInfo.getSettlementCurrency());
+        CardMessageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(transactionInfo.getSettlementAmount()));
+        CardMessageProcessed.setEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
+        CardMessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(transactionInfo.getSettlementAmount().negate()));
+        CardMessageProcessed.setWirecardCurrency(transactionInfo.getSettlementCurrency());
 
-        gpsMessageProcessed.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(
+        CardMessageProcessed.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(
                 lastTransaction.getEarmarkAmount().add(transactionInfo.getSettlementAmount())));
-        gpsMessageProcessed.setTotalEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
-        gpsMessageProcessed.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(
+        CardMessageProcessed.setTotalEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
+        CardMessageProcessed.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(
                 lastTransaction.getWirecardAmount().subtract(transactionInfo.getSettlementAmount())));
-        gpsMessageProcessed.setTotalWirecardCurrency(transactionInfo.getSettlementCurrency());
+        CardMessageProcessed.setTotalWirecardCurrency(transactionInfo.getSettlementCurrency());
 
-        gpsMessageProcessed.setInternalAccountCurrency(lastTransaction.getInternalAccountCurrency());
-        gpsMessageProcessed.setInternalAccountId(lastTransaction.getInternalAccountId());
+        CardMessageProcessed.setInternalAccountCurrency(lastTransaction.getInternalAccountCurrency());
+        CardMessageProcessed.setInternalAccountId(lastTransaction.getInternalAccountId());
 
-        LOG.debug("{}GPS message processed generated: {}", logPrefix, gpsMessageProcessed);
-        return gpsMessageProcessed;
+        LOG.debug("{}GPS message processed generated: {}", logPrefix, CardMessageProcessed);
+        return CardMessageProcessed;
     }
 }

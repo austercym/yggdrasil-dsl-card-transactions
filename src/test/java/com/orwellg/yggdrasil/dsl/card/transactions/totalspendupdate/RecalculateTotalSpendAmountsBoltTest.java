@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.ResponseMsg;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
@@ -30,7 +30,7 @@ public class RecalculateTotalSpendAmountsBoltTest {
         ResponseMsg response = new ResponseMsg();
         response.setResponsestatus("00");
 
-        GpsMessageProcessed message = new GpsMessageProcessed();
+        CardMessageProcessed message = new CardMessageProcessed();
         message.setGpsMessageType("A");
         message.setEhiResponse(response);
 
@@ -59,7 +59,7 @@ public class RecalculateTotalSpendAmountsBoltTest {
         ResponseMsg response = new ResponseMsg();
         response.setResponsestatus("51");
 
-        GpsMessageProcessed message = new GpsMessageProcessed();
+        CardMessageProcessed message = new CardMessageProcessed();
         message.setGpsMessageType("A");
         message.setEhiResponse(response);
 
@@ -85,7 +85,7 @@ public class RecalculateTotalSpendAmountsBoltTest {
     @Test
     public void executeWhenDebitPresentmentShouldCalculateNewTotalSpendAmounts() {
         // arrange
-        GpsMessageProcessed message = new GpsMessageProcessed();
+        CardMessageProcessed message = new CardMessageProcessed();
         message.setGpsMessageType("P");
         message.setClientAmount(DecimalTypeUtils.toDecimal(-19.09));
 
@@ -111,7 +111,7 @@ public class RecalculateTotalSpendAmountsBoltTest {
     @Test
     public void executeWhenCreditPresentmentShouldNotCalculateNewTotalSpendAmounts() {
         // arrange
-        GpsMessageProcessed message = new GpsMessageProcessed();
+        CardMessageProcessed message = new CardMessageProcessed();
         message.setGpsMessageType("P");
         message.setClientAmount(DecimalTypeUtils.toDecimal(19.09));
 

@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
@@ -53,8 +53,8 @@ public class GenerateProcessedMessageBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(GpsMessageProcessed.class::isInstance)
-                        .map(GpsMessageProcessed.class::cast)
+                        .filter(CardMessageProcessed.class::isInstance)
+                        .map(CardMessageProcessed.class::cast)
                         .anyMatch(item -> isEqual(item.getEarmarkAmount(), 0)
                                 && "foo".equals(item.getEarmarkCurrency())
                                 && isEqual(item.getTotalEarmarkAmount(), 0)
@@ -102,8 +102,8 @@ public class GenerateProcessedMessageBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(GpsMessageProcessed.class::isInstance)
-                        .map(GpsMessageProcessed.class::cast)
+                        .filter(CardMessageProcessed.class::isInstance)
+                        .map(CardMessageProcessed.class::cast)
                         .anyMatch(item -> isEqual(item.getEarmarkAmount(), 20.15)
                                 && "foo".equals(item.getEarmarkCurrency())
                                 && isEqual(item.getTotalEarmarkAmount(), 0)
@@ -151,8 +151,8 @@ public class GenerateProcessedMessageBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(GpsMessageProcessed.class::isInstance)
-                        .map(GpsMessageProcessed.class::cast)
+                        .filter(CardMessageProcessed.class::isInstance)
+                        .map(CardMessageProcessed.class::cast)
                         .anyMatch(item -> isEqual(item.getEarmarkAmount(), 0)
                                 && "foo".equals(item.getEarmarkCurrency())
                                 && isEqual(item.getTotalEarmarkAmount(), 0)
@@ -200,8 +200,8 @@ public class GenerateProcessedMessageBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(GpsMessageProcessed.class::isInstance)
-                        .map(GpsMessageProcessed.class::cast)
+                        .filter(CardMessageProcessed.class::isInstance)
+                        .map(CardMessageProcessed.class::cast)
                         .anyMatch(item -> isEqual(item.getEarmarkAmount(), 0)
                                 && "foo".equals(item.getEarmarkCurrency())
                                 && isEqual(item.getTotalEarmarkAmount(), 0)

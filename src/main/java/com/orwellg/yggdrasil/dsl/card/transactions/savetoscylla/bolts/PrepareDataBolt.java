@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.savetoscylla.bolts;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.GenericEventProcessBolt;
 import org.apache.logging.log4j.LogManager;
@@ -8,18 +8,18 @@ import org.apache.logging.log4j.Logger;
 
 import java.time.Instant;
 
-public class PrepareDataBolt extends GenericEventProcessBolt<GpsMessageProcessed> {
+public class PrepareDataBolt extends GenericEventProcessBolt<CardMessageProcessed> {
 
     private static final long serialVersionUID = 1L;
 
     private static final Logger LOG = LogManager.getLogger(PrepareDataBolt.class);
 
     public PrepareDataBolt() {
-        super(GpsMessageProcessed.class);
+        super(CardMessageProcessed.class);
     }
 
     @Override
-    protected Object process(GpsMessageProcessed message, String key, String processId) {
+    protected Object process(CardMessageProcessed message, String key, String processId) {
 
         CardTransaction transaction = new CardTransaction();
         transaction.setGpsTransactionLink(message.getGpsTransactionLink());

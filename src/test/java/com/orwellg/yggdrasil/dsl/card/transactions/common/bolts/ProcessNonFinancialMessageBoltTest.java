@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
@@ -53,8 +53,8 @@ public class ProcessNonFinancialMessageBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(GpsMessageProcessed.class::isInstance)
-                        .map(GpsMessageProcessed.class::cast)
+                        .filter(CardMessageProcessed.class::isInstance)
+                        .map(CardMessageProcessed.class::cast)
                         .anyMatch(item ->
                                 (
                                         item.getWirecardAmount() == null

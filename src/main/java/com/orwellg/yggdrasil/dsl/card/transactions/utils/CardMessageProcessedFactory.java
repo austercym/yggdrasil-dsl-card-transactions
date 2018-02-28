@@ -1,15 +1,15 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.utils;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 
 import java.time.ZoneOffset;
 import java.util.Objects;
 
-public final class GpsMessageProcessedFactory {
-    public static GpsMessageProcessed from(TransactionInfo transaction){
+public final class CardMessageProcessedFactory {
+    public static CardMessageProcessed from(TransactionInfo transaction) {
 
-        GpsMessageProcessed result = new GpsMessageProcessed();
+        CardMessageProcessed result = new CardMessageProcessed();
         if (transaction != null) {
             Objects.requireNonNull(transaction.getMessage(), "TransactionInfo.Message cannot be null");
 

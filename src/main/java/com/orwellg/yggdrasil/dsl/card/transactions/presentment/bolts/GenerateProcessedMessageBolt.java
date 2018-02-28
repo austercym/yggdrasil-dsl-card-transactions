@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
@@ -8,7 +8,7 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.GpsMessageProcessedFactory;
+import com.orwellg.yggdrasil.dsl.card.transactions.utils.CardMessageProcessedFactory;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -72,7 +72,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
                 throw new Exception("Either last transaction or linked account must be provided");
             }
 
-            GpsMessageProcessed messageProcessed = GpsMessageProcessedFactory.from(presentment);
+            CardMessageProcessed messageProcessed = CardMessageProcessedFactory.from(presentment);
 
             messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(earmarkAmount));
             messageProcessed.setEarmarkCurrency(clientAccountCurrency);
