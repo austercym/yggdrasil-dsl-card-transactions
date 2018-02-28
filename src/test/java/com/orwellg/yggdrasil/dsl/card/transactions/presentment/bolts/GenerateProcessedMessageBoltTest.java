@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
-import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
@@ -30,6 +30,7 @@ public class GenerateProcessedMessageBoltTest {
     public void executeWhenOfflinePresentmentShouldCalculateAmounts() {
         // arrange
         Message message = new Message();
+        message.setTxnType("P");
         TransactionInfo transaction = new TransactionInfo();
         transaction.setMessage(message);
         transaction.setSettlementAmount(BigDecimal.valueOf(-19.09));
@@ -53,8 +54,8 @@ public class GenerateProcessedMessageBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(CardMessageProcessed.class::isInstance)
-                        .map(CardMessageProcessed.class::cast)
+                        .filter(MessageProcessed.class::isInstance)
+                        .map(MessageProcessed.class::cast)
                         .anyMatch(item -> isEqual(item.getEarmarkAmount(), 0)
                                 && "foo".equals(item.getEarmarkCurrency())
                                 && isEqual(item.getTotalEarmarkAmount(), 0)
@@ -76,6 +77,7 @@ public class GenerateProcessedMessageBoltTest {
     public void executeWhenDifferentAmountsOnPresentmentAndAuthorisationShouldCalculateAmounts() {
         // arrange
         Message message = new Message();
+        message.setTxnType("P");
         TransactionInfo transaction = new TransactionInfo();
         transaction.setMessage(message);
         transaction.setSettlementAmount(BigDecimal.valueOf(-19.09));
@@ -102,8 +104,8 @@ public class GenerateProcessedMessageBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(CardMessageProcessed.class::isInstance)
-                        .map(CardMessageProcessed.class::cast)
+                        .filter(MessageProcessed.class::isInstance)
+                        .map(MessageProcessed.class::cast)
                         .anyMatch(item -> isEqual(item.getEarmarkAmount(), 20.15)
                                 && "foo".equals(item.getEarmarkCurrency())
                                 && isEqual(item.getTotalEarmarkAmount(), 0)
@@ -125,6 +127,7 @@ public class GenerateProcessedMessageBoltTest {
     public void executeWhenSecondDebitPresentmentShouldCalculateAmounts() {
         // arrange
         Message message = new Message();
+        message.setTxnType("P");
         TransactionInfo transaction = new TransactionInfo();
         transaction.setMessage(message);
         transaction.setSettlementAmount(BigDecimal.valueOf(-19.09));
@@ -151,8 +154,8 @@ public class GenerateProcessedMessageBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(CardMessageProcessed.class::isInstance)
-                        .map(CardMessageProcessed.class::cast)
+                        .filter(MessageProcessed.class::isInstance)
+                        .map(MessageProcessed.class::cast)
                         .anyMatch(item -> isEqual(item.getEarmarkAmount(), 0)
                                 && "foo".equals(item.getEarmarkCurrency())
                                 && isEqual(item.getTotalEarmarkAmount(), 0)
@@ -174,6 +177,7 @@ public class GenerateProcessedMessageBoltTest {
     public void executeWhenCreditPresentmentAfterDebitOneShouldCalculateAmounts() {
         // arrange
         Message message = new Message();
+        message.setTxnType("P");
         TransactionInfo transaction = new TransactionInfo();
         transaction.setMessage(message);
         transaction.setSettlementAmount(BigDecimal.valueOf(19.09));
@@ -200,8 +204,8 @@ public class GenerateProcessedMessageBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(CardMessageProcessed.class::isInstance)
-                        .map(CardMessageProcessed.class::cast)
+                        .filter(MessageProcessed.class::isInstance)
+                        .map(MessageProcessed.class::cast)
                         .anyMatch(item -> isEqual(item.getEarmarkAmount(), 0)
                                 && "foo".equals(item.getEarmarkCurrency())
                                 && isEqual(item.getTotalEarmarkAmount(), 0)

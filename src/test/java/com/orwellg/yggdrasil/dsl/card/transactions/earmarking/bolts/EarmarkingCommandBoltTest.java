@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.earmarking.bolts;
 
-import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.command.accounting.AccountingCommandData;
 import com.orwellg.umbrella.avro.types.command.accounting.BalanceUpdateType;
 import com.orwellg.umbrella.avro.types.command.accounting.TransactionDirection;
@@ -36,7 +36,7 @@ public class EarmarkingCommandBoltTest {
     @Test
     public void executeWhenNoEarmarkRequiredShouldMoveProcessingToDifferentStream() {
         // arrange
-        CardMessageProcessed processed = new CardMessageProcessed();
+        MessageProcessed processed = new MessageProcessed();
         processed.setEarmarkAmount(DecimalTypeUtils.toDecimal(0));
         processed.setClientAmount(DecimalTypeUtils.toDecimal(19.09));
         processed.setWirecardAmount(DecimalTypeUtils.toDecimal(-19.09));
@@ -57,7 +57,7 @@ public class EarmarkingCommandBoltTest {
     @Test
     public void executeWhenPutEarmarkRequiredShouldCreateAccountingCommand() {
         // arrange
-        CardMessageProcessed processed = new CardMessageProcessed();
+        MessageProcessed processed = new MessageProcessed();
         processed.setEarmarkAmount(DecimalTypeUtils.toDecimal(-19.09));
         processed.setEarmarkCurrency("bar");
         processed.setInternalAccountId(42L);
@@ -103,7 +103,7 @@ public class EarmarkingCommandBoltTest {
     @Test
     public void executeWhenReleaseEarmarkRequiredShouldCreateAccountingCommand() {
         // arrange
-        CardMessageProcessed processed = new CardMessageProcessed();
+        MessageProcessed processed = new MessageProcessed();
         processed.setEarmarkAmount(DecimalTypeUtils.toDecimal(19.09));
         processed.setEarmarkCurrency("bar");
         processed.setInternalAccountId(42L);

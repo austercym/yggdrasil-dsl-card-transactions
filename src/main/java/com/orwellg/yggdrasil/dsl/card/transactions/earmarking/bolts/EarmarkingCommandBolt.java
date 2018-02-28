@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.earmarking.bolts;
 
-import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.command.accounting.*;
 import com.orwellg.umbrella.avro.types.commons.TransactionType;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
@@ -59,7 +59,7 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
         try {
             String key = input.getStringByField(Fields.KEY);
             String processId = input.getStringByField(Fields.PROCESS_ID);
-            CardMessageProcessed processed = (CardMessageProcessed) input.getValueByField(Fields.EVENT_DATA);
+            MessageProcessed processed = (MessageProcessed) input.getValueByField(Fields.EVENT_DATA);
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
             if (isEarmarkingOperation(processed)) {
@@ -118,23 +118,23 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
         }
     }
 
-    private boolean isEarmarkingOperation(CardMessageProcessed processed) {
+    private boolean isEarmarkingOperation(MessageProcessed processed) {
         return processed.getEarmarkAmount() != null
                 && processed.getEarmarkAmount().getValue().compareTo(BigDecimal.ZERO) != 0;
     }
 
-    private boolean isPutEarmark(CardMessageProcessed processed) {
+    private boolean isPutEarmark(MessageProcessed processed) {
         return processed.getEarmarkAmount() != null
                 && processed.getEarmarkAmount().getValue().compareTo(BigDecimal.ZERO) < 0;
     }
 
-    private boolean isReleaseEarmark(CardMessageProcessed processed) {
+    private boolean isReleaseEarmark(MessageProcessed processed) {
         return processed.getEarmarkAmount() != null
                 && processed.getEarmarkAmount().getValue().compareTo(BigDecimal.ZERO) > 0;
     }
 
     private AccountingCommandData generateCommand(
-            CardMessageProcessed processed,
+            MessageProcessed processed,
             String debitAccount, BalanceUpdateType debitAccountUpdateType,
             String creditAccount, BalanceUpdateType creditAccountUpdateType,
             TransactionType transactionType, String processId) {

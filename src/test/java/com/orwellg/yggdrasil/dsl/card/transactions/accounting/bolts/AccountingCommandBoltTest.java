@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.accounting.bolts;
 
-import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.command.accounting.AccountingCommandData;
 import com.orwellg.umbrella.avro.types.command.accounting.BalanceUpdateType;
 import com.orwellg.umbrella.avro.types.command.accounting.TransactionDirection;
@@ -36,7 +36,7 @@ public class AccountingCommandBoltTest {
     @Test
     public void executeWhenNoAccountingRequiredShouldMoveProcessingToDifferentStream() {
         // arrange
-        CardMessageProcessed processed = new CardMessageProcessed();
+        MessageProcessed processed = new MessageProcessed();
         processed.setEarmarkAmount(DecimalTypeUtils.toDecimal(19.09));
         processed.setClientAmount(DecimalTypeUtils.toDecimal(0));
         processed.setWirecardAmount(DecimalTypeUtils.toDecimal(0));
@@ -57,7 +57,7 @@ public class AccountingCommandBoltTest {
     @Test
     public void executeWhenClientDebitShouldCreateAccountingCommand() {
         // arrange
-        CardMessageProcessed processed = new CardMessageProcessed();
+        MessageProcessed processed = new MessageProcessed();
         processed.setClientAmount(DecimalTypeUtils.toDecimal(-19.09));
         processed.setClientCurrency("bar");
         processed.setWirecardAmount(DecimalTypeUtils.toDecimal(19.09));
@@ -105,7 +105,7 @@ public class AccountingCommandBoltTest {
     @Test
     public void executeWhenClientCreditShouldCreateAccountingCommand() {
         // arrange
-        CardMessageProcessed processed = new CardMessageProcessed();
+        MessageProcessed processed = new MessageProcessed();
         processed.setClientAmount(DecimalTypeUtils.toDecimal(19.09));
         processed.setClientCurrency("bar");
         processed.setWirecardAmount(DecimalTypeUtils.toDecimal(-19.09));

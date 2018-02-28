@@ -1,12 +1,12 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
-import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.CardMessageProcessedFactory;
+import com.orwellg.yggdrasil.dsl.card.transactions.utils.MessageProcessedFactory;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,7 +39,7 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
             LOG.debug("{}Processing", logPrefix);
-            CardMessageProcessed result = CardMessageProcessedFactory.from(eventData);
+            MessageProcessed result = MessageProcessedFactory.from(eventData);
 
             if (transactionList == null || transactionList.isEmpty()) {
                 throw new IllegalArgumentException("Empty transaction list - cannot process");
@@ -65,7 +65,7 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
         }
     }
 
-    private void calculateNewValues(TransactionInfo eventData, CardMessageProcessed result, CardTransaction lastTransaction) {
+    private void calculateNewValues(TransactionInfo eventData, MessageProcessed result, CardTransaction lastTransaction) {
         result.setWirecardAmount(DecimalTypeUtils.toDecimal(eventData.getSettlementAmount().negate()));
         result.setWirecardCurrency(eventData.getSettlementCurrency());
         result.setClientAmount(DecimalTypeUtils.toDecimal(eventData.getSettlementAmount()));
@@ -84,7 +84,7 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
         result.setTotalEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
     }
 
-    private void copyValuesFromLatestTransaction(TransactionInfo eventData, CardMessageProcessed result, CardTransaction lastTransaction) {
+    private void copyValuesFromLatestTransaction(TransactionInfo eventData, MessageProcessed result, CardTransaction lastTransaction) {
         result.setWirecardAmount(DecimalTypeUtils.toDecimal(BigDecimal.ZERO));
         result.setWirecardCurrency(eventData.getSettlementCurrency());
         result.setClientAmount(DecimalTypeUtils.toDecimal(BigDecimal.ZERO));

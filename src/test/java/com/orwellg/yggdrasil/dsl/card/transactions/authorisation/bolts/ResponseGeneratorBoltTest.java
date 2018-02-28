@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.bolts;
 
-import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTransactionLog;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
@@ -33,6 +33,7 @@ public class ResponseGeneratorBoltTest {
     public void executeWhenAllValidationPassedShouldGenerateCorrectResponse() {
         // arrange
         Message message = new Message();
+        message.setTxnType("A");
         TransactionInfo authorisation = new TransactionInfo();
         authorisation.setMessage(message);
         authorisation.setSettlementAmount(BigDecimal.valueOf(-19.09));
@@ -65,8 +66,8 @@ public class ResponseGeneratorBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(CardMessageProcessed.class::isInstance)
-                        .map(CardMessageProcessed.class::cast)
+                        .filter(MessageProcessed.class::isInstance)
+                        .map(MessageProcessed.class::cast)
                         .anyMatch(item -> isEqual(item.getEarmarkAmount(), -19.09)
                                 && "foo".equals(item.getEarmarkCurrency())
                                 && isEqual(item.getTotalEarmarkAmount(), -19.09)

@@ -1,6 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
-import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageType;
 import com.orwellg.umbrella.avro.types.commons.Decimal;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
@@ -49,7 +50,7 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
         LOG.info("{}Recalculating total spend amounts", logPrefix, key, processId);
 
         try {
-            CardMessageProcessed eventData = (CardMessageProcessed) input.getValueByField(Fields.EVENT_DATA);
+            MessageProcessed eventData = (MessageProcessed) input.getValueByField(Fields.EVENT_DATA);
             SpendingTotalAmounts spendAmounts = (SpendingTotalAmounts) input.getValueByField(Fields.TOTAL_AMOUNTS);
             CardTransaction authorisation = (CardTransaction) input.getValueByField(Fields.AUTHORISATION);
             SpendingTotalAmounts newSpendAmounts = null;
@@ -60,7 +61,7 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
                 LOG.info(
                         "{}No need for recalculation of spend total amounts - GpsMessageType={}, ResponseStatus={}",
                         logPrefix,
-                        eventData == null ? null : eventData.getGpsMessageType(),
+                        eventData == null ? null : eventData.getMessageType(),
                         eventData == null || eventData.getEhiResponse() == null ? null : eventData.getEhiResponse().getResponsestatus());
             }
 
@@ -76,18 +77,18 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
         }
     }
 
-    private boolean isAcceptedAuthorisation(CardMessageProcessed eventData) {
+    private boolean isAcceptedAuthorisation(MessageProcessed eventData) {
         return eventData != null && eventData.getEhiResponse() != null
                 &&
-                "A".equalsIgnoreCase(eventData.getGpsMessageType())
+                MessageType.AUTHORISATION.equals(eventData.getMessageType())
                 &&
                 "00".equals(eventData.getEhiResponse().getResponsestatus());
     }
 
-    private boolean isDebitPresentment(CardMessageProcessed eventData) {
+    private boolean isDebitPresentment(MessageProcessed eventData) {
         return eventData != null
                 &&
-                "P".equalsIgnoreCase(eventData.getGpsMessageType())
+                MessageType.PRESENTMENT.equals(eventData.getMessageType())
                 && Optional.ofNullable(eventData.getClientAmount())
                         .map(Decimal::getValue)
                         .orElse(BigDecimal.ZERO)

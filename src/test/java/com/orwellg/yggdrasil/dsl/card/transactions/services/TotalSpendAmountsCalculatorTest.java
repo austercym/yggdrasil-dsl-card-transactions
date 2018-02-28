@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.services;
 
-import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
@@ -37,7 +37,7 @@ public class TotalSpendAmountsCalculatorTest {
     public void recalculateWhenAuthorisationTodayTransactionAndTodayTotalSpendShouldIncreaseDailyAndAnnualTotalSpend()
             throws ParseException {
         // arrange
-        CardMessageProcessed messageProcessed = new CardMessageProcessed();
+        MessageProcessed messageProcessed = new MessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
         messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(-9));
 
@@ -63,7 +63,7 @@ public class TotalSpendAmountsCalculatorTest {
     public void recalculateWhenAuthorisationTodayTransactionAndYesterdayTotalSpendShouldSetDailyAndIncreaseAnnualTotalSpend()
             throws ParseException {
         // arrange
-        CardMessageProcessed messageProcessed = new CardMessageProcessed();
+        MessageProcessed messageProcessed = new MessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
         messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(-9));
 
@@ -89,7 +89,7 @@ public class TotalSpendAmountsCalculatorTest {
     public void recalculateWhenAuthorisationTodayTransactionAndTheYearBeforeTotalSpendShouldSetDailyAndAnnualTotalSpend()
             throws ParseException {
         // arrange
-        CardMessageProcessed messageProcessed = new CardMessageProcessed();
+        MessageProcessed messageProcessed = new MessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
         messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(-9));
 
@@ -115,7 +115,7 @@ public class TotalSpendAmountsCalculatorTest {
     public void recalculateWhenAuthorisationTodayTransactionAndTotalSpendNotPresentShouldSetDailyAndAnnualTotalSpend()
             throws ParseException {
         // arrange
-        CardMessageProcessed messageProcessed = new CardMessageProcessed();
+        MessageProcessed messageProcessed = new MessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
         messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(-9));
 
@@ -136,7 +136,7 @@ public class TotalSpendAmountsCalculatorTest {
     public void recalculateWhenPresentmentYesterdayTransactionAndTodayTotalSpendShouldIncreaseAnnualTotalSpendOnly()
             throws ParseException {
         // arrange
-        CardMessageProcessed messageProcessed = new CardMessageProcessed();
+        MessageProcessed messageProcessed = new MessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-18 19:09:42").getTime());
         messageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(-9));
 
@@ -162,7 +162,7 @@ public class TotalSpendAmountsCalculatorTest {
     public void recalculateWhenPresentmentTheYearBeforeTransactionAndTodayTotalSpendShouldNotChangeAmounts()
             throws ParseException {
         // arrange
-        CardMessageProcessed messageProcessed = new CardMessageProcessed();
+        MessageProcessed messageProcessed = new MessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2014-09-19 19:09:42").getTime());
         messageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(-9));
 
@@ -188,7 +188,7 @@ public class TotalSpendAmountsCalculatorTest {
     public void recalculateWhenPresentmentTheYearBeforeTransactionAndYesterdayTotalSpendShouldSetDailyTotalToZero()
             throws ParseException {
         // arrange
-        CardMessageProcessed messageProcessed = new CardMessageProcessed();
+        MessageProcessed messageProcessed = new MessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2014-09-19 19:09:42").getTime());
         messageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(-9));
 
@@ -214,7 +214,7 @@ public class TotalSpendAmountsCalculatorTest {
     public void recalculateWhenPresentmentTheYearBeforeTransactionAndTheYearBeforeTotalSpendShouldSetAmountsToZero()
             throws ParseException {
         // arrange
-        CardMessageProcessed messageProcessed = new CardMessageProcessed();
+        MessageProcessed messageProcessed = new MessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2014-09-19 19:09:42").getTime());
         messageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(-9));
 
@@ -241,7 +241,7 @@ public class TotalSpendAmountsCalculatorTest {
             throws ParseException {
 
         // arrange
-        CardMessageProcessed messageProcessed = new CardMessageProcessed();
+        MessageProcessed messageProcessed = new MessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
         messageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(-9));
 
@@ -271,7 +271,7 @@ public class TotalSpendAmountsCalculatorTest {
             throws ParseException {
 
         // arrange
-        CardMessageProcessed messageProcessed = new CardMessageProcessed();
+        MessageProcessed messageProcessed = new MessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
         messageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(-9));
 
@@ -301,7 +301,7 @@ public class TotalSpendAmountsCalculatorTest {
             throws ParseException {
 
         // arrange
-        CardMessageProcessed messageProcessed = new CardMessageProcessed();
+        MessageProcessed messageProcessed = new MessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
         messageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(-9));
 
@@ -331,7 +331,7 @@ public class TotalSpendAmountsCalculatorTest {
             throws ParseException {
 
         // arrange
-        CardMessageProcessed messageProcessed = new CardMessageProcessed();
+        MessageProcessed messageProcessed = new MessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
         messageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(9));
 
@@ -361,7 +361,7 @@ public class TotalSpendAmountsCalculatorTest {
             throws ParseException {
 
         // arrange
-        CardMessageProcessed messageProcessed = new CardMessageProcessed();
+        MessageProcessed messageProcessed = new MessageProcessed();
         messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
         messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(19));
         messageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(-9));

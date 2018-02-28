@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
-import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
@@ -32,7 +32,9 @@ public class GenericMessageProcessingBoltTest {
         transaction.setSettlementAmount(BigDecimal.valueOf(-19.09));
         transaction.setSettlementCurrency("FOO");
         transaction.setGpsTransactionId("42");
-        transaction.setMessage(new Message());
+        Message message = new Message();
+        message.setTxnType("A");
+        transaction.setMessage(message);
 
         CardTransaction previousTransaction = new CardTransaction();
         previousTransaction.setWirecardAmount(BigDecimal.valueOf(20.15));
@@ -54,8 +56,8 @@ public class GenericMessageProcessingBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(CardMessageProcessed.class::isInstance)
-                        .map(CardMessageProcessed.class::cast)
+                        .filter(MessageProcessed.class::isInstance)
+                        .map(MessageProcessed.class::cast)
                         .anyMatch(item -> item.getWirecardAmount() != null
                                 &&
                                 item.getWirecardAmount().getValue().compareTo(BigDecimal.valueOf(19.09)) == 0
@@ -95,7 +97,9 @@ public class GenericMessageProcessingBoltTest {
         transaction.setSettlementAmount(BigDecimal.valueOf(19.09));
         transaction.setSettlementCurrency("FOO");
         transaction.setGpsTransactionId("42");
-        transaction.setMessage(new Message());
+        Message message = new Message();
+        message.setTxnType("A");
+        transaction.setMessage(message);
 
         CardTransaction previousTransaction = new CardTransaction();
         previousTransaction.setWirecardAmount(BigDecimal.valueOf(20.15));
@@ -117,8 +121,8 @@ public class GenericMessageProcessingBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(CardMessageProcessed.class::isInstance)
-                        .map(CardMessageProcessed.class::cast)
+                        .filter(MessageProcessed.class::isInstance)
+                        .map(MessageProcessed.class::cast)
                         .anyMatch(item -> item.getWirecardAmount() != null
                                 &&
                                 item.getWirecardAmount().getValue().compareTo(BigDecimal.valueOf(-19.09)) == 0
@@ -158,7 +162,9 @@ public class GenericMessageProcessingBoltTest {
         transaction.setSettlementAmount(BigDecimal.valueOf(19.09));
         transaction.setSettlementCurrency("FOO");
         transaction.setGpsTransactionId("42");
-        transaction.setMessage(new Message());
+        Message message = new Message();
+        message.setTxnType("A");
+        transaction.setMessage(message);
 
         CardTransaction previousTransaction = new CardTransaction();
         previousTransaction.setWirecardAmount(BigDecimal.valueOf(19.09));
@@ -180,8 +186,8 @@ public class GenericMessageProcessingBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(CardMessageProcessed.class::isInstance)
-                        .map(CardMessageProcessed.class::cast)
+                        .filter(MessageProcessed.class::isInstance)
+                        .map(MessageProcessed.class::cast)
                         .anyMatch(item -> item.getWirecardAmount() != null
                                 &&
                                 item.getWirecardAmount().getValue().compareTo(BigDecimal.valueOf(-19.09)) == 0
@@ -221,7 +227,9 @@ public class GenericMessageProcessingBoltTest {
         transaction.setSettlementAmount(BigDecimal.valueOf(19.09));
         transaction.setSettlementCurrency("FOO");
         transaction.setGpsTransactionId("42");
-        transaction.setMessage(new Message());
+        Message message = new Message();
+        message.setTxnType("A");
+        transaction.setMessage(message);
 
         CardTransaction previousTransaction = new CardTransaction();
         previousTransaction.setWirecardAmount(BigDecimal.valueOf(3.08));
@@ -243,8 +251,8 @@ public class GenericMessageProcessingBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(CardMessageProcessed.class::isInstance)
-                        .map(CardMessageProcessed.class::cast)
+                        .filter(MessageProcessed.class::isInstance)
+                        .map(MessageProcessed.class::cast)
                         .anyMatch(item -> item.getWirecardAmount() != null
                                 &&
                                 item.getWirecardAmount().getValue().compareTo(BigDecimal.valueOf(-19.09)) == 0
@@ -284,7 +292,9 @@ public class GenericMessageProcessingBoltTest {
         transaction.setSettlementAmount(BigDecimal.valueOf(19.09));
         transaction.setSettlementCurrency("FOO");
         transaction.setGpsTransactionId("42");
-        transaction.setMessage(new Message());
+        Message message = new Message();
+        message.setTxnType("A");
+        transaction.setMessage(message);
 
         CardTransaction previousTransaction = new CardTransaction();
         previousTransaction.setWirecardAmount(BigDecimal.valueOf(3.08));
@@ -311,8 +321,8 @@ public class GenericMessageProcessingBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(CardMessageProcessed.class::isInstance)
-                        .map(CardMessageProcessed.class::cast)
+                        .filter(MessageProcessed.class::isInstance)
+                        .map(MessageProcessed.class::cast)
                         .anyMatch(item -> item.getWirecardAmount() != null
                                 &&
                                 item.getWirecardAmount().getValue().compareTo(BigDecimal.ZERO) == 0
@@ -351,7 +361,9 @@ public class GenericMessageProcessingBoltTest {
         TransactionInfo transaction = new TransactionInfo();
         transaction.setSettlementAmount(BigDecimal.valueOf(19.09));
         transaction.setSettlementCurrency("FOO");
-        transaction.setMessage(new Message());
+        Message message = new Message();
+        message.setTxnType("A");
+        transaction.setMessage(message);
 
         Tuple input = mock(Tuple.class);
         when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(transaction);

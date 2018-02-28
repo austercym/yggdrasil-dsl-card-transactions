@@ -1,7 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.event.Event;
-import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventProcessBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +28,7 @@ public class ResponseEventProcessBolt extends KafkaEventProcessBolt {
         try {
             // Get the JSON message with the data
             String data = event.getEvent().getData();
-            CardMessageProcessed eventData = gson.fromJson(data, CardMessageProcessed.class);
+            MessageProcessed eventData = gson.fromJson(data, MessageProcessed.class);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);

@@ -1,6 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
-import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageType;
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
@@ -24,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-public class LoadDataBolt extends JoinFutureBolt<CardMessageProcessed> {
+public class LoadDataBolt extends JoinFutureBolt<MessageProcessed> {
 
     private static final long serialVersionUID = 1L;
 
@@ -71,7 +72,7 @@ public class LoadDataBolt extends JoinFutureBolt<CardMessageProcessed> {
     }
 
     @Override
-    protected void join(Tuple input, String key, String processId, CardMessageProcessed eventData) {
+    protected void join(Tuple input, String key, String processId, MessageProcessed eventData) {
 
         String logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
@@ -80,8 +81,8 @@ public class LoadDataBolt extends JoinFutureBolt<CardMessageProcessed> {
         try {
             CompletableFuture<SpendingTotalAmounts> totalAmountsFuture = retrieveTotalAmounts(
                     eventData.getDebitCardId(), eventData.getSpendGroup(), logPrefix);
-            CompletableFuture<CardTransaction> cardTransactionFuture = "P".equalsIgnoreCase(eventData.getGpsMessageType())
-                    ? retrieveCardTransaction(eventData.getGpsTransactionLink(), logPrefix)
+            CompletableFuture<CardTransaction> cardTransactionFuture = MessageType.PRESENTMENT.equals(eventData.getMessageType())
+                    ? retrieveCardTransaction(eventData.getProviderTransactionId(), logPrefix)
                     : CompletableFuture.completedFuture(null);
 
             Map<String, Object> values = new HashMap<>();

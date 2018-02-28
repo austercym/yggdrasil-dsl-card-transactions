@@ -1,21 +1,21 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.utils;
 
-import com.orwellg.umbrella.avro.types.cards.CardMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
 
 import java.time.ZoneOffset;
 import java.util.Objects;
 
-public final class CardMessageProcessedFactory {
-    public static CardMessageProcessed from(TransactionInfo transaction) {
+public final class MessageProcessedFactory {
+    public static MessageProcessed from(TransactionInfo transaction) {
 
-        CardMessageProcessed result = new CardMessageProcessed();
+        MessageProcessed result = new MessageProcessed();
         if (transaction != null) {
             Objects.requireNonNull(transaction.getMessage(), "TransactionInfo.Message cannot be null");
 
-            result.setGpsMessageType(transaction.getMessage().getTxnType());
-            result.setGpsTransactionLink(transaction.getGpsTransactionLink());
-            result.setGpsTransactionId(transaction.getGpsTransactionId());
+            result.setMessageType(MessageTypeMapper.fromGpsTxnType(transaction.getMessage().getTxnType()));
+            result.setProviderTransactionId(transaction.getGpsTransactionLink());
+            result.setProviderMessageId(transaction.getGpsTransactionId());
             result.setDebitCardId(transaction.getDebitCardId());
             result.setSpendGroup(transaction.getSpendGroup());
             if (transaction.getTransactionDateTime() != null) {
@@ -23,7 +23,7 @@ public final class CardMessageProcessedFactory {
                         transaction.getTransactionDateTime().toInstant(ZoneOffset.UTC).toEpochMilli());
             }
             if (transaction.getGpsTransactionTime() != null) {
-                result.setGpsTransactionTime(
+                result.setProviderTransactionTime(
                         transaction.getGpsTransactionTime().toInstant(ZoneOffset.UTC).toEpochMilli());
             }
         }
