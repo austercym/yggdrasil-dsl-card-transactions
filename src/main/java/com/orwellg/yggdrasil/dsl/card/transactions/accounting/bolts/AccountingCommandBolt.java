@@ -1,8 +1,8 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.accounting.bolts;
 
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.command.accounting.*;
 import com.orwellg.umbrella.avro.types.commons.TransactionType;
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CommandTypes;
@@ -59,7 +59,7 @@ public class AccountingCommandBolt extends BasicRichBolt {
         try {
             String key = input.getStringByField(Fields.KEY);
             String processId = input.getStringByField(Fields.PROCESS_ID);
-            GpsMessageProcessed processed = (GpsMessageProcessed) input.getValueByField(Fields.EVENT_DATA);
+            MessageProcessed processed = (MessageProcessed) input.getValueByField(Fields.EVENT_DATA);
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
             if (isAccountingRequired(processed)) {
@@ -114,7 +114,7 @@ public class AccountingCommandBolt extends BasicRichBolt {
         }
     }
 
-    private boolean isAccountingRequired(GpsMessageProcessed processed) {
+    private boolean isAccountingRequired(MessageProcessed processed) {
         return (
                 processed.getClientAmount() != null
                         && processed.getClientAmount().getValue().compareTo(BigDecimal.ZERO) != 0
@@ -125,20 +125,20 @@ public class AccountingCommandBolt extends BasicRichBolt {
         );
     }
 
-    private boolean isClientDebit(GpsMessageProcessed processed) {
+    private boolean isClientDebit(MessageProcessed processed) {
         return processed.getClientAmount() != null && processed.getWirecardAmount() != null
                 && processed.getClientAmount().getValue().compareTo(BigDecimal.ZERO) < 0
                 && processed.getWirecardAmount().getValue().compareTo(BigDecimal.ZERO) > 0;
     }
 
-    private boolean isClientCredit(GpsMessageProcessed processed) {
+    private boolean isClientCredit(MessageProcessed processed) {
         return processed.getClientAmount() != null && processed.getWirecardAmount() != null
                 && processed.getClientAmount().getValue().compareTo(BigDecimal.ZERO) > 0
                 && processed.getWirecardAmount().getValue().compareTo(BigDecimal.ZERO) < 0;
     }
 
     private AccountingCommandData generateCommand(
-            GpsMessageProcessed processed,
+            MessageProcessed processed,
             String debitAccount, String creditAccount,
             TransactionType transactionType, String processId) {
         AccountingCommandData commandData = new AccountingCommandData();

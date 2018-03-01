@@ -1,6 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageType;
 import com.orwellg.umbrella.avro.types.gps.ResponseMsg;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
@@ -30,8 +31,8 @@ public class RecalculateTotalSpendAmountsBoltTest {
         ResponseMsg response = new ResponseMsg();
         response.setResponsestatus("00");
 
-        GpsMessageProcessed message = new GpsMessageProcessed();
-        message.setGpsMessageType("A");
+        MessageProcessed message = new MessageProcessed();
+        message.setMessageType(MessageType.AUTHORISATION);
         message.setEhiResponse(response);
 
         Tuple input = mock(Tuple.class);
@@ -59,8 +60,8 @@ public class RecalculateTotalSpendAmountsBoltTest {
         ResponseMsg response = new ResponseMsg();
         response.setResponsestatus("51");
 
-        GpsMessageProcessed message = new GpsMessageProcessed();
-        message.setGpsMessageType("A");
+        MessageProcessed message = new MessageProcessed();
+        message.setMessageType(MessageType.AUTHORISATION);
         message.setEhiResponse(response);
 
         Tuple input = mock(Tuple.class);
@@ -85,8 +86,8 @@ public class RecalculateTotalSpendAmountsBoltTest {
     @Test
     public void executeWhenDebitPresentmentShouldCalculateNewTotalSpendAmounts() {
         // arrange
-        GpsMessageProcessed message = new GpsMessageProcessed();
-        message.setGpsMessageType("P");
+        MessageProcessed message = new MessageProcessed();
+        message.setMessageType(MessageType.PRESENTMENT);
         message.setClientAmount(DecimalTypeUtils.toDecimal(-19.09));
 
         Tuple input = mock(Tuple.class);
@@ -111,8 +112,8 @@ public class RecalculateTotalSpendAmountsBoltTest {
     @Test
     public void executeWhenCreditPresentmentShouldNotCalculateNewTotalSpendAmounts() {
         // arrange
-        GpsMessageProcessed message = new GpsMessageProcessed();
-        message.setGpsMessageType("P");
+        MessageProcessed message = new MessageProcessed();
+        message.setMessageType(MessageType.PRESENTMENT);
         message.setClientAmount(DecimalTypeUtils.toDecimal(19.09));
 
         Tuple input = mock(Tuple.class);

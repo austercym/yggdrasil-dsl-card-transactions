@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
@@ -31,8 +31,10 @@ public class GenericMessageProcessingBoltTest {
         TransactionInfo transaction = new TransactionInfo();
         transaction.setSettlementAmount(BigDecimal.valueOf(-19.09));
         transaction.setSettlementCurrency("FOO");
-        transaction.setGpsTransactionId("42");
-        transaction.setMessage(new Message());
+        transaction.setProviderMessageId("42");
+        Message message = new Message();
+        message.setTxnType("A");
+        transaction.setMessage(message);
 
         CardTransaction previousTransaction = new CardTransaction();
         previousTransaction.setWirecardAmount(BigDecimal.valueOf(20.15));
@@ -54,8 +56,8 @@ public class GenericMessageProcessingBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(GpsMessageProcessed.class::isInstance)
-                        .map(GpsMessageProcessed.class::cast)
+                        .filter(MessageProcessed.class::isInstance)
+                        .map(MessageProcessed.class::cast)
                         .anyMatch(item -> item.getWirecardAmount() != null
                                 &&
                                 item.getWirecardAmount().getValue().compareTo(BigDecimal.valueOf(19.09)) == 0
@@ -94,8 +96,10 @@ public class GenericMessageProcessingBoltTest {
         TransactionInfo transaction = new TransactionInfo();
         transaction.setSettlementAmount(BigDecimal.valueOf(19.09));
         transaction.setSettlementCurrency("FOO");
-        transaction.setGpsTransactionId("42");
-        transaction.setMessage(new Message());
+        transaction.setProviderMessageId("42");
+        Message message = new Message();
+        message.setTxnType("A");
+        transaction.setMessage(message);
 
         CardTransaction previousTransaction = new CardTransaction();
         previousTransaction.setWirecardAmount(BigDecimal.valueOf(20.15));
@@ -117,8 +121,8 @@ public class GenericMessageProcessingBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(GpsMessageProcessed.class::isInstance)
-                        .map(GpsMessageProcessed.class::cast)
+                        .filter(MessageProcessed.class::isInstance)
+                        .map(MessageProcessed.class::cast)
                         .anyMatch(item -> item.getWirecardAmount() != null
                                 &&
                                 item.getWirecardAmount().getValue().compareTo(BigDecimal.valueOf(-19.09)) == 0
@@ -157,8 +161,10 @@ public class GenericMessageProcessingBoltTest {
         TransactionInfo transaction = new TransactionInfo();
         transaction.setSettlementAmount(BigDecimal.valueOf(19.09));
         transaction.setSettlementCurrency("FOO");
-        transaction.setGpsTransactionId("42");
-        transaction.setMessage(new Message());
+        transaction.setProviderMessageId("42");
+        Message message = new Message();
+        message.setTxnType("A");
+        transaction.setMessage(message);
 
         CardTransaction previousTransaction = new CardTransaction();
         previousTransaction.setWirecardAmount(BigDecimal.valueOf(19.09));
@@ -180,8 +186,8 @@ public class GenericMessageProcessingBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(GpsMessageProcessed.class::isInstance)
-                        .map(GpsMessageProcessed.class::cast)
+                        .filter(MessageProcessed.class::isInstance)
+                        .map(MessageProcessed.class::cast)
                         .anyMatch(item -> item.getWirecardAmount() != null
                                 &&
                                 item.getWirecardAmount().getValue().compareTo(BigDecimal.valueOf(-19.09)) == 0
@@ -220,8 +226,10 @@ public class GenericMessageProcessingBoltTest {
         TransactionInfo transaction = new TransactionInfo();
         transaction.setSettlementAmount(BigDecimal.valueOf(19.09));
         transaction.setSettlementCurrency("FOO");
-        transaction.setGpsTransactionId("42");
-        transaction.setMessage(new Message());
+        transaction.setProviderMessageId("42");
+        Message message = new Message();
+        message.setTxnType("A");
+        transaction.setMessage(message);
 
         CardTransaction previousTransaction = new CardTransaction();
         previousTransaction.setWirecardAmount(BigDecimal.valueOf(3.08));
@@ -243,8 +251,8 @@ public class GenericMessageProcessingBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(GpsMessageProcessed.class::isInstance)
-                        .map(GpsMessageProcessed.class::cast)
+                        .filter(MessageProcessed.class::isInstance)
+                        .map(MessageProcessed.class::cast)
                         .anyMatch(item -> item.getWirecardAmount() != null
                                 &&
                                 item.getWirecardAmount().getValue().compareTo(BigDecimal.valueOf(-19.09)) == 0
@@ -283,8 +291,10 @@ public class GenericMessageProcessingBoltTest {
         TransactionInfo transaction = new TransactionInfo();
         transaction.setSettlementAmount(BigDecimal.valueOf(19.09));
         transaction.setSettlementCurrency("FOO");
-        transaction.setGpsTransactionId("42");
-        transaction.setMessage(new Message());
+        transaction.setProviderMessageId("42");
+        Message message = new Message();
+        message.setTxnType("A");
+        transaction.setMessage(message);
 
         CardTransaction previousTransaction = new CardTransaction();
         previousTransaction.setWirecardAmount(BigDecimal.valueOf(3.08));
@@ -292,9 +302,8 @@ public class GenericMessageProcessingBoltTest {
         previousTransaction.setClientAmount(BigDecimal.valueOf(-3.08));
         previousTransaction.setClientCurrency("BAR");
         previousTransaction.setEarmarkCurrency("BAR");
-        previousTransaction.setFeesCurrency("BAR");
         previousTransaction.setInternalAccountCurrency("BAR");
-        previousTransaction.setGpsTransactionId("42");
+        previousTransaction.setProviderMessageId("42");
         List<CardTransaction> transactionList = Collections.singletonList(previousTransaction);
 
         Tuple input = mock(Tuple.class);
@@ -311,8 +320,8 @@ public class GenericMessageProcessingBoltTest {
         verify(collector).emit(
                 any(Tuple.class),
                 argThat(result -> result.stream()
-                        .filter(GpsMessageProcessed.class::isInstance)
-                        .map(GpsMessageProcessed.class::cast)
+                        .filter(MessageProcessed.class::isInstance)
+                        .map(MessageProcessed.class::cast)
                         .anyMatch(item -> item.getWirecardAmount() != null
                                 &&
                                 item.getWirecardAmount().getValue().compareTo(BigDecimal.ZERO) == 0
@@ -351,7 +360,9 @@ public class GenericMessageProcessingBoltTest {
         TransactionInfo transaction = new TransactionInfo();
         transaction.setSettlementAmount(BigDecimal.valueOf(19.09));
         transaction.setSettlementCurrency("FOO");
-        transaction.setMessage(new Message());
+        Message message = new Message();
+        message.setTxnType("A");
+        transaction.setMessage(message);
 
         Tuple input = mock(Tuple.class);
         when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(transaction);

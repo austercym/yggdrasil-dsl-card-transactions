@@ -14,7 +14,7 @@ import static org.junit.Assert.assertNotNull;
 
 
 @RunWith(Parameterized.class)
-public class GpsMessageMapperIsBalanceEnquiryTest {
+public class CardMessageMapperIsBalanceEnquiryTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -25,12 +25,12 @@ public class GpsMessageMapperIsBalanceEnquiryTest {
         });
     }
 
-    private GpsMessageMapper mapper = new GpsMessageMapper();
+    private CardMessageMapper mapper = new CardMessageMapper();
 
     private final String procCode;
     private final Boolean expectedIsBalanceEnquiry;
 
-    public GpsMessageMapperIsBalanceEnquiryTest(String procCode, Boolean expectedIsBalanceEnquiry) {
+    public CardMessageMapperIsBalanceEnquiryTest(String procCode, Boolean expectedIsBalanceEnquiry) {
         this.procCode = procCode;
         this.expectedIsBalanceEnquiry = expectedIsBalanceEnquiry;
     }

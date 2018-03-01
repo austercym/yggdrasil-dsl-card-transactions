@@ -66,8 +66,8 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
         String logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
         try {
-            LOG.info("{}Retrieving transaction list for GpsTransactionLink {}", logPrefix, eventData.getGpsTransactionLink());
-            List<CardTransaction> transactionList = transactionRepository.getCardTransaction(eventData.getGpsTransactionLink());
+            LOG.info("{}Retrieving transaction list for GpsTransactionLink {}", logPrefix, eventData.getProviderTransactionId());
+            List<CardTransaction> transactionList = transactionRepository.getCardTransaction(eventData.getProviderTransactionId());
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);

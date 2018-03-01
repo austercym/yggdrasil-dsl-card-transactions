@@ -1,14 +1,13 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
-import com.orwellg.umbrella.avro.types.gps.Message;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.GpsMessageProcessedFactory;
+import com.orwellg.yggdrasil.dsl.card.transactions.utils.MessageProcessedFactory;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,16 +32,20 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
 
         String key = (String) tuple.getValueByField(Fields.KEY);
         String originalProcessId = (String) tuple.getValueByField(Fields.PROCESS_ID);
-        Message eventData = (Message) tuple.getValueByField(Fields.EVENT_DATA);
+        TransactionInfo eventData = (TransactionInfo) tuple.getValueByField(Fields.EVENT_DATA);
 
-        LOG.debug("Key: {} | ProcessId: {} | Preparing Response. GpsTransactionId: {}, GpsTransactionLink: {}", key, originalProcessId, eventData.getTXnID(),
-                eventData.getTransLink());
+        LOG.debug("Key: {} | ProcessId: {} | Preparing Response. ProviderMessageId: {}, ProviderTransactionId: {}", key, originalProcessId, eventData.getProviderMessageId(),
+                eventData.getProviderTransactionId());
 
         try {
 
-            TransactionInfo presentment = (TransactionInfo) tuple.getValueByField(Fields.GPS_MESSAGE);
-            CardTransaction lastTransaction = (CardTransaction) tuple.getValueByField(Fields.LAST_TRANSACTION);
-            LinkedAccount linkedAccount = (LinkedAccount) tuple.getValueByField(Fields.LINKED_ACCOUNT);
+            TransactionInfo presentment = (TransactionInfo) tuple.getValueByField(Fields.EVENT_DATA);
+            CardTransaction lastTransaction = tuple.contains(Fields.LAST_TRANSACTION)
+                    ? (CardTransaction) tuple.getValueByField(Fields.LAST_TRANSACTION)
+                    : null;
+            LinkedAccount linkedAccount = tuple.contains(Fields.LINKED_ACCOUNT)
+                    ? (LinkedAccount) tuple.getValueByField(Fields.LINKED_ACCOUNT)
+                    : null;
 
             BigDecimal lastEarmarkAmount;
             BigDecimal earmarkAmount;
@@ -72,7 +75,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
                 throw new Exception("Either last transaction or linked account must be provided");
             }
 
-            GpsMessageProcessed messageProcessed = GpsMessageProcessedFactory.from(presentment);
+            MessageProcessed messageProcessed = MessageProcessedFactory.from(presentment);
 
             messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(earmarkAmount));
             messageProcessed.setEarmarkCurrency(clientAccountCurrency);
@@ -99,8 +102,8 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
             values.put(Fields.RESULT, messageProcessed);
 
             send(tuple, values);
-            LOG.info(" Key: {} | ProcessId: {} | GPS Presentment Message Processed. Response sent to kafka topic. GpsTransactionId: {}, Gps TransactionLink: {}",
-                    key, originalProcessId, eventData.getTXnID(),  eventData.getTransLink());
+            LOG.info(" Key: {} | ProcessId: {} | Presentment Message Processed. Response sent to kafka topic. GpsTransactionId: {}, Gps TransactionLink: {}",
+                    key, originalProcessId, eventData.getProviderMessageId(), eventData.getProviderTransactionId());
 
         }catch(Exception e){
             LOG.error("Error when generating response message. Tuple: {}, Message: {}, Error: {}", tuple, e.getMessage(), e);

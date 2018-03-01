@@ -7,7 +7,7 @@ topic:
       - com.orwellg.gps.authorisation.response.1
    commitInterval: 3
 application:
-   id: card-save-gps-message-processed
-   name: card-save-gps-message-processed
+   id: card-save-message-processed
+   name: card-save-message-processed
 configuration:
    autoOffsetReset: earliest

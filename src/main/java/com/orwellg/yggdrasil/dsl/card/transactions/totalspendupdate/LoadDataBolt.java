@@ -1,7 +1,8 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageType;
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
@@ -24,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-public class LoadDataBolt extends JoinFutureBolt<GpsMessageProcessed> {
+public class LoadDataBolt extends JoinFutureBolt<MessageProcessed> {
 
     private static final long serialVersionUID = 1L;
 
@@ -71,7 +72,7 @@ public class LoadDataBolt extends JoinFutureBolt<GpsMessageProcessed> {
     }
 
     @Override
-    protected void join(Tuple input, String key, String processId, GpsMessageProcessed eventData) {
+    protected void join(Tuple input, String key, String processId, MessageProcessed eventData) {
 
         String logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
@@ -80,8 +81,8 @@ public class LoadDataBolt extends JoinFutureBolt<GpsMessageProcessed> {
         try {
             CompletableFuture<SpendingTotalAmounts> totalAmountsFuture = retrieveTotalAmounts(
                     eventData.getDebitCardId(), eventData.getSpendGroup(), logPrefix);
-            CompletableFuture<CardTransaction> cardTransactionFuture = "P".equalsIgnoreCase(eventData.getGpsMessageType())
-                    ? retrieveCardTransaction(eventData.getGpsTransactionLink(), logPrefix)
+            CompletableFuture<CardTransaction> cardTransactionFuture = MessageType.PRESENTMENT.equals(eventData.getMessageType())
+                    ? retrieveCardTransaction(eventData.getProviderTransactionId(), logPrefix)
                     : CompletableFuture.completedFuture(null);
 
             Map<String, Object> values = new HashMap<>();
@@ -102,16 +103,16 @@ public class LoadDataBolt extends JoinFutureBolt<GpsMessageProcessed> {
     private CompletableFuture<CardTransaction> retrieveCardTransaction(String gpsTransactionLink, String logPrefix) {
         return CompletableFuture.supplyAsync(
                 () -> {
-                    LOG.info("{}Retrieving card transactions for GpsTransactionLink={} ...", logPrefix, gpsTransactionLink);
+                    LOG.info("{}Retrieving card transactions for ProviderTransactionId={} ...", logPrefix, gpsTransactionLink);
                     List<CardTransaction> cardTransactions = cardTransactionRepository.getCardTransaction(gpsTransactionLink);
-                    LOG.info("{}Card transactions retrieved for GpsTransactionLink={}: {}", logPrefix, gpsTransactionLink, cardTransactions);
+                    LOG.info("{}Card transactions retrieved for ProviderTransactionId={}: {}", logPrefix, gpsTransactionLink, cardTransactions);
                     if (cardTransactions == null || cardTransactions.isEmpty()) {
                         return null;
                     }
                     return cardTransactions.stream()
-                            .filter(i -> "A".equalsIgnoreCase(i.getGpsMessageType()))
+                            .filter(i -> "A".equalsIgnoreCase(i.getMessageType()))
                             .findFirst()
-                            .get();
+                            .orElse(null);
                 });
     }
 

@@ -17,9 +17,9 @@ public class TransactionInfo implements Serializable {
     private String merchantId;
     private TransactionType transactionType;
     private String settlementCurrency;
-    private String gpsTransactionLink;
-    private String gpsTransactionId;
-    private LocalDateTime gpsTransactionTime;
+    private String providerTransactionId;
+    private String providerMessageId;
+    private LocalDateTime providerTransactionTime;
     private String cardToken;
     private BigDecimal transactionAmount;
     private String transactionCurrency;
@@ -91,20 +91,20 @@ public class TransactionInfo implements Serializable {
         this.settlementCurrency = settlementCurrency;
     }
 
-    public void setGpsTransactionLink(String gpsTransactionLink) {
-        this.gpsTransactionLink = gpsTransactionLink;
+    public void setProviderTransactionId(String providerTransactionId) {
+        this.providerTransactionId = providerTransactionId;
     }
 
-    public String getGpsTransactionLink() {
-        return gpsTransactionLink;
+    public String getProviderTransactionId() {
+        return providerTransactionId;
     }
 
-    public void setGpsTransactionId(String gpsTransactionId) {
-        this.gpsTransactionId = gpsTransactionId;
+    public void setProviderMessageId(String providerMessageId) {
+        this.providerMessageId = providerMessageId;
     }
 
-    public String getGpsTransactionId() {
-        return gpsTransactionId;
+    public String getProviderMessageId() {
+        return providerMessageId;
     }
 
     public void setCardToken(String cardToken) {
@@ -147,12 +147,12 @@ public class TransactionInfo implements Serializable {
         isBalanceEnquiry = balanceEnquiry;
     }
 
-    public LocalDateTime getGpsTransactionTime() {
-        return gpsTransactionTime;
+    public LocalDateTime getProviderTransactionTime() {
+        return providerTransactionTime;
     }
 
-    public void setGpsTransactionTime(LocalDateTime gpsTransactionTime) {
-        this.gpsTransactionTime = gpsTransactionTime;
+    public void setProviderTransactionTime(LocalDateTime providerTransactionTime) {
+        this.providerTransactionTime = providerTransactionTime;
     }
 
     public LocalDateTime getTransactionDateTime() {
@@ -166,8 +166,8 @@ public class TransactionInfo implements Serializable {
     @Override
     public String toString() {
         return "TransactionInfo{" +
-                "gpsTransactionLink='" + gpsTransactionLink + '\'' +
-                ", gpsTransactionId='" + gpsTransactionId + '\'' +
+                "providerTransactionId='" + providerTransactionId + '\'' +
+                ", providerMessageId='" + providerMessageId + '\'' +
                 ", debitCardId=" + debitCardId +
                 ", transactionAmount=" + transactionAmount +
                 ", transactionCurrency='" + transactionCurrency + '\'' +

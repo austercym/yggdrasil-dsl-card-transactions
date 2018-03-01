@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
@@ -51,7 +51,7 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
         LOG.info("{}Saving total spend amounts", logPrefix);
 
         try {
-            GpsMessageProcessed eventData = (GpsMessageProcessed) input.getValueByField(Fields.EVENT_DATA);
+            MessageProcessed eventData = (MessageProcessed) input.getValueByField(Fields.EVENT_DATA);
             SpendingTotalAmounts newSpendAmounts = (SpendingTotalAmounts) input.getValueByField(Fields.NEW_TOTAL_SPEND_AMOUNTS);
 
             if (newSpendAmounts == null) {

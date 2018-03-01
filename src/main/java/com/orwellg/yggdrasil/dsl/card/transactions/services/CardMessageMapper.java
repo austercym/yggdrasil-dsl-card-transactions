@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class GpsMessageMapper {
+public class CardMessageMapper {
 
     static final String BALANCE_INQUIRY_SERVICE = "30";
     private final CardPresenceResolver cardPresenceResolver;
@@ -24,7 +24,7 @@ public class GpsMessageMapper {
     private final Map<String, String> availableCurrencies;
     private List<String> historicalCurrencyCurrencyCodes = Arrays.asList("YUM", "ROL", "CSD", "XFU", "XFO");
 
-    public GpsMessageMapper() {
+    public CardMessageMapper() {
         cardPresenceResolver = new CardPresenceResolver();
         transactionTypeResolver = new TransactionTypeResolver();
         availableCurrencies = Currency.getAvailableCurrencies().stream()
@@ -52,18 +52,18 @@ public class GpsMessageMapper {
         if (message.getMerchIDDE42() != null)
             model.setMerchantId(message.getMerchIDDE42().trim());
         model.setTransactionType(transactionTypeResolver.getType(message));
-        model.setGpsTransactionLink(message.getTransLink());
-        model.setGpsTransactionId(message.getTXnID());
+        model.setProviderTransactionId(message.getTransLink());
+        model.setProviderMessageId(message.getTXnID());
         model.setCardToken(message.getToken());
         if (message.getTxnAmt() != null)
             model.setTransactionAmount(BigDecimal.valueOf(message.getTxnAmt()));
         model.setTransactionCurrency(currencyFromNumericCode(message.getTxnCCy()));
         model.setIsBalanceEnquiry(isBalanceEnquiry(message.getProcCode()));
         if (StringUtils.isNotBlank(message.getTxnGPSDate())) {
-            model.setGpsTransactionTime(parseDateTime(message.getTxnGPSDate()));
+            model.setProviderTransactionTime(parseDateTime(message.getTxnGPSDate()));
         }
         model.setTransactionDateTime(getTransactionDateTime(
-                message.getPOSTimeDE12(), message.getTxnCtry(), message.getTXNTimeDE07(), model.getGpsTransactionTime()));
+                message.getPOSTimeDE12(), message.getTxnCtry(), message.getTXNTimeDE07(), model.getProviderTransactionTime()));
         return model;
     }
 

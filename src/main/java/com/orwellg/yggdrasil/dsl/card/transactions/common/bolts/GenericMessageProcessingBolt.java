@@ -1,12 +1,12 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.GpsMessageProcessedFactory;
+import com.orwellg.yggdrasil.dsl.card.transactions.utils.MessageProcessedFactory;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,7 +39,7 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
             LOG.debug("{}Processing", logPrefix);
-            GpsMessageProcessed result = GpsMessageProcessedFactory.from(eventData);
+            MessageProcessed result = MessageProcessedFactory.from(eventData);
 
             if (transactionList == null || transactionList.isEmpty()) {
                 throw new IllegalArgumentException("Empty transaction list - cannot process");
@@ -47,7 +47,7 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
 
             CardTransaction lastTransaction = transactionList.get(0);
             if (isDuplicatedMessage(eventData, transactionList)) {
-                LOG.info("{}Ignore message with GpsTxnId {}. It has been already processed.", logPrefix);
+                LOG.info("{}Ignore message. It has been already processed.", logPrefix);
                 copyValuesFromLatestTransaction(eventData, result, lastTransaction);
             } else {
                 calculateNewValues(eventData, result, lastTransaction);
@@ -65,7 +65,7 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
         }
     }
 
-    private void calculateNewValues(TransactionInfo eventData, GpsMessageProcessed result, CardTransaction lastTransaction) {
+    private void calculateNewValues(TransactionInfo eventData, MessageProcessed result, CardTransaction lastTransaction) {
         result.setWirecardAmount(DecimalTypeUtils.toDecimal(eventData.getSettlementAmount().negate()));
         result.setWirecardCurrency(eventData.getSettlementCurrency());
         result.setClientAmount(DecimalTypeUtils.toDecimal(eventData.getSettlementAmount()));
@@ -84,7 +84,7 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
         result.setTotalEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
     }
 
-    private void copyValuesFromLatestTransaction(TransactionInfo eventData, GpsMessageProcessed result, CardTransaction lastTransaction) {
+    private void copyValuesFromLatestTransaction(TransactionInfo eventData, MessageProcessed result, CardTransaction lastTransaction) {
         result.setWirecardAmount(DecimalTypeUtils.toDecimal(BigDecimal.ZERO));
         result.setWirecardCurrency(eventData.getSettlementCurrency());
         result.setClientAmount(DecimalTypeUtils.toDecimal(BigDecimal.ZERO));
@@ -103,6 +103,6 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
 
     private boolean isDuplicatedMessage(TransactionInfo eventData, List<CardTransaction> transactionList) {
         return transactionList.stream().anyMatch(
-                t -> eventData.getGpsTransactionId().equals(t.getGpsTransactionId()));
+                t -> eventData.getProviderMessageId().equals(t.getProviderMessageId()));
     }
 }

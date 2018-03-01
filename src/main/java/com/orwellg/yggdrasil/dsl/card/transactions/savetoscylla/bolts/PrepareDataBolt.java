@@ -1,32 +1,33 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.savetoscylla.bolts;
 
-import com.orwellg.umbrella.avro.types.gps.GpsMessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.GenericEventProcessBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.utils.MessageTypeMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Instant;
 
-public class PrepareDataBolt extends GenericEventProcessBolt<GpsMessageProcessed> {
+public class PrepareDataBolt extends GenericEventProcessBolt<MessageProcessed> {
 
     private static final long serialVersionUID = 1L;
 
     private static final Logger LOG = LogManager.getLogger(PrepareDataBolt.class);
 
     public PrepareDataBolt() {
-        super(GpsMessageProcessed.class);
+        super(MessageProcessed.class);
     }
 
     @Override
-    protected Object process(GpsMessageProcessed message, String key, String processId) {
+    protected Object process(MessageProcessed message, String key, String processId) {
 
         CardTransaction transaction = new CardTransaction();
-        transaction.setGpsTransactionLink(message.getGpsTransactionLink());
-        transaction.setGpsTransactionId(message.getGpsTransactionId());
-        transaction.setGpsTransactionDateTime(Instant.ofEpochMilli(message.getGpsTransactionTime()));
+        transaction.setProviderTransactionId(message.getProviderTransactionId());
+        transaction.setProviderMessageId(message.getProviderMessageId());
+        transaction.setProviderTransactionDateTime(Instant.ofEpochMilli(message.getProviderTransactionTime()));
         transaction.setTransactionTimestamp(Instant.ofEpochMilli(message.getTransactionTimestamp()));
-        transaction.setGpsMessageType(message.getGpsMessageType());
+        transaction.setMessageType(MessageTypeMapper.toGpsTxnType(message.getMessageType()));
         transaction.setDebitCardId(message.getDebitCardId());
         transaction.setInternalAccountId(message.getInternalAccountId());
         transaction.setInternalAccountCurrency(message.getInternalAccountCurrency());

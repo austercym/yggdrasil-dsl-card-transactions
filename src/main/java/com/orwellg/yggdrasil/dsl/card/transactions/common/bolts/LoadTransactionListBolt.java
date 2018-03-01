@@ -56,7 +56,7 @@ public class LoadTransactionListBolt extends BasicRichBolt {
             TransactionInfo eventData = (TransactionInfo) input.getValueByField(Fields.EVENT_DATA);
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
-            List<CardTransaction> transactionList = getTransactionList(eventData.getGpsTransactionLink(), logPrefix);
+            List<CardTransaction> transactionList = getTransactionList(eventData.getProviderTransactionId(), logPrefix);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
@@ -73,9 +73,9 @@ public class LoadTransactionListBolt extends BasicRichBolt {
     }
 
     private List<CardTransaction> getTransactionList(String gpsTransactionLink, String logPrefix) {
-        LOG.info("{}Retrieving transaction list for GpsTransactionLink={} ...", logPrefix, gpsTransactionLink);
+        LOG.info("{}Retrieving transaction list for ProviderTransactionId={} ...", logPrefix, gpsTransactionLink);
         List<CardTransaction> transactionList = transactionRepository.getCardTransaction(gpsTransactionLink);
-        LOG.info("{}Retrieved transaction list for GpsTransactionLink={}: {}", logPrefix, gpsTransactionLink, transactionList);
+        LOG.info("{}Retrieved transaction list for ProviderTransactionId={}: {}", logPrefix, gpsTransactionLink, transactionList);
         return transactionList;
     }
 }

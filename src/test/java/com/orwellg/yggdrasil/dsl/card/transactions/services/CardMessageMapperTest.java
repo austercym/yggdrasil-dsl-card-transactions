@@ -11,9 +11,9 @@ import java.time.LocalDateTime;
 import static org.junit.Assert.*;
 
 
-public class GpsMessageMapperTest {
+public class CardMessageMapperTest {
 
-    private GpsMessageMapper mapper = new GpsMessageMapper();
+    private CardMessageMapper mapper = new CardMessageMapper();
 
     @Test
     public void mapShouldMapCurrencyCodes() {
@@ -58,6 +58,6 @@ public class GpsMessageMapperTest {
         // assert
         LocalDateTime expected = LocalDateTime.of(2015, 9, 19, 7, 55, 42, 53000000);
         assertNotNull(result);
-        assertEquals(expected, result.getGpsTransactionTime());
+        assertEquals(expected, result.getProviderTransactionTime());
     }
 }
