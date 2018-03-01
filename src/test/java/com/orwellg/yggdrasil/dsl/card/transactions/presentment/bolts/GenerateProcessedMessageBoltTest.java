@@ -40,8 +40,8 @@ public class GenerateProcessedMessageBoltTest {
         linkedAccount.setInternalAccountCurrency("foo");
 
         Tuple input = mock(Tuple.class);
-        when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(message);
-        when(input.getValueByField(Fields.INCOMING_MESSAGE)).thenReturn(transaction);
+        when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(transaction);
+        when(input.contains(Fields.LINKED_ACCOUNT)).thenReturn(true);
         when(input.getValueByField(Fields.LINKED_ACCOUNT)).thenReturn(linkedAccount);
 
         OutputCollector collector = mock(OutputCollector.class);
@@ -90,8 +90,8 @@ public class GenerateProcessedMessageBoltTest {
         authorisation.setInternalAccountCurrency("foo");
 
         Tuple input = mock(Tuple.class);
-        when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(message);
-        when(input.getValueByField(Fields.INCOMING_MESSAGE)).thenReturn(transaction);
+        when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(transaction);
+        when(input.contains(Fields.LAST_TRANSACTION)).thenReturn(true);
         when(input.getValueByField(Fields.LAST_TRANSACTION)).thenReturn(authorisation);
 
         OutputCollector collector = mock(OutputCollector.class);
@@ -140,8 +140,8 @@ public class GenerateProcessedMessageBoltTest {
         firstPresentment.setInternalAccountCurrency("foo");
 
         Tuple input = mock(Tuple.class);
-        when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(message);
-        when(input.getValueByField(Fields.INCOMING_MESSAGE)).thenReturn(transaction);
+        when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(transaction);
+        when(input.contains(Fields.LAST_TRANSACTION)).thenReturn(true);
         when(input.getValueByField(Fields.LAST_TRANSACTION)).thenReturn(firstPresentment);
 
         OutputCollector collector = mock(OutputCollector.class);
@@ -190,8 +190,8 @@ public class GenerateProcessedMessageBoltTest {
         firstPresentment.setInternalAccountCurrency("foo");
 
         Tuple input = mock(Tuple.class);
-        when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(message);
-        when(input.getValueByField(Fields.INCOMING_MESSAGE)).thenReturn(transaction);
+        when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(transaction);
+        when(input.contains(Fields.LAST_TRANSACTION)).thenReturn(true);
         when(input.getValueByField(Fields.LAST_TRANSACTION)).thenReturn(firstPresentment);
 
         OutputCollector collector = mock(OutputCollector.class);

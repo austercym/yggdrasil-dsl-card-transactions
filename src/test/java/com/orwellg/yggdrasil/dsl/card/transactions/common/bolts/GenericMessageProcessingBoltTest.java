@@ -302,9 +302,8 @@ public class GenericMessageProcessingBoltTest {
         previousTransaction.setClientAmount(BigDecimal.valueOf(-3.08));
         previousTransaction.setClientCurrency("BAR");
         previousTransaction.setEarmarkCurrency("BAR");
-        previousTransaction.setFeesCurrency("BAR");
         previousTransaction.setInternalAccountCurrency("BAR");
-        previousTransaction.setGpsTransactionId("42");
+        previousTransaction.setProviderMessageId("42");
         List<CardTransaction> transactionList = Collections.singletonList(previousTransaction);
 
         Tuple input = mock(Tuple.class);

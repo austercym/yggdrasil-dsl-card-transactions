@@ -1,6 +1,5 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
-import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
@@ -19,7 +18,7 @@ public class ProcessOfflineTransactionBolt extends BasicRichBolt {
 
     @Override
     public void declareFieldsDefinition() {
-        addFielsDefinition(Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.INCOMING_MESSAGE, Fields.LINKED_ACCOUNT));
+        addFielsDefinition(Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.LINKED_ACCOUNT));
     }
 
     @Override
@@ -28,15 +27,14 @@ public class ProcessOfflineTransactionBolt extends BasicRichBolt {
         try {
             String key = tuple.getStringByField(Fields.KEY);
             String processId = tuple.getStringByField(Fields.PROCESS_ID);
-            Message eventData = (Message) tuple.getValueByField(Fields.EVENT_DATA);
 
             LOG.debug("Key: {} | ProcessId: {} | Processing offline transaction", key, processId);
 
-            TransactionInfo presentment = (TransactionInfo) tuple.getValueByField(Fields.INCOMING_MESSAGE);
+            TransactionInfo presentment = (TransactionInfo) tuple.getValueByField(Fields.EVENT_DATA);
             List<LinkedAccount> linkedAccounts = (List<LinkedAccount>) tuple.getValueByField("retrieveValue");
 
             LOG.debug("Key: {} | ProcessId: {} | " + "Selecting linked account. CardTransactionId: {}, Transaction date: {}", key, processId,
-                    eventData.getCustRef(), eventData.getPOSTimeDE12());
+                    presentment.getDebitCardId(), presentment.getTransactionDateTime());
 
             if (linkedAccounts == null || linkedAccounts.isEmpty()) {
                 throw new Exception("No linked accounts found for cardId: " + presentment.getDebitCardId() + " transaction date time: " + presentment.getTransactionDateTime());
@@ -51,8 +49,7 @@ public class ProcessOfflineTransactionBolt extends BasicRichBolt {
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
             values.put(Fields.PROCESS_ID, processId);
-            values.put(Fields.EVENT_DATA, eventData);
-            values.put(Fields.INCOMING_MESSAGE, presentment);
+            values.put(Fields.EVENT_DATA, presentment);
             values.put(Fields.LINKED_ACCOUNT, linkedAccount);
 
             send(tuple, values);

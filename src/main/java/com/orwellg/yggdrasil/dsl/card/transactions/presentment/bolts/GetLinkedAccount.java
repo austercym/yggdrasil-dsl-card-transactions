@@ -1,6 +1,5 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
-import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.repositories.scylla.LinkedAccountRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.LinkedAccountRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
@@ -27,7 +26,7 @@ public class GetLinkedAccount extends BasicRichBolt {
 
     @Override
     public void declareFieldsDefinition() {
-        addFielsDefinition(Arrays.asList("key", "processId", "eventData", "retrieveValue", "gpsMessage"));
+        addFielsDefinition(Arrays.asList("key", "processId", "eventData", "retrieveValue"));
     }
 
     protected void setScyllaConnectionParameters() {
@@ -35,8 +34,8 @@ public class GetLinkedAccount extends BasicRichBolt {
         setScyllaKeyspace(ComponentFactory.getConfigurationParams().getCardsScyllaParams().getKeyspace());
     }
 
-    protected List<LinkedAccount> retrieve(Message message, TransactionInfo presentment) {
-        long cardTransactionId = Long.parseLong(message.getCustRef());
+    protected List<LinkedAccount> retrieve(TransactionInfo presentment) {
+        long cardTransactionId = presentment.getDebitCardId();
         List<LinkedAccount> linkedAccount = repository.getLinkedAccountByDate(
                 cardTransactionId,
                 presentment.getTransactionDateTime().toInstant(ZoneOffset.UTC));
@@ -57,12 +56,11 @@ public class GetLinkedAccount extends BasicRichBolt {
             values.put("key", key);
             values.put("processId", processId);
             values.put("eventData", input.getValueByField("eventData"));
-            values.put("gpsMessage", input.getValueByField("gpsMessage"));
-            values.put("retrieveValue", retrieve((Message) input.getValueByField("eventData"), (TransactionInfo) input.getValueByField("gpsMessage")));
+            values.put("retrieveValue", retrieve((TransactionInfo) input.getValueByField("eventData")));
             send(input, values);
 
         } catch (Exception e) {
-            LOG.error("Error retrieving fee schema history information. Message: {}", input, e.getMessage(), e);
+            LOG.error("Error retrieving linked account history. Message: {}", input, e.getMessage(), e);
             error(e, input);
         }
     }

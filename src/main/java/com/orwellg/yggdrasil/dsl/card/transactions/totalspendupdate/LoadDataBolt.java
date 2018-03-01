@@ -110,9 +110,9 @@ public class LoadDataBolt extends JoinFutureBolt<MessageProcessed> {
                         return null;
                     }
                     return cardTransactions.stream()
-                            .filter(i -> "A".equalsIgnoreCase(i.getGpsMessageType()))
+                            .filter(i -> "A".equalsIgnoreCase(i.getMessageType()))
                             .findFirst()
-                            .get();
+                            .orElse(null);
                 });
     }
 

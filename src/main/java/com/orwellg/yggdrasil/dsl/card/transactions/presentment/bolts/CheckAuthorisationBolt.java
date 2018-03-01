@@ -1,7 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
 
-import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
@@ -21,8 +20,8 @@ public class CheckAuthorisationBolt extends BasicRichBolt {
 
     @Override
     public void declareFieldsDefinition() {
-        addFielsDefinition(Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.INCOMING_MESSAGE, Fields.LAST_TRANSACTION));
-        addFielsDefinition(PresentmentTopology.OFFLINE_PRESENTMENT_STREAM, Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.INCOMING_MESSAGE));
+        addFielsDefinition(Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.LAST_TRANSACTION));
+        addFielsDefinition(PresentmentTopology.OFFLINE_PRESENTMENT_STREAM, Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA));
     }
 
     @Override
@@ -35,20 +34,19 @@ public class CheckAuthorisationBolt extends BasicRichBolt {
 
             LOG.debug("Key: {} | ProcessId: {} | Card Transactions retrieved from database. Starting validation process", key, originalProcessId);
 
-            Message eventData = (Message) tuple.getValueByField(Fields.EVENT_DATA);
-            TransactionInfo message = (TransactionInfo) tuple.getValueByField(Fields.INCOMING_MESSAGE);
+            TransactionInfo eventData = (TransactionInfo) tuple.getValueByField(Fields.EVENT_DATA);
             List<CardTransaction> cardTransactions = (List<CardTransaction>) tuple.getValueByField("retrieveValue");
 
             if (cardTransactions != null && !cardTransactions.isEmpty()) {
-                LOG.info("Key: {} | ProcessId: {} | Processing Online Presentment. ProviderMessageId: {}, ProviderTransactionId: {}", key, originalProcessId, eventData.getTXnID(), eventData.getTransLink());
+                LOG.info("Key: {} | ProcessId: {} | Processing Online Presentment. ProviderMessageId: {}, ProviderTransactionId: {}", key, originalProcessId, eventData.getProviderMessageId(), eventData.getProviderTransactionId());
 
-                Map<String, Object> values = getReturnValues(key, originalProcessId, eventData, message);
+                Map<String, Object> values = getReturnValues(key, originalProcessId, eventData);
                 values.put(Fields.LAST_TRANSACTION, cardTransactions.get(0));
                 send(tuple, values);
             }
             else {
-                LOG.info("Key: {} | ProcessId: {} | Processing Offline Presentment. ProviderMessageId: {}, ProviderTransactionId: {}. Continuing with Offline PresentmentMessage flow", key, originalProcessId, eventData.getTXnID(), eventData.getTransLink());
-                Map<String, Object> values = getReturnValues(key, originalProcessId, eventData, message);
+                LOG.info("Key: {} | ProcessId: {} | Processing Offline Presentment. ProviderMessageId: {}, ProviderTransactionId: {}. Continuing with Offline PresentmentMessage flow", key, originalProcessId, eventData.getProviderMessageId(), eventData.getProviderTransactionId());
+                Map<String, Object> values = getReturnValues(key, originalProcessId, eventData);
                 send(PresentmentTopology.OFFLINE_PRESENTMENT_STREAM, tuple, values);
             }
 
@@ -58,13 +56,12 @@ public class CheckAuthorisationBolt extends BasicRichBolt {
         }
     }
 
-    private Map<String, Object> getReturnValues(String key, String originalProcessId, Message eventData, TransactionInfo presentmentMessage) {
+    private Map<String, Object> getReturnValues(String key, String originalProcessId, TransactionInfo eventData) {
 
         Map<String, Object> values = new HashMap<>();
         values.put(Fields.KEY, key);
         values.put(Fields.PROCESS_ID, originalProcessId);
         values.put(Fields.EVENT_DATA, eventData);
-        values.put(Fields.INCOMING_MESSAGE, presentmentMessage);
         return values;
     }
 }

@@ -23,11 +23,11 @@ public class PrepareDataBolt extends GenericEventProcessBolt<MessageProcessed> {
     protected Object process(MessageProcessed message, String key, String processId) {
 
         CardTransaction transaction = new CardTransaction();
-        transaction.setGpsTransactionLink(message.getProviderTransactionId());
-        transaction.setGpsTransactionId(message.getProviderMessageId());
-        transaction.setGpsTransactionDateTime(Instant.ofEpochMilli(message.getProviderTransactionTime()));
+        transaction.setProviderTransactionId(message.getProviderTransactionId());
+        transaction.setProviderMessageId(message.getProviderMessageId());
+        transaction.setProviderTransactionDateTime(Instant.ofEpochMilli(message.getProviderTransactionTime()));
         transaction.setTransactionTimestamp(Instant.ofEpochMilli(message.getTransactionTimestamp()));
-        transaction.setGpsMessageType(MessageTypeMapper.toGpsTxnType(message.getMessageType()));
+        transaction.setMessageType(MessageTypeMapper.toGpsTxnType(message.getMessageType()));
         transaction.setDebitCardId(message.getDebitCardId());
         transaction.setInternalAccountId(message.getInternalAccountId());
         transaction.setInternalAccountCurrency(message.getInternalAccountCurrency());

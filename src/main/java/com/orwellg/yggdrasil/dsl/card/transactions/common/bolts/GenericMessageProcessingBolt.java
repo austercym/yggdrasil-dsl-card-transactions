@@ -103,6 +103,6 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
 
     private boolean isDuplicatedMessage(TransactionInfo eventData, List<CardTransaction> transactionList) {
         return transactionList.stream().anyMatch(
-                t -> eventData.getProviderMessageId().equals(t.getGpsTransactionId()));
+                t -> eventData.getProviderMessageId().equals(t.getProviderMessageId()));
     }
 }
