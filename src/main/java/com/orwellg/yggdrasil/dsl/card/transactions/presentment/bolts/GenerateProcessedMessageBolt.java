@@ -35,12 +35,12 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
         String originalProcessId = (String) tuple.getValueByField(Fields.PROCESS_ID);
         Message eventData = (Message) tuple.getValueByField(Fields.EVENT_DATA);
 
-        LOG.debug("Key: {} | ProcessId: {} | Preparing Response. GpsTransactionId: {}, GpsTransactionLink: {}", key, originalProcessId, eventData.getTXnID(),
+        LOG.debug("Key: {} | ProcessId: {} | Preparing Response. ProviderMessageId: {}, ProviderTransactionId: {}", key, originalProcessId, eventData.getTXnID(),
                 eventData.getTransLink());
 
         try {
 
-            TransactionInfo presentment = (TransactionInfo) tuple.getValueByField(Fields.GPS_MESSAGE);
+            TransactionInfo presentment = (TransactionInfo) tuple.getValueByField(Fields.INCOMING_MESSAGE);
             CardTransaction lastTransaction = (CardTransaction) tuple.getValueByField(Fields.LAST_TRANSACTION);
             LinkedAccount linkedAccount = (LinkedAccount) tuple.getValueByField(Fields.LINKED_ACCOUNT);
 
@@ -99,7 +99,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
             values.put(Fields.RESULT, messageProcessed);
 
             send(tuple, values);
-            LOG.info(" Key: {} | ProcessId: {} | GPS Presentment Message Processed. Response sent to kafka topic. GpsTransactionId: {}, Gps TransactionLink: {}",
+            LOG.info(" Key: {} | ProcessId: {} | Presentment Message Processed. Response sent to kafka topic. GpsTransactionId: {}, Gps TransactionLink: {}",
                     key, originalProcessId, eventData.getTXnID(),  eventData.getTransLink());
 
         }catch(Exception e){

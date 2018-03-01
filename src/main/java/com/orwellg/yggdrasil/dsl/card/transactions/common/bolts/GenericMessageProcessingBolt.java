@@ -47,7 +47,7 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
 
             CardTransaction lastTransaction = transactionList.get(0);
             if (isDuplicatedMessage(eventData, transactionList)) {
-                LOG.info("{}Ignore message with GpsTxnId {}. It has been already processed.", logPrefix);
+                LOG.info("{}Ignore message. It has been already processed.", logPrefix);
                 copyValuesFromLatestTransaction(eventData, result, lastTransaction);
             } else {
                 calculateNewValues(eventData, result, lastTransaction);
@@ -103,6 +103,6 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
 
     private boolean isDuplicatedMessage(TransactionInfo eventData, List<CardTransaction> transactionList) {
         return transactionList.stream().anyMatch(
-                t -> eventData.getGpsTransactionId().equals(t.getGpsTransactionId()));
+                t -> eventData.getProviderMessageId().equals(t.getGpsTransactionId()));
     }
 }

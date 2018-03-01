@@ -53,18 +53,18 @@ public class TotalSpendAmountsCalculator {
 
         if (clientAmountWithEarmark.compareTo(BigDecimal.ZERO) == 0) {
             LOG.info(
-                    "Spending total amounts will not be updated - transaction's client and earmark amounts are zero for GpsTransactionLink={}",
+                    "Spending total amounts will not be updated - transaction's client and earmark amounts are zero for ProviderTransactionId={}",
                     messageProcessed.getProviderTransactionId());
         } else if (clientAmountWithEarmark.compareTo(BigDecimal.ZERO) > 0) {
             LOG.info(
-                    "Spending total amounts will not be updated - transaction's sum of client and earmark amounts is positive GpsTransactionLink={}",
+                    "Spending total amounts will not be updated - transaction's sum of client and earmark amounts is positive ProviderTransactionId={}",
                     messageProcessed.getProviderTransactionId());
         } else {
             if (transactionTimestamp.toLocalDate().equals(today)) {
                 daily = calculateNewAmount(daily, clientAmountWithEarmark, authorisation);
             } else {
                 LOG.info(
-                        "Daily spending total amount will not be updated - GpsTransactionLink={}, TransactionTimestamp={}",
+                        "Daily spending total amount will not be updated - ProviderTransactionId={}, TransactionTimestamp={}",
                         messageProcessed.getProviderTransactionId(), transactionTimestamp);
             }
 
@@ -72,7 +72,7 @@ public class TotalSpendAmountsCalculator {
                 annual = calculateNewAmount(annual, clientAmountWithEarmark, authorisation);
             } else {
                 LOG.info(
-                        "Annual spending total amount will not be updated - GpsTransactionLink={}, TransactionTimestamp={}",
+                        "Annual spending total amount will not be updated - ProviderTransactionId={}, TransactionTimestamp={}",
                         messageProcessed.getProviderTransactionId(), transactionTimestamp);
             }
         }

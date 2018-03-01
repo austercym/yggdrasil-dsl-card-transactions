@@ -19,7 +19,7 @@ public class ProcessOfflineTransactionBolt extends BasicRichBolt {
 
     @Override
     public void declareFieldsDefinition() {
-        addFielsDefinition(Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.GPS_MESSAGE, Fields.LINKED_ACCOUNT));
+        addFielsDefinition(Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.INCOMING_MESSAGE, Fields.LINKED_ACCOUNT));
     }
 
     @Override
@@ -32,7 +32,7 @@ public class ProcessOfflineTransactionBolt extends BasicRichBolt {
 
             LOG.debug("Key: {} | ProcessId: {} | Processing offline transaction", key, processId);
 
-            TransactionInfo presentment = (TransactionInfo) tuple.getValueByField(Fields.GPS_MESSAGE);
+            TransactionInfo presentment = (TransactionInfo) tuple.getValueByField(Fields.INCOMING_MESSAGE);
             List<LinkedAccount> linkedAccounts = (List<LinkedAccount>) tuple.getValueByField("retrieveValue");
 
             LOG.debug("Key: {} | ProcessId: {} | " + "Selecting linked account. CardTransactionId: {}, Transaction date: {}", key, processId,
@@ -52,7 +52,7 @@ public class ProcessOfflineTransactionBolt extends BasicRichBolt {
             values.put(Fields.KEY, key);
             values.put(Fields.PROCESS_ID, processId);
             values.put(Fields.EVENT_DATA, eventData);
-            values.put(Fields.GPS_MESSAGE, presentment);
+            values.put(Fields.INCOMING_MESSAGE, presentment);
             values.put(Fields.LINKED_ACCOUNT, linkedAccount);
 
             send(tuple, values);

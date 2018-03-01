@@ -23,7 +23,7 @@ public class ResponseEventProcessBolt extends KafkaEventProcessBolt {
         String processId = event.getProcessIdentifier().getUuid();
         String logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
-        LOG.info("[Key: {}][ProcessId: {}]: Received GPS message processed event", key, processId);
+        LOG.info("[Key: {}][ProcessId: {}]: Received message processed event", key, processId);
 
         try {
             // Get the JSON message with the data
@@ -37,7 +37,7 @@ public class ResponseEventProcessBolt extends KafkaEventProcessBolt {
 
             send(input, values);
         } catch (Exception e) {
-            LOG.error("{} Error processing the GPS message. Message: {},", logPrefix, e.getMessage(), e);
+            LOG.error("{} Error processing the message. Message: {},", logPrefix, e.getMessage(), e);
             error(e, input);
         }
     }

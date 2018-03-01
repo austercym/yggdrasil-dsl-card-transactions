@@ -41,7 +41,7 @@ public class GenerateProcessedMessageBoltTest {
 
         Tuple input = mock(Tuple.class);
         when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(message);
-        when(input.getValueByField(Fields.GPS_MESSAGE)).thenReturn(transaction);
+        when(input.getValueByField(Fields.INCOMING_MESSAGE)).thenReturn(transaction);
         when(input.getValueByField(Fields.LINKED_ACCOUNT)).thenReturn(linkedAccount);
 
         OutputCollector collector = mock(OutputCollector.class);
@@ -91,7 +91,7 @@ public class GenerateProcessedMessageBoltTest {
 
         Tuple input = mock(Tuple.class);
         when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(message);
-        when(input.getValueByField(Fields.GPS_MESSAGE)).thenReturn(transaction);
+        when(input.getValueByField(Fields.INCOMING_MESSAGE)).thenReturn(transaction);
         when(input.getValueByField(Fields.LAST_TRANSACTION)).thenReturn(authorisation);
 
         OutputCollector collector = mock(OutputCollector.class);
@@ -141,7 +141,7 @@ public class GenerateProcessedMessageBoltTest {
 
         Tuple input = mock(Tuple.class);
         when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(message);
-        when(input.getValueByField(Fields.GPS_MESSAGE)).thenReturn(transaction);
+        when(input.getValueByField(Fields.INCOMING_MESSAGE)).thenReturn(transaction);
         when(input.getValueByField(Fields.LAST_TRANSACTION)).thenReturn(firstPresentment);
 
         OutputCollector collector = mock(OutputCollector.class);
@@ -191,7 +191,7 @@ public class GenerateProcessedMessageBoltTest {
 
         Tuple input = mock(Tuple.class);
         when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(message);
-        when(input.getValueByField(Fields.GPS_MESSAGE)).thenReturn(transaction);
+        when(input.getValueByField(Fields.INCOMING_MESSAGE)).thenReturn(transaction);
         when(input.getValueByField(Fields.LAST_TRANSACTION)).thenReturn(firstPresentment);
 
         OutputCollector collector = mock(OutputCollector.class);

@@ -59,7 +59,7 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
                 newSpendAmounts = calculator.recalculate(eventData, spendAmounts, authorisation);
             } else {
                 LOG.info(
-                        "{}No need for recalculation of spend total amounts - GpsMessageType={}, ResponseStatus={}",
+                        "{}No need for recalculation of spend total amounts - MessageType={}, ResponseStatus={}",
                         logPrefix,
                         eventData == null ? null : eventData.getMessageType(),
                         eventData == null || eventData.getEhiResponse() == null ? null : eventData.getEhiResponse().getResponsestatus());

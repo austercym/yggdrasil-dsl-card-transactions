@@ -14,17 +14,17 @@ public final class MessageProcessedFactory {
             Objects.requireNonNull(transaction.getMessage(), "TransactionInfo.Message cannot be null");
 
             result.setMessageType(MessageTypeMapper.fromGpsTxnType(transaction.getMessage().getTxnType()));
-            result.setProviderTransactionId(transaction.getGpsTransactionLink());
-            result.setProviderMessageId(transaction.getGpsTransactionId());
+            result.setProviderTransactionId(transaction.getProviderTransactionId());
+            result.setProviderMessageId(transaction.getProviderMessageId());
             result.setDebitCardId(transaction.getDebitCardId());
             result.setSpendGroup(transaction.getSpendGroup());
             if (transaction.getTransactionDateTime() != null) {
                 result.setTransactionTimestamp(
                         transaction.getTransactionDateTime().toInstant(ZoneOffset.UTC).toEpochMilli());
             }
-            if (transaction.getGpsTransactionTime() != null) {
+            if (transaction.getProviderTransactionTime() != null) {
                 result.setProviderTransactionTime(
-                        transaction.getGpsTransactionTime().toInstant(ZoneOffset.UTC).toEpochMilli());
+                        transaction.getProviderTransactionTime().toInstant(ZoneOffset.UTC).toEpochMilli());
             }
         }
         return result;

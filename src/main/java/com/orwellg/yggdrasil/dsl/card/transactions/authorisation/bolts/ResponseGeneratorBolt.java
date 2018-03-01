@@ -52,7 +52,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
 
             String logPrefix = String.format(
                     "[Key: %s, TransLink: %s, TxnId: %s, DebitCardId: %s, Token: %s, Amount: %s %s] ",
-                    parentKey, event.getGpsTransactionLink(), event.getGpsTransactionId(),
+                    parentKey, event.getProviderTransactionId(), event.getProviderMessageId(),
                     event.getDebitCardId(), event.getCardToken(),
                     event.getTransactionAmount(), event.getTransactionCurrency());
             LOG.debug("{}Generating response for authorisation message...", logPrefix);

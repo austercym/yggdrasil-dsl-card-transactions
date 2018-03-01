@@ -103,9 +103,9 @@ public class LoadDataBolt extends JoinFutureBolt<MessageProcessed> {
     private CompletableFuture<CardTransaction> retrieveCardTransaction(String gpsTransactionLink, String logPrefix) {
         return CompletableFuture.supplyAsync(
                 () -> {
-                    LOG.info("{}Retrieving card transactions for GpsTransactionLink={} ...", logPrefix, gpsTransactionLink);
+                    LOG.info("{}Retrieving card transactions for ProviderTransactionId={} ...", logPrefix, gpsTransactionLink);
                     List<CardTransaction> cardTransactions = cardTransactionRepository.getCardTransaction(gpsTransactionLink);
-                    LOG.info("{}Card transactions retrieved for GpsTransactionLink={}: {}", logPrefix, gpsTransactionLink, cardTransactions);
+                    LOG.info("{}Card transactions retrieved for ProviderTransactionId={}: {}", logPrefix, gpsTransactionLink, cardTransactions);
                     if (cardTransactions == null || cardTransactions.isEmpty()) {
                         return null;
                     }

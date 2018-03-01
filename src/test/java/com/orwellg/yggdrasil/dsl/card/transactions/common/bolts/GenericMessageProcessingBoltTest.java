@@ -31,7 +31,7 @@ public class GenericMessageProcessingBoltTest {
         TransactionInfo transaction = new TransactionInfo();
         transaction.setSettlementAmount(BigDecimal.valueOf(-19.09));
         transaction.setSettlementCurrency("FOO");
-        transaction.setGpsTransactionId("42");
+        transaction.setProviderMessageId("42");
         Message message = new Message();
         message.setTxnType("A");
         transaction.setMessage(message);
@@ -96,7 +96,7 @@ public class GenericMessageProcessingBoltTest {
         TransactionInfo transaction = new TransactionInfo();
         transaction.setSettlementAmount(BigDecimal.valueOf(19.09));
         transaction.setSettlementCurrency("FOO");
-        transaction.setGpsTransactionId("42");
+        transaction.setProviderMessageId("42");
         Message message = new Message();
         message.setTxnType("A");
         transaction.setMessage(message);
@@ -161,7 +161,7 @@ public class GenericMessageProcessingBoltTest {
         TransactionInfo transaction = new TransactionInfo();
         transaction.setSettlementAmount(BigDecimal.valueOf(19.09));
         transaction.setSettlementCurrency("FOO");
-        transaction.setGpsTransactionId("42");
+        transaction.setProviderMessageId("42");
         Message message = new Message();
         message.setTxnType("A");
         transaction.setMessage(message);
@@ -226,7 +226,7 @@ public class GenericMessageProcessingBoltTest {
         TransactionInfo transaction = new TransactionInfo();
         transaction.setSettlementAmount(BigDecimal.valueOf(19.09));
         transaction.setSettlementCurrency("FOO");
-        transaction.setGpsTransactionId("42");
+        transaction.setProviderMessageId("42");
         Message message = new Message();
         message.setTxnType("A");
         transaction.setMessage(message);
@@ -291,7 +291,7 @@ public class GenericMessageProcessingBoltTest {
         TransactionInfo transaction = new TransactionInfo();
         transaction.setSettlementAmount(BigDecimal.valueOf(19.09));
         transaction.setSettlementCurrency("FOO");
-        transaction.setGpsTransactionId("42");
+        transaction.setProviderMessageId("42");
         Message message = new Message();
         message.setTxnType("A");
         transaction.setMessage(message);

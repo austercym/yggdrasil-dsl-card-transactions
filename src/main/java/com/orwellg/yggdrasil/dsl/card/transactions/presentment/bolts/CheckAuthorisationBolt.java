@@ -21,8 +21,8 @@ public class CheckAuthorisationBolt extends BasicRichBolt {
 
     @Override
     public void declareFieldsDefinition() {
-        addFielsDefinition(Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.GPS_MESSAGE, Fields.LAST_TRANSACTION));
-        addFielsDefinition(PresentmentTopology.OFFLINE_PRESENTMENT_STREAM, Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.GPS_MESSAGE));
+        addFielsDefinition(Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.INCOMING_MESSAGE, Fields.LAST_TRANSACTION));
+        addFielsDefinition(PresentmentTopology.OFFLINE_PRESENTMENT_STREAM, Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.INCOMING_MESSAGE));
     }
 
     @Override
@@ -36,18 +36,18 @@ public class CheckAuthorisationBolt extends BasicRichBolt {
             LOG.debug("Key: {} | ProcessId: {} | Card Transactions retrieved from database. Starting validation process", key, originalProcessId);
 
             Message eventData = (Message) tuple.getValueByField(Fields.EVENT_DATA);
-            TransactionInfo message = (TransactionInfo) tuple.getValueByField(Fields.GPS_MESSAGE);
+            TransactionInfo message = (TransactionInfo) tuple.getValueByField(Fields.INCOMING_MESSAGE);
             List<CardTransaction> cardTransactions = (List<CardTransaction>) tuple.getValueByField("retrieveValue");
 
             if (cardTransactions != null && !cardTransactions.isEmpty()) {
-                LOG.info("Key: {} | ProcessId: {} | Processing Online Presentment. GpsTransactionId: {}, GpsTransactionLink: {}", key, originalProcessId, eventData.getTXnID(), eventData.getTransLink());
+                LOG.info("Key: {} | ProcessId: {} | Processing Online Presentment. ProviderMessageId: {}, ProviderTransactionId: {}", key, originalProcessId, eventData.getTXnID(), eventData.getTransLink());
 
                 Map<String, Object> values = getReturnValues(key, originalProcessId, eventData, message);
                 values.put(Fields.LAST_TRANSACTION, cardTransactions.get(0));
                 send(tuple, values);
             }
             else {
-                LOG.info("Key: {} | ProcessId: {} | Processing Offline Presentment. GpsTransactionId: {}, GpsTransactionLink: {}. Continuing with Offline PresentmentMessage flow", key, originalProcessId, eventData.getTXnID(), eventData.getTransLink());
+                LOG.info("Key: {} | ProcessId: {} | Processing Offline Presentment. ProviderMessageId: {}, ProviderTransactionId: {}. Continuing with Offline PresentmentMessage flow", key, originalProcessId, eventData.getTXnID(), eventData.getTransLink());
                 Map<String, Object> values = getReturnValues(key, originalProcessId, eventData, message);
                 send(PresentmentTopology.OFFLINE_PRESENTMENT_STREAM, tuple, values);
             }
@@ -64,7 +64,7 @@ public class CheckAuthorisationBolt extends BasicRichBolt {
         values.put(Fields.KEY, key);
         values.put(Fields.PROCESS_ID, originalProcessId);
         values.put(Fields.EVENT_DATA, eventData);
-        values.put(Fields.GPS_MESSAGE, presentmentMessage);
+        values.put(Fields.INCOMING_MESSAGE, presentmentMessage);
         return values;
     }
 }

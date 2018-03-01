@@ -58,6 +58,6 @@ public class CardMessageMapperTest {
         // assert
         LocalDateTime expected = LocalDateTime.of(2015, 9, 19, 7, 55, 42, 53000000);
         assertNotNull(result);
-        assertEquals(expected, result.getGpsTransactionTime());
+        assertEquals(expected, result.getProviderTransactionTime());
     }
 }

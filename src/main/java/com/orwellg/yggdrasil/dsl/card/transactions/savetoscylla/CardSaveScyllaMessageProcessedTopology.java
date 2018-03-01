@@ -23,13 +23,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class CardSaveScyllaGpsMessageProcessedTopology extends AbstractTopology {
+public class CardSaveScyllaMessageProcessedTopology extends AbstractTopology {
 
-    private static final Logger LOG = LogManager.getLogger(CardSaveScyllaGpsMessageProcessedTopology.class);
+    private static final Logger LOG = LogManager.getLogger(CardSaveScyllaMessageProcessedTopology.class);
 
     public static final String PROPERTIES_FILE = "scylla-topology.properties";
-    private static final String TOPOLOGY_NAME = "dsl-gps-processed-scylla";
-    private static final String BOLT_NAME_PREFIX = "gpsProcessedScylla";
+    private static final String TOPOLOGY_NAME = "dsl-message-processed-scylla";
+    private static final String BOLT_NAME_PREFIX = "messageProcessedScylla";
     private static final String KAFKA_EVENT_READER_FORMAT = BOLT_NAME_PREFIX + "Reader%d";
     private static final String PROCESS_COMPONENT = BOLT_NAME_PREFIX + "Process";
     private static final String SAVE_COMPONENT = BOLT_NAME_PREFIX + "Save";
