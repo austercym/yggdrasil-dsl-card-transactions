@@ -46,7 +46,7 @@
 		<dependency>
 			<groupId>com.orwellg.umbrella</groupId>
 			<artifactId>umbrella-commons-nosql</artifactId>
-			<version>0.0.4-SNAPSHOT</version>
+			<version>0.0.3-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
