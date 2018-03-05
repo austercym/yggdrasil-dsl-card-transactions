@@ -26,7 +26,7 @@ public class PresentmentTopology extends AbstractTopology {
     private final static Logger LOG = LogManager.getLogger(PresentmentTopology.class);
   
     public final static String OFFLINE_PRESENTMENT_STREAM = "offline-presentment-stream";
-    public static final String TOPOLOGY_NAME = "dsl-card-presentment";
+    public static final String TOPOLOGY_NAME = "yggdrasil-card-presentment";
 
     private final static String BOLT_KAFKA_READER_NAME = "kafka-event-reader";
     private final static String BOLT_KAFKA_PROCESS_MESSAGE = "process-kafka-message";

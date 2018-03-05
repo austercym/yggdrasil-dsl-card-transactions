@@ -60,7 +60,7 @@ public class EarmarkingCommandBoltTest {
         MessageProcessed processed = new MessageProcessed();
         processed.setEarmarkAmount(DecimalTypeUtils.toDecimal(-19.09));
         processed.setEarmarkCurrency("bar");
-        processed.setInternalAccountId(42L);
+        processed.setInternalAccountId("42");
 
         Tuple input = mock(Tuple.class);
         when(input.getValueByField(com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.Fields.EVENT_DATA)).thenReturn(processed);
@@ -106,7 +106,7 @@ public class EarmarkingCommandBoltTest {
         MessageProcessed processed = new MessageProcessed();
         processed.setEarmarkAmount(DecimalTypeUtils.toDecimal(19.09));
         processed.setEarmarkCurrency("bar");
-        processed.setInternalAccountId(42L);
+        processed.setInternalAccountId("42");
 
         Tuple input = mock(Tuple.class);
         when(input.getValueByField(com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.Fields.EVENT_DATA)).thenReturn(processed);

@@ -55,7 +55,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
             BigDecimal wirecardAmount = presentment.getSettlementAmount().negate();
             String clientAccountCurrency;
             String wirecardAccountCurrency = presentment.getSettlementCurrency();
-            Long clientAccountId;
+            String clientAccountId;
 
             if (lastTransaction != null) {
                 lastEarmarkAmount = ObjectUtils.firstNonNull(lastTransaction.getEarmarkAmount(), BigDecimal.ZERO);

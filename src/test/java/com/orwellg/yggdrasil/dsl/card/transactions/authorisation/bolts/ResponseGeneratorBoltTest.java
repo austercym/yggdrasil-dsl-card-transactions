@@ -40,7 +40,7 @@ public class ResponseGeneratorBoltTest {
         authorisation.setSettlementCurrency("foo");
         authorisation.setIsBalanceEnquiry(false);
         CardSettings cardSettings = new CardSettings();
-        cardSettings.setLinkedAccountId(42L);
+        cardSettings.setLinkedAccountId("42");
         cardSettings.setLinkedAccountCurrency("foo");
         AccountTransactionLog accountTransactionLog = new AccountTransactionLog();
         accountTransactionLog.setActualBalance(BigDecimal.valueOf(100));
@@ -80,7 +80,7 @@ public class ResponseGeneratorBoltTest {
                                 && "foo".equals(item.getWirecardCurrency())
                                 && isEqual(item.getTotalWirecardAmount(), 0)
                                 && "foo".equals(item.getTotalWirecardCurrency())
-                                && item.getInternalAccountId() == 42
+                                && "42".equals(item.getInternalAccountId())
                                 && "foo".equals(item.getInternalAccountCurrency())
                                 && item.getEhiResponse() != null
                                 && ResponseCode.ALL_GOOD.getCode().equals(item.getEhiResponse().getResponsestatus())
