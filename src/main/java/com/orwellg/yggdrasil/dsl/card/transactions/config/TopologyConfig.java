@@ -1,22 +1,37 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.config;
 
 import com.orwellg.umbrella.commons.beans.config.kafka.SubscriberKafkaConfiguration;
-import com.orwellg.yggdrasil.commons.config.topology.DSLTopologyConfig;
+import com.orwellg.yggdrasil.commons.config.NetworkConfig;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class TopologyConfig extends DSLTopologyConfig {
+public class TopologyConfig extends com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig {
 
+    public NetworkConfig networkConfig;
+
+    public NetworkConfig getNetworkConfig() { return networkConfig; }
 
     public TopologyConfig() {
-        super(DEFAULT_PROPERTIES_FILE);
+        this(DEFAULT_PROPERTIES_FILE);
     }
 
     public TopologyConfig(String propertiesFile) {
         super(propertiesFile);
+        networkConfig = new NetworkConfig(propertiesFile);
+    }
+
+    @Override
+    public void start() throws Exception {
+        networkConfig.start();
+        super.start();
+    }
+
+    @Override
+    public void close() throws Exception {
+        networkConfig.close();
+        super.close();
     }
 
     public List<SubscriberKafkaConfiguration> getKafkaSubscriberSpoutConfigs() {
@@ -31,7 +46,11 @@ public class TopologyConfig extends DSLTopologyConfig {
 
                 SubscriberKafkaConfiguration subsConf = new SubscriberKafkaConfiguration();
 
-                setSubsConfData(subsConf, true, topic);
+                subsConf.setTopic(new SubscriberKafkaConfiguration.Topic());
+                subsConf.getTopic().setName(Collections.singletonList(topic));
+                subsConf.getTopic().setCommitInterval(3);
+
+                setSubsConfData(subsConf, false, null);
 
                 configs.add(subsConf);
             }
@@ -73,6 +92,10 @@ public class TopologyConfig extends DSLTopologyConfig {
             // overriden with yaml
             subsConf.setConfiguration(new SubscriberKafkaConfiguration.Configuration());
             subsConf.getConfiguration().setAutoOffsetReset("earliest");
+        }
+
+        if ((forceSet || subsConf.getSslProps() == null) && kafkaConfig != null) {
+            subsConf.setSslProps(kafkaConfig.getSslProps());
         }
     }
 }

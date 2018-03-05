@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.orwellg.yggdrasil</groupId>
 	<artifactId>yggdrasil-dsl-card-transactions</artifactId>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
 	<name>yggdrasil-dsl-card-transactions</name>
 	<description>DSL Topology to process card transactions</description>
 
@@ -23,7 +23,6 @@
 		<storm.topology>com.orwellg.yggdrasil.dsl.card.transactions.authorisation.AuthorisationDSLTopology</storm.topology>
 
 		<zookeeper.host>localhost:2181</zookeeper.host>
-		<kafka.bootstrap.host>localhost:9092,localhost:10092</kafka.bootstrap.host>
 	</properties>
 
 	<dependencies>
@@ -76,7 +75,7 @@
 		<dependency>
 			<groupId>com.orwellg.umbrella</groupId>
 			<artifactId>umbrella-commons-storm</artifactId>
-			<version>0.0.3</version>
+			<version>0.0.6-SNAPSHOT</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
@@ -229,7 +228,6 @@
 			<id>dev</id>
 			<properties>
 				<zookeeper.host>localhost:2181</zookeeper.host>
-				<kafka.bootstrap.host>localhost:9092,localhost:10092</kafka.bootstrap.host>
 			</properties>
 		</profile>
 		<!-- Production environment @ production server -->
@@ -237,7 +235,6 @@
 			<id>production</id>
 			<properties>
 				<zookeeper.host>hdf-node1:2181,hdf-node2:2181,hdf-node3:2181</zookeeper.host>
-				<kafka.bootstrap.host>confluent-node1:9092,confluent-node2:9092,confluent-node3:9092,confluent-node4:9092,confluent-node5:9092,confluent-node6:9092</kafka.bootstrap.host>
 			</properties>
 
 			<dependencies>

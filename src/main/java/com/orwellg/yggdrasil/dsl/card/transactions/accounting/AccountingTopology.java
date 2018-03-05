@@ -30,7 +30,7 @@ public class AccountingTopology extends AbstractTopology {
 
     private static final Logger LOG = LogManager.getLogger(AccountingTopology.class);
 
-    public static final String PROPERTIES_FILE = "accounting-topology.properties.properties";
+    public static final String PROPERTIES_FILE = "accounting-topology.properties";
     public static final String NO_ACCOUNTING_STREAM = "NoAccounting";
     private static final String TOPOLOGY_NAME = "dsl-cards-accounting";
     private static final String BOLT_NAME_PREFIX = "accounting";
