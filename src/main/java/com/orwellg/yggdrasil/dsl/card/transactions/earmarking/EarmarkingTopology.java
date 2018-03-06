@@ -30,9 +30,9 @@ public class EarmarkingTopology extends AbstractTopology {
 
     private static final Logger LOG = LogManager.getLogger(EarmarkingTopology.class);
 
-    public static final String PROPERTIES_FILE = "earmarking-topology.properties.properties";
+    public static final String PROPERTIES_FILE = "earmarking-topology.properties";
     public static final String NO_EARMARKING_STREAM = "NoEarmarking";
-    private static final String TOPOLOGY_NAME = "dsl-cards-earmarking";
+    private static final String TOPOLOGY_NAME = "yggdrasil-cards-earmarking";
     private static final String BOLT_NAME_PREFIX = "earmarking";
     private static final String KAFKA_EVENT_READER_FORMAT = BOLT_NAME_PREFIX + "Reader%d";
     private static final String PROCESS_COMPONENT = BOLT_NAME_PREFIX + "Process";

@@ -168,7 +168,7 @@ public class AccountingCommandBolt extends BasicRichBolt {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private Node getProcessorNode(String internalAccountId) {
         Node processorNode = null;
-        if (!internalAccountId.equals(StringUtils.EMPTY)) {
+        if (StringUtils.isNotBlank(internalAccountId)) {
             processorNode = processorCluster.nodeByAccount(internalAccountId);
         } else {
             Map nodes = processorCluster.getNodes();

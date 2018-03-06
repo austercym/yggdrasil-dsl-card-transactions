@@ -26,7 +26,7 @@ public class FinancialReversalTopology extends AbstractTopology {
 
     public static final String PROPERTIES_FILE = "financial-reversal-topology.properties";
     private static final Logger LOG = LogManager.getLogger(FinancialReversalTopology.class);
-    private static final String TOPOLOGY_NAME = "dsl-card-financial-reversal";
+    private static final String TOPOLOGY_NAME = "yggdrasil-card-financial-reversal";
     private static final String BOLT_NAME_PREFIX = "financialReversal";
     private static final String KAFKA_EVENT_READER_COMPONENT = BOLT_NAME_PREFIX + "Reader";
     private static final String MAP_EVENT = BOLT_NAME_PREFIX + "Map";

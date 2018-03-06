@@ -26,7 +26,7 @@ public class ChargebackNonCreditTopology extends AbstractTopology {
 
     public static final String PROPERTIES_FILE = "chargeback-non-credit-topology.properties";
     private static final Logger LOG = LogManager.getLogger(ChargebackNonCreditTopology.class);
-    private static final String TOPOLOGY_NAME = "dsl-card-chargeback-non-credit";
+    private static final String TOPOLOGY_NAME = "yggdrasil-card-chargeback-non-credit";
     private static final String BOLT_NAME_PREFIX = "chargebackNonCredit";
     private static final String KAFKA_EVENT_READER_COMPONENT = BOLT_NAME_PREFIX + "Reader";
     private static final String MAP_EVENT = BOLT_NAME_PREFIX + "Map";

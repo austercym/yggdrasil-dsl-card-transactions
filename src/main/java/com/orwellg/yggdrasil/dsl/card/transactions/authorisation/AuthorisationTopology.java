@@ -27,7 +27,7 @@ public class AuthorisationTopology extends AbstractTopology {
 
     public static final String PROPERTIES_FILE = "authorisation-topology.properties";
     private static final Logger LOG = LogManager.getLogger(AuthorisationTopology.class);
-    private static final String TOPOLOGY_NAME = "dsl-card-authorisation";
+    private static final String TOPOLOGY_NAME = "yggdrasil-card-authorisation";
     private static final String BOLT_NAME_PREFIX = "authorisation";
     private static final String KAFKA_EVENT_READER_COMPONENT = BOLT_NAME_PREFIX + "Reader";
     private static final String KAFKA_EVENT_SUCCESS_PROCESS = BOLT_NAME_PREFIX + "KafkaEventSuccessProcess";

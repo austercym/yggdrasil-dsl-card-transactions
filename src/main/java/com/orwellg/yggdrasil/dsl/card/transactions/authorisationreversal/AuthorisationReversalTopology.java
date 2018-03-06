@@ -26,7 +26,7 @@ public class AuthorisationReversalTopology extends AbstractTopology {
 
     public static final String PROPERTIES_FILE = "authorisation-reversal-topology.properties";
     private static final Logger LOG = LogManager.getLogger(AuthorisationReversalTopology.class);
-    private static final String TOPOLOGY_NAME = "dsl-card-authorisation-reversal";
+    private static final String TOPOLOGY_NAME = "yggdrasil-card-authorisation-reversal";
     private static final String BOLT_NAME_PREFIX = "AuthorisationReversal";
     private static final String KAFKA_EVENT_READER_COMPONENT = BOLT_NAME_PREFIX + "Reader";
     private static final String KAFKA_EVENT_SUCCESS_PROCESS = BOLT_NAME_PREFIX + "KafkaEventSuccessProcess";
@@ -68,7 +68,7 @@ public class AuthorisationReversalTopology extends AbstractTopology {
 
         // Send a event with the result
         GBolt<?> kafkaEventSuccessProducer = new GRichBolt(KAFKA_EVENT_SUCCESS_PRODUCER, new KafkaBoltWrapper(config.getKafkaPublisherBoltConfig(), String.class, String.class).getKafkaBolt(), config.getEventResponseHints());
-        kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping(PROCESSED_MESSAGE_GENERATION));
+        kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping(EVENT_GENERATOR));
         // -------------------------------------------------------
 
         // -------------------------------------------------------
