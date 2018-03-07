@@ -2,12 +2,16 @@ package com.orwellg.yggdrasil.dsl.card.transactions.config;
 
 import com.orwellg.umbrella.commons.beans.config.kafka.SubscriberKafkaConfiguration;
 import com.orwellg.yggdrasil.commons.config.NetworkConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class TopologyConfig extends com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig {
+
+    private static final Logger LOG = LogManager.getLogger(TopologyConfig.class);
 
     public NetworkConfig networkConfig;
 
@@ -24,8 +28,8 @@ public class TopologyConfig extends com.orwellg.umbrella.commons.storm.config.to
 
     @Override
     public void start() throws Exception {
-        networkConfig.start();
         super.start();
+        networkConfig.start(getZookeeperConnection());
     }
 
     @Override

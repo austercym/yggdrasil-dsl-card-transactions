@@ -32,7 +32,7 @@ public class AccountingTopology extends AbstractTopology {
 
     public static final String PROPERTIES_FILE = "accounting-topology.properties";
     public static final String NO_ACCOUNTING_STREAM = "NoAccounting";
-    private static final String TOPOLOGY_NAME = "yggdrasil-cards-accounting";
+    private static final String TOPOLOGY_NAME = "yggdrasil-card-accounting";
     private static final String BOLT_NAME_PREFIX = "accounting";
     private static final String KAFKA_EVENT_READER_FORMAT = BOLT_NAME_PREFIX + "Reader%d";
     private static final String PROCESS_COMPONENT = BOLT_NAME_PREFIX + "Process";
@@ -73,7 +73,7 @@ public class AccountingTopology extends AbstractTopology {
         commandGeneratorBolt.addGrouping(new ShuffleGrouping(PROCESS_COMPONENT));
 
         GBolt<?> eventAccountingCommandGeneratorBolt = new GRichBolt(ACCOUNTING_KAFKA_COMMAND_COMPONENT, new KafkaCommandGeneratorBolt(), config.getKafkaSpoutHints());
-        eventAccountingCommandGeneratorBolt.addGrouping(new ShuffleGrouping(PROCESS_COMPONENT));
+        eventAccountingCommandGeneratorBolt.addGrouping(new ShuffleGrouping(COMMAND_GENERATOR));
 
         GBolt<?> kafkaAccountingCommandProducerBolt = new GRichBolt(ACCOUNTING_PUBLISH_COMMAND_COMPONENT, new KafkaBoltFieldNameWrapper(config.getKafkaPublisherBoltConfig(), String.class, String.class).getKafkaBolt(), config.getActionBoltHints());
         kafkaAccountingCommandProducerBolt.addGrouping(new ShuffleGrouping(ACCOUNTING_KAFKA_COMMAND_COMPONENT));

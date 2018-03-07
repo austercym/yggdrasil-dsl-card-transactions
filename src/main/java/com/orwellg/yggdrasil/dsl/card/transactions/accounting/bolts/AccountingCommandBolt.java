@@ -40,7 +40,8 @@ public class AccountingCommandBolt extends BasicRichBolt {
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
-        processorCluster = ClusterFactory.createCluster(TopologyConfigFactory.getTopologyConfig().getNetworkConfig());
+        processorCluster = ClusterFactory.createCluster(
+                TopologyConfigFactory.getTopologyConfig(AccountingTopology.PROPERTIES_FILE).getNetworkConfig());
     }
 
     @Override
@@ -64,7 +65,7 @@ public class AccountingCommandBolt extends BasicRichBolt {
 
             if (isAccountingRequired(processed)) {
                 LOG.debug("{}Generating accounting command", logPrefix);
-                Node processorNode = getProcessorNode(processed.getInternalAccountId().toString());
+                Node processorNode = getProcessorNode(processed.getInternalAccountId());
                 String wirecardAccountId = processorNode.getSpecialAccount(SpecialAccountTypes.GPS);
 
                 AccountingCommandData command = null;
@@ -73,7 +74,7 @@ public class AccountingCommandBolt extends BasicRichBolt {
 
                     command = generateCommand(
                             processed,
-                            processed.getInternalAccountId().toString(),
+                            processed.getInternalAccountId(),
                             wirecardAccountId,
                             TransactionType.DEBIT,
                             processId);
@@ -82,7 +83,7 @@ public class AccountingCommandBolt extends BasicRichBolt {
                     command = generateCommand(
                             processed,
                             wirecardAccountId,
-                            processed.getInternalAccountId().toString(),
+                            processed.getInternalAccountId(),
                             TransactionType.CREDIT,
                             processId);
                 }
@@ -167,7 +168,7 @@ public class AccountingCommandBolt extends BasicRichBolt {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private Node getProcessorNode(String internalAccountId) {
-        Node processorNode = null;
+        Node processorNode;
         if (StringUtils.isNotBlank(internalAccountId)) {
             processorNode = processorCluster.nodeByAccount(internalAccountId);
         } else {
