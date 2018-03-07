@@ -26,7 +26,7 @@ public class PresentmentTopology extends AbstractTopology {
     private final static Logger LOG = LogManager.getLogger(PresentmentTopology.class);
   
     public final static String OFFLINE_PRESENTMENT_STREAM = "offline-presentment-stream";
-    public static final String TOPOLOGY_NAME = "dsl-card-presentment";
+    public static final String TOPOLOGY_NAME = "yggdrasil-card-presentment";
 
     private final static String BOLT_KAFKA_READER_NAME = "kafka-event-reader";
     private final static String BOLT_KAFKA_PROCESS_MESSAGE = "process-kafka-message";
@@ -39,7 +39,7 @@ public class PresentmentTopology extends AbstractTopology {
     private final static String BOLT_KAFKA_EVENT_ERROR = "kafka-event-error-process";
     private final static String BOLT_KAFKA_ERROR_PRODUCER = "kafka-error-producer";
     private static final String EVENT_GENERATOR = "EventGenerator";
-    static final String PROPERTIES_FILE = "presentment.topology.properties";
+    static final String PROPERTIES_FILE = "presentment-topology.properties";
 
     @Override
     public StormTopology load() {

@@ -1,5 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.config;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -9,6 +10,7 @@ public class TopologyConfigFactory {
 
     protected static TopologyConfig topologyConfig;
 
+    @Deprecated
     protected static synchronized void initTopologyConfig(String propertiesFile) {
 
         if (topologyConfig == null) {
@@ -27,6 +29,30 @@ public class TopologyConfigFactory {
         }
     }
 
+    protected static synchronized void initTopologyConfig(String propertiesFile, String zookeeperhost) {
+
+        if (topologyConfig == null) {
+            if (propertiesFile != null) {
+                LOG.info("Initializing topology with propertiesFile {}", propertiesFile);
+                topologyConfig = new TopologyConfig(propertiesFile);
+            } else {
+                LOG.info("Initializing topology with propertiesFile DEFAULT_PROPERTIES_FILE");
+                topologyConfig = new TopologyConfig();
+            }
+            try {
+                LOG.info("Initializing topology");
+                if (StringUtils.isBlank(zookeeperhost)) {
+                    topologyConfig.start();
+                }else {
+                    LOG.info("Initializing topology using zookeeper host passing by parameter");
+                    topologyConfig.start(zookeeperhost);
+                }
+            } catch (Exception e) {
+                LOG.error("Topology configuration params cannot be started. The system will work with default parameters. Message: {}",  e.getMessage(),  e);
+            }
+        }
+    }
+
     /**
      * Loads config from propertiesFile and zookeeper.<br/>
      * Use it for testing or with a topology-specific properties file name.
@@ -36,6 +62,12 @@ public class TopologyConfigFactory {
      */
     public static synchronized TopologyConfig getTopologyConfig(String propertiesFile) {
         initTopologyConfig(propertiesFile);
+        return topologyConfig;
+    }
+
+
+    public static synchronized TopologyConfig getTopologyConfig(String propertiesFile, String zookeeperhost) {
+        initTopologyConfig(propertiesFile, zookeeperhost);
         return topologyConfig;
     }
 
@@ -53,19 +85,22 @@ public class TopologyConfigFactory {
     /**
      * Set topologyConfig ready for a new initialization in getTopologyConfig().<br/>
      * Useful for testing.
+     * @throws Exception
      */
-    public static void resetTopologyConfig() {
+    public static void resetTopologyConfig() throws Exception {
         if (topologyConfig != null) {
             topologyConfig.close();
             topologyConfig = null;
         }
     }
 
+
     /**
      * Set topologyConfig ready for a new initialization in getTopologyConfig().<br/>
      * Useful for testing, only to avoid guava closeable nosuchmethoderror...
+     * @throws Exception
      */
-    public static void resetTopologyConfig(boolean close) {
+    public static void resetTopologyConfig(boolean close) throws Exception {
         if (topologyConfig != null) {
             if (close) {
                 topologyConfig.close();

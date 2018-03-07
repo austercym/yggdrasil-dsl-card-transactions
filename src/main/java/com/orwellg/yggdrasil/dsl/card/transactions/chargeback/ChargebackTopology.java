@@ -26,7 +26,7 @@ public class ChargebackTopology extends AbstractTopology {
 
     public static final String PROPERTIES_FILE = "chargeback-topology.properties";
     private static final Logger LOG = LogManager.getLogger(ChargebackTopology.class);
-    private static final String TOPOLOGY_NAME = "dsl-card-chargeback";
+    private static final String TOPOLOGY_NAME = "yggdrasil-card-chargeback";
     private static final String BOLT_NAME_PREFIX = "chargeback";
     private static final String KAFKA_EVENT_READER_COMPONENT = BOLT_NAME_PREFIX + "Reader";
     private static final String MAP_EVENT = BOLT_NAME_PREFIX + "Map";

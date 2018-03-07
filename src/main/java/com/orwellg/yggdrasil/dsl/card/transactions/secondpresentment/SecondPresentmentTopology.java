@@ -26,7 +26,7 @@ public class SecondPresentmentTopology extends AbstractTopology {
 
     public static final String PROPERTIES_FILE = "second-presentment-topology.properties";
     private static final Logger LOG = LogManager.getLogger(SecondPresentmentTopology.class);
-    private static final String TOPOLOGY_NAME = "dsl-card-second-presentment";
+    private static final String TOPOLOGY_NAME = "yggdrasil-card-second-presentment";
     private static final String BOLT_NAME_PREFIX = "secondPresentment";
     private static final String KAFKA_EVENT_READER_COMPONENT = BOLT_NAME_PREFIX + "Reader";
     private static final String MAP_EVENT = BOLT_NAME_PREFIX + "Map";

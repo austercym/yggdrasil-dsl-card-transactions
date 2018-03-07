@@ -36,7 +36,7 @@ public class GenerateProcessedMessageBoltTest {
         transaction.setSettlementAmount(BigDecimal.valueOf(-19.09));
         transaction.setSettlementCurrency("bar");
         LinkedAccount linkedAccount = new LinkedAccount();
-        linkedAccount.setInternalAccountId(42L);
+        linkedAccount.setInternalAccountId("42");
         linkedAccount.setInternalAccountCurrency("foo");
 
         Tuple input = mock(Tuple.class);
@@ -68,7 +68,7 @@ public class GenerateProcessedMessageBoltTest {
                                 && "bar".equals(item.getWirecardCurrency())
                                 && isEqual(item.getTotalWirecardAmount(), 19.09)
                                 && "bar".equals(item.getTotalWirecardCurrency())
-                                && item.getInternalAccountId() == 42
+                                && "42".equals(item.getInternalAccountId())
                                 && "foo".equals(item.getInternalAccountCurrency())
                         )));
     }
@@ -86,7 +86,7 @@ public class GenerateProcessedMessageBoltTest {
         authorisation.setEarmarkAmount(BigDecimal.valueOf(-20.15));
         authorisation.setClientAmount(BigDecimal.ZERO);
         authorisation.setWirecardAmount(BigDecimal.ZERO);
-        authorisation.setInternalAccountId(42L);
+        authorisation.setInternalAccountId("42");
         authorisation.setInternalAccountCurrency("foo");
 
         Tuple input = mock(Tuple.class);
@@ -118,7 +118,7 @@ public class GenerateProcessedMessageBoltTest {
                                 && "bar".equals(item.getWirecardCurrency())
                                 && isEqual(item.getTotalWirecardAmount(), 19.09)
                                 && "bar".equals(item.getTotalWirecardCurrency())
-                                && item.getInternalAccountId() == 42
+                                && "42".equals(item.getInternalAccountId())
                                 && "foo".equals(item.getInternalAccountCurrency())
                         )));
     }
@@ -136,7 +136,7 @@ public class GenerateProcessedMessageBoltTest {
         firstPresentment.setEarmarkAmount(BigDecimal.ZERO);
         firstPresentment.setClientAmount(BigDecimal.valueOf(-20.15));
         firstPresentment.setWirecardAmount(BigDecimal.valueOf(20.15));
-        firstPresentment.setInternalAccountId(42L);
+        firstPresentment.setInternalAccountId("42");
         firstPresentment.setInternalAccountCurrency("foo");
 
         Tuple input = mock(Tuple.class);
@@ -168,7 +168,7 @@ public class GenerateProcessedMessageBoltTest {
                                 && "bar".equals(item.getWirecardCurrency())
                                 && isEqual(item.getTotalWirecardAmount(), 39.24)
                                 && "bar".equals(item.getTotalWirecardCurrency())
-                                && item.getInternalAccountId() == 42
+                                && "42".equals(item.getInternalAccountId())
                                 && "foo".equals(item.getInternalAccountCurrency())
                         )));
     }
@@ -186,7 +186,7 @@ public class GenerateProcessedMessageBoltTest {
         firstPresentment.setEarmarkAmount(BigDecimal.ZERO);
         firstPresentment.setClientAmount(BigDecimal.valueOf(-20.15));
         firstPresentment.setWirecardAmount(BigDecimal.valueOf(20.15));
-        firstPresentment.setInternalAccountId(42L);
+        firstPresentment.setInternalAccountId("42");
         firstPresentment.setInternalAccountCurrency("foo");
 
         Tuple input = mock(Tuple.class);
@@ -218,7 +218,7 @@ public class GenerateProcessedMessageBoltTest {
                                 && "bar".equals(item.getWirecardCurrency())
                                 && isEqual(item.getTotalWirecardAmount(), 1.06)
                                 && "bar".equals(item.getTotalWirecardCurrency())
-                                && item.getInternalAccountId() == 42
+                                && "42".equals(item.getInternalAccountId())
                                 && "foo".equals(item.getInternalAccountCurrency())
                         )));
     }

@@ -135,7 +135,7 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
                 LOG.info("{}No card settings - cannot retrieve linked account transaction log", logPrefix);
                 return null;
             }
-            Long linkedAccountId = settings.getLinkedAccountId();
+            String linkedAccountId = settings.getLinkedAccountId();
             LOG.info("{}Retrieving account transaction log for account id {} ...", logPrefix, linkedAccountId);
             AccountTransactionLog transactionLog = accountTransactionLogRepository.getLastByAccountId(linkedAccountId.toString());
             LOG.info("{}Account transaction log retrieved for account id {}: {}", logPrefix, linkedAccountId, transactionLog);

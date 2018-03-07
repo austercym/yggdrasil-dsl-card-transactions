@@ -28,7 +28,7 @@ public class TotalSpendUpdateDSLTopology {
 
     private final static Logger LOG = LogManager.getLogger(TotalSpendUpdateDSLTopology.class);
 
-    private static final String TOPOLOGY_NAME = "dsl-card-total-spend-update";
+    private static final String TOPOLOGY_NAME = "yggdrasil-card-total-spend-update";
     private static final String PROPERTIES_FILE = "total-spend-update-topology.properties";
     private static final String KAFKA_EVENT_READER_FORMAT = "kafka-event-reader-%d";
     private static final String KAFKA_EVENT_SUCCESS_PROCESS = "kafka-event-success-process";

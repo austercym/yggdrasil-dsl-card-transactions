@@ -62,7 +62,7 @@ public class AccountingCommandBoltTest {
         processed.setClientCurrency("bar");
         processed.setWirecardAmount(DecimalTypeUtils.toDecimal(19.09));
         processed.setWirecardCurrency("bar");
-        processed.setInternalAccountId(42L);
+        processed.setInternalAccountId("42");
 
         Tuple input = mock(Tuple.class);
         when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(processed);
@@ -110,7 +110,7 @@ public class AccountingCommandBoltTest {
         processed.setClientCurrency("bar");
         processed.setWirecardAmount(DecimalTypeUtils.toDecimal(-19.09));
         processed.setWirecardCurrency("bar");
-        processed.setInternalAccountId(42L);
+        processed.setInternalAccountId("42");
 
         Tuple input = mock(Tuple.class);
         when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(processed);

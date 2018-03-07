@@ -28,7 +28,7 @@ public class CardSaveScyllaMessageProcessedTopology extends AbstractTopology {
     private static final Logger LOG = LogManager.getLogger(CardSaveScyllaMessageProcessedTopology.class);
 
     public static final String PROPERTIES_FILE = "scylla-topology.properties";
-    private static final String TOPOLOGY_NAME = "dsl-message-processed-scylla";
+    private static final String TOPOLOGY_NAME = "yggdrasil-card-message-processed-scylla";
     private static final String BOLT_NAME_PREFIX = "messageProcessedScylla";
     private static final String KAFKA_EVENT_READER_FORMAT = BOLT_NAME_PREFIX + "Reader%d";
     private static final String PROCESS_COMPONENT = BOLT_NAME_PREFIX + "Process";

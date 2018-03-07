@@ -40,6 +40,7 @@ public class GenericMessageProcessingBoltTest {
         previousTransaction.setWirecardAmount(BigDecimal.valueOf(20.15));
         previousTransaction.setClientAmount(BigDecimal.valueOf(-20.15));
         previousTransaction.setInternalAccountCurrency("BAR");
+        previousTransaction.setInternalAccountId("BUZ");
         List<CardTransaction> transactionList = Collections.singletonList(previousTransaction);
 
         Tuple input = mock(Tuple.class);
@@ -87,6 +88,10 @@ public class GenericMessageProcessingBoltTest {
                                 item.getTotalEarmarkAmount().getValue().compareTo(BigDecimal.ZERO) == 0
                                 &&
                                 "BAR".equals(item.getTotalEarmarkCurrency())
+                                &&
+                                "BAR".equalsIgnoreCase(item.getInternalAccountCurrency())
+                                &&
+                                "BUZ".equalsIgnoreCase(item.getInternalAccountId())
                         )));
     }
 
@@ -105,6 +110,7 @@ public class GenericMessageProcessingBoltTest {
         previousTransaction.setWirecardAmount(BigDecimal.valueOf(20.15));
         previousTransaction.setClientAmount(BigDecimal.valueOf(-20.15));
         previousTransaction.setInternalAccountCurrency("BAR");
+        previousTransaction.setInternalAccountId("BUZ");
         List<CardTransaction> transactionList = Collections.singletonList(previousTransaction);
 
         Tuple input = mock(Tuple.class);
@@ -152,6 +158,10 @@ public class GenericMessageProcessingBoltTest {
                                 item.getTotalEarmarkAmount().getValue().compareTo(BigDecimal.ZERO) == 0
                                 &&
                                 "BAR".equals(item.getTotalEarmarkCurrency())
+                                &&
+                                "BAR".equalsIgnoreCase(item.getInternalAccountCurrency())
+                                &&
+                                "BUZ".equalsIgnoreCase(item.getInternalAccountId())
                         )));
     }
 
@@ -170,6 +180,7 @@ public class GenericMessageProcessingBoltTest {
         previousTransaction.setWirecardAmount(BigDecimal.valueOf(19.09));
         previousTransaction.setClientAmount(BigDecimal.valueOf(-19.09));
         previousTransaction.setInternalAccountCurrency("BAR");
+        previousTransaction.setInternalAccountId("BUZ");
         List<CardTransaction> transactionList = Collections.singletonList(previousTransaction);
 
         Tuple input = mock(Tuple.class);
@@ -217,6 +228,10 @@ public class GenericMessageProcessingBoltTest {
                                 item.getTotalEarmarkAmount().getValue().compareTo(BigDecimal.ZERO) == 0
                                 &&
                                 "BAR".equals(item.getTotalEarmarkCurrency())
+                                &&
+                                "BAR".equalsIgnoreCase(item.getInternalAccountCurrency())
+                                &&
+                                "BUZ".equalsIgnoreCase(item.getInternalAccountId())
                         )));
     }
 
@@ -235,6 +250,7 @@ public class GenericMessageProcessingBoltTest {
         previousTransaction.setWirecardAmount(BigDecimal.valueOf(3.08));
         previousTransaction.setClientAmount(BigDecimal.valueOf(-3.08));
         previousTransaction.setInternalAccountCurrency("BAR");
+        previousTransaction.setInternalAccountId("BUZ");
         List<CardTransaction> transactionList = Collections.singletonList(previousTransaction);
 
         Tuple input = mock(Tuple.class);
@@ -282,6 +298,10 @@ public class GenericMessageProcessingBoltTest {
                                 item.getTotalEarmarkAmount().getValue().compareTo(BigDecimal.ZERO) == 0
                                 &&
                                 "BAR".equals(item.getTotalEarmarkCurrency())
+                                &&
+                                "BAR".equalsIgnoreCase(item.getInternalAccountCurrency())
+                                &&
+                                "BUZ".equalsIgnoreCase(item.getInternalAccountId())
                         )));
     }
 
@@ -303,6 +323,7 @@ public class GenericMessageProcessingBoltTest {
         previousTransaction.setClientCurrency("BAR");
         previousTransaction.setEarmarkCurrency("BAR");
         previousTransaction.setInternalAccountCurrency("BAR");
+        previousTransaction.setInternalAccountId("BUZ");
         previousTransaction.setProviderMessageId("42");
         List<CardTransaction> transactionList = Collections.singletonList(previousTransaction);
 
@@ -351,6 +372,10 @@ public class GenericMessageProcessingBoltTest {
                                 item.getTotalEarmarkAmount().getValue().compareTo(BigDecimal.ZERO) == 0
                                 &&
                                 "BAR".equals(item.getTotalEarmarkCurrency())
+                                &&
+                                "BAR".equalsIgnoreCase(item.getInternalAccountCurrency())
+                                &&
+                                "BUZ".equalsIgnoreCase(item.getInternalAccountId())
                         )));
     }
 
