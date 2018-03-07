@@ -39,7 +39,7 @@ public class PresentmentTopology extends AbstractTopology {
     private final static String BOLT_KAFKA_EVENT_ERROR = "kafka-event-error-process";
     private final static String BOLT_KAFKA_ERROR_PRODUCER = "kafka-error-producer";
     private static final String EVENT_GENERATOR = "EventGenerator";
-    static final String PROPERTIES_FILE = "presentment.topology.properties";
+    static final String PROPERTIES_FILE = "presentment-topology.properties";
 
     @Override
     public StormTopology load() {

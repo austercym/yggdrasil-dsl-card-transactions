@@ -82,6 +82,9 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
         result.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(
                 ObjectUtils.firstNonNull(lastTransaction.getEarmarkAmount(), BigDecimal.ZERO)));
         result.setTotalEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
+
+        result.setInternalAccountId(lastTransaction.getInternalAccountId());
+        result.setInternalAccountCurrency(lastTransaction.getInternalAccountCurrency());
     }
 
     private void copyValuesFromLatestTransaction(TransactionInfo eventData, MessageProcessed result, CardTransaction lastTransaction) {
@@ -99,6 +102,9 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
         result.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(
                 ObjectUtils.firstNonNull(lastTransaction.getEarmarkAmount(), BigDecimal.ZERO)));
         result.setTotalEarmarkCurrency(lastTransaction.getEarmarkCurrency());
+
+        result.setInternalAccountId(lastTransaction.getInternalAccountId());
+        result.setInternalAccountCurrency(lastTransaction.getInternalAccountCurrency());
     }
 
     private boolean isDuplicatedMessage(TransactionInfo eventData, List<CardTransaction> transactionList) {
