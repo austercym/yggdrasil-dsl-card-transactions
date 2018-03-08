@@ -43,6 +43,7 @@ public class PrepareDataBolt extends GenericEventProcessBolt<MessageProcessed> {
             transaction.setEarmarkAmount(message.getTotalEarmarkAmount().getValue());
         }
         transaction.setEarmarkCurrency(message.getTotalEarmarkCurrency());
+        transaction.setTimestamp(Instant.now());
 
         LOG.info("[Key: {}][ProcessId: {}]: Card transaction object prepared to save in Scylla.", key, processId);
 
