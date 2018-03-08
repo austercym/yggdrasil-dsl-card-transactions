@@ -27,7 +27,7 @@ public class PrepareDataBolt extends GenericEventProcessBolt<MessageProcessed> {
         transaction.setProviderMessageId(message.getProviderMessageId());
         transaction.setProviderTransactionDateTime(Instant.ofEpochMilli(message.getProviderTransactionTime()));
         transaction.setTransactionTimestamp(Instant.ofEpochMilli(message.getTransactionTimestamp()));
-        transaction.setMessageType(MessageTypeMapper.toGpsTxnType(message.getMessageType()));
+        transaction.setMessageType(message.getMessageType());
         transaction.setDebitCardId(message.getDebitCardId());
         transaction.setInternalAccountId(message.getInternalAccountId());
         transaction.setInternalAccountCurrency(message.getInternalAccountCurrency());
