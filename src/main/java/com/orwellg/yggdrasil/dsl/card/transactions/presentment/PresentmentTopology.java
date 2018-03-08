@@ -34,7 +34,7 @@ public class PresentmentTopology extends AbstractTopology {
     private final static String BOLT_CHECK_AUTHORISATION = "check-authorisation";
     private final static String BOLT_GET_LINKED_ACCOUNT = "get-linked-account";
     private final static String BOLT_PROCESS_LINKED_ACCOUNT = "process-linked-account";
-    private final static String BOLT_PROCESS_FEE_SCHEMA = "process-fee-schema";
+    private final static String BOLT_GENERATE_PROCESSED_MESSAGE = "generate-processed-message";
     private final static String BOLT_KAFKA_SUCCESS_PRODUCER = "kafka-success-producer";
     private final static String BOLT_KAFKA_EVENT_ERROR = "kafka-event-error-process";
     private final static String BOLT_KAFKA_ERROR_PRODUCER = "kafka-error-producer";
@@ -79,12 +79,12 @@ public class PresentmentTopology extends AbstractTopology {
 
         //------------------------- Calculating Wirecard Amounts, Client Amounts -------------------------------
 
-        GBolt<?> calculateAmountsBolt = new GRichBolt(BOLT_PROCESS_FEE_SCHEMA, new GenerateProcessedMessageBolt(), hintsProcessors);
+        GBolt<?> calculateAmountsBolt = new GRichBolt(BOLT_GENERATE_PROCESSED_MESSAGE, new GenerateProcessedMessageBolt(), hintsProcessors);
         calculateAmountsBolt.addGrouping(new ShuffleGrouping(BOLT_PROCESS_LINKED_ACCOUNT));
         calculateAmountsBolt.addGrouping(new ShuffleGrouping(BOLT_CHECK_AUTHORISATION));
 
         GBolt<?> eventGeneratorBolt = new GRichBolt(EVENT_GENERATOR, new KafkaEventGeneratorBolt(), config.getActionBoltHints());
-        eventGeneratorBolt.addGrouping(new ShuffleGrouping(BOLT_PROCESS_FEE_SCHEMA));
+        eventGeneratorBolt.addGrouping(new ShuffleGrouping(BOLT_GENERATE_PROCESSED_MESSAGE));
 
         //------------------------- Send an event with the result -------------------------------------------------------
 

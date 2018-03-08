@@ -91,9 +91,7 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
                             TransactionType.CREDIT,
                             processId);
                 }
-                LOG.info(
-                        "{}Client account {}, Wirecard account {}",
-                        logPrefix, processed.getInternalAccountId(), wirecardAccountId);
+                LOG.info("{}Accounting command created: {}", logPrefix, command);
 
                 Map<String, Object> values = new HashMap<>();
                 values.put(Fields.KEY, key);

@@ -110,7 +110,7 @@ public class LoadDataBolt extends JoinFutureBolt<MessageProcessed> {
                         return null;
                     }
                     return cardTransactions.stream()
-                            .filter(i -> "A".equalsIgnoreCase(i.getMessageType()))
+                            .filter(i -> MessageType.AUTHORISATION.equals(i.getMessageType()))
                             .findFirst()
                             .orElse(null);
                 });
