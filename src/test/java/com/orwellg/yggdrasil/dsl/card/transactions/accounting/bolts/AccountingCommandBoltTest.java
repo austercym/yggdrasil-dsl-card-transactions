@@ -71,7 +71,7 @@ public class AccountingCommandBoltTest {
         bolt.setCollector(collector);
 
         Node node = mock(Node.class);
-        when(node.getSpecialAccount(SpecialAccountTypes.GPS)).thenReturn("foo");
+        when(node.getSpecialAccount(SpecialAccountTypes.GPS.getLiteral())).thenReturn("foo");
 
         Cluster cluster = mock(Cluster.class);
         bolt.setProcessorCluster(cluster);
@@ -119,7 +119,7 @@ public class AccountingCommandBoltTest {
         bolt.setCollector(collector);
 
         Node node = mock(Node.class);
-        when(node.getSpecialAccount(SpecialAccountTypes.GPS)).thenReturn("foo");
+        when(node.getSpecialAccount(SpecialAccountTypes.GPS.getLiteral())).thenReturn("foo");
 
         Cluster cluster = mock(Cluster.class);
         bolt.setProcessorCluster(cluster);

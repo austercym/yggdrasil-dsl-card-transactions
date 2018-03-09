@@ -66,7 +66,7 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
             if (isEarmarkingOperation(processed)) {
                 LOG.debug("{}Generating accounting command", logPrefix);
                 Node processorNode = getProcessorNode(processed.getInternalAccountId());
-                String wirecardAccountId = processorNode.getSpecialAccount(SpecialAccountTypes.GPS);
+                String wirecardAccountId = processorNode.getSpecialAccount(SpecialAccountTypes.GPS.getLiteral());
 
                 AccountingCommandData command = null;
                 if (isPutEarmark(processed)) {
