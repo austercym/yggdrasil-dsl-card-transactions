@@ -3,7 +3,6 @@ package com.orwellg.yggdrasil.dsl.card.transactions.config;
 import com.netflix.config.DynamicPropertyFactory;
 import com.orwellg.umbrella.commons.beans.config.zookeeper.ZkConfigurationParams;
 import com.orwellg.umbrella.commons.utils.config.ZookeeperUtils;
-import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.yggdrasil.commons.config.NetworkConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,7 +28,6 @@ public class ConfigurationParams extends ZkConfigurationParams implements Serial
 
     private NetworkConfig networkConfig;
     private ScyllaParams cardsScyllaParams;
-    private ScyllaParams transactionLogScyllaParams;
 
     public ConfigurationParams() {
         LOG.info("Loading configuration params.");
@@ -63,15 +61,6 @@ public class ConfigurationParams extends ZkConfigurationParams implements Serial
                     dynamicPropertyFactory.getStringProperty(CARDS_SCYLLA_NODE_HOST_LIST, ScyllaParams.DEFAULT_SCYLLA_NODE_HOST_LIST),
                     dynamicPropertyFactory.getStringProperty(CARDS_SCYLLA_KEYSPACE, ScyllaParams.DEFAULT_SCYLLA_KEYSPACE)
             );
-            transactionLogScyllaParams = new ScyllaParams(
-                    dynamicPropertyFactory.getStringProperty(
-                            Constants.SCYLLA_NODE_LIST,
-                            com.orwellg.umbrella.commons.config.params.ScyllaParams.DEFAULT_SCYLA_NODE_LIST),
-                    dynamicPropertyFactory.getStringProperty(
-                            Constants.SCYLLA_NODE_HOST_LIST,
-                            com.orwellg.umbrella.commons.config.params.ScyllaParams.DEFAULT_SCYLA_NODE_HOST_LIST),
-                    dynamicPropertyFactory.getStringProperty(SCYLLA_KEYSPACE, DEFAULT_SCYLA_KEYSPACE)
-            );
         }
     }
 
@@ -86,12 +75,6 @@ public class ConfigurationParams extends ZkConfigurationParams implements Serial
                 getCardsScyllaParams().getHostList(),
                 getCardsScyllaParams().getKeyspace());
 
-        LOG.info(
-                "TransactionLog's Scylla configuration: NodeList={}, HostList={}, Keyspace={}",
-                getTransactionLogScyllaParams().getNodeList(),
-                getTransactionLogScyllaParams().getHostList(),
-                getTransactionLogScyllaParams().getKeyspace());
-
         networkConfig.start();
         LOG.info("Configuration params started.");
     }
@@ -104,9 +87,5 @@ public class ConfigurationParams extends ZkConfigurationParams implements Serial
 
     public ScyllaParams getCardsScyllaParams() {
         return cardsScyllaParams;
-    }
-
-    public ScyllaParams getTransactionLogScyllaParams() {
-        return transactionLogScyllaParams;
     }
 }

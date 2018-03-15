@@ -59,7 +59,6 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
         super.prepare(stormConf, context, collector);
 
         initializeCardRepositories();
-        initializeTransactionRepositories();
     }
 
     private void initializeCardRepositories() {
@@ -68,12 +67,6 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
         String keyspace = scyllaParams.getKeyspace();
         cardSettingsRepository = new CardSettingsRepositoryImpl(nodeList, keyspace);
         totalAmountsRepository = new SpendingTotalAmountsRepositoryImpl(nodeList, keyspace);
-    }
-
-    private void initializeTransactionRepositories() {
-        ScyllaParams scyllaParams = ComponentFactory.getConfigurationParams().getTransactionLogScyllaParams();
-        String nodeList = scyllaParams.getNodeList();
-        String keyspace = scyllaParams.getKeyspace();
         accountBalanceRepository = new AccountBalanceRepositoryImpl(nodeList, keyspace);
     }
 
