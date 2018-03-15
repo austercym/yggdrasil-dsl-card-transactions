@@ -3,7 +3,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.bolts;
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.ResponseMsg;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
-import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTransactionLog;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.AccountBalance;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.ResponseCode;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
@@ -30,15 +30,16 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
     @Override
     public void execute(Tuple input) {
 
-        LOG.debug("Preparing response for input={}", input);
+        long startTime = System.currentTimeMillis();
+        LOG.info("Preparing response for input={}", input);
 
         try {
             String processId = input.getStringByField(Fields.PROCESS_ID);
             TransactionInfo event = (TransactionInfo) input.getValueByField(Fields.EVENT_DATA);
             String parentKey = (String) input.getValueByField(Fields.KEY);
             CardSettings settings = (CardSettings) input.getValueByField(Fields.CARD_SETTINGS);
-            AccountTransactionLog accountTransactionLog =
-                    (AccountTransactionLog) input.getValueByField(Fields.TRANSACTION_LOG);
+            AccountBalance accountBalance =
+                    (AccountBalance) input.getValueByField(Fields.ACCOUNT_BALANCE);
             ValidationResult statusValidationResult =
                     (ValidationResult) input.getValueByField(Fields.STATUS_VALIDATION_RESULT);
             ValidationResult transactionTypeValidationResult =
@@ -64,13 +65,13 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
             if (event.getIsBalanceEnquiry()) {
                 if (statusValidationResult.getIsValid()) {
                     responseCode = ResponseCode.ALL_GOOD;
-                    if (accountTransactionLog != null) {
-                        response.setAvlBalance(accountTransactionLog.getActualBalance() == null
+                    if (accountBalance != null) {
+                        response.setAvlBalance(accountBalance.getActualBalance() == null
                                 ? 0
-                                : accountTransactionLog.getActualBalance().doubleValue());
-                        response.setCurBalance(accountTransactionLog.getLedgerBalance() == null
+                                : accountBalance.getActualBalance().doubleValue());
+                        response.setCurBalance(accountBalance.getLedgerBalance() == null
                                 ? 0
-                                : accountTransactionLog.getLedgerBalance().doubleValue());
+                                : accountBalance.getLedgerBalance().doubleValue());
                     }
                 }
             } else if (!balanceValidationResult.getIsValid()) {
@@ -84,12 +85,12 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
                 earmarkAmount = event.getSettlementAmount();
                 earmarkCurrency = event.getSettlementCurrency();
 
-                if (accountTransactionLog != null) {
-                    response.setAvlBalance(Optional.ofNullable(accountTransactionLog.getActualBalance())
+                if (accountBalance != null) {
+                    response.setAvlBalance(Optional.ofNullable(accountBalance.getActualBalance())
                             .orElse(BigDecimal.ZERO)
                             .subtract(event.getSettlementAmount().abs())
                             .doubleValue());
-                    response.setCurBalance(Optional.ofNullable(accountTransactionLog.getLedgerBalance())
+                    response.setCurBalance(Optional.ofNullable(accountBalance.getLedgerBalance())
                             .orElse(BigDecimal.ZERO)
                             .doubleValue());
                 }
@@ -107,9 +108,11 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
             values.put(Fields.RESULT, processedMessage);
             send(input, values);
 
+            long stopTime = System.currentTimeMillis();
+            long elapsedTime = stopTime - startTime;
             LOG.info(
-                    "{}Response code for authorisation message: {} ({}))",
-                    logPrefix, response.getResponsestatus(), responseCode);
+                    "{}Response code for authorisation message: {} ({})). (Execution time: {} ms)",
+                    logPrefix, response.getResponsestatus(), responseCode, elapsedTime);
 
         } catch (Exception e) {
             LOG.error("Response generation failed - input={}, message={}", input, e.getMessage(), e);

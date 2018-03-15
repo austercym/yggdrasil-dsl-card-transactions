@@ -2,7 +2,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.bolts;
 
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
-import com.orwellg.umbrella.commons.types.scylla.entities.accounting.AccountTransactionLog;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.AccountBalance;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.ResponseCode;
 import com.orwellg.yggdrasil.dsl.card.transactions.authorisation.services.ValidationResult;
@@ -42,9 +42,9 @@ public class ResponseGeneratorBoltTest {
         CardSettings cardSettings = new CardSettings();
         cardSettings.setLinkedAccountId("42");
         cardSettings.setLinkedAccountCurrency("foo");
-        AccountTransactionLog accountTransactionLog = new AccountTransactionLog();
-        accountTransactionLog.setActualBalance(BigDecimal.valueOf(100));
-        accountTransactionLog.setLedgerBalance(BigDecimal.valueOf(200));
+        AccountBalance accountBalance = new AccountBalance();
+        accountBalance.setActualBalance(BigDecimal.valueOf(100));
+        accountBalance.setLedgerBalance(BigDecimal.valueOf(200));
 
         Tuple input = mock(Tuple.class);
         when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(authorisation);
@@ -54,7 +54,7 @@ public class ResponseGeneratorBoltTest {
         when(input.getValueByField(Fields.MERCHANT_VALIDATION_RESULT)).thenReturn(ValidationResult.valid());
         when(input.getValueByField(Fields.TRANSACTION_TYPE_VALIDATION_RESULT)).thenReturn(ValidationResult.valid());
         when(input.getValueByField(Fields.CARD_SETTINGS)).thenReturn(cardSettings);
-        when(input.getValueByField(Fields.TRANSACTION_LOG)).thenReturn(accountTransactionLog);
+        when(input.getValueByField(Fields.ACCOUNT_BALANCE)).thenReturn(accountBalance);
 
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
