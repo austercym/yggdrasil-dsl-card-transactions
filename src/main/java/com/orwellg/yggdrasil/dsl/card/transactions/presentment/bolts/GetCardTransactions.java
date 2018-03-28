@@ -4,7 +4,7 @@ import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepositor
 import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.generics.scylla.ScyllaRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
+import com.orwellg.yggdrasil.dsl.card.transaction.commons.model.TransactionInfo;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
