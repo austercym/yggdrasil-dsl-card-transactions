@@ -3,7 +3,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
-import com.orwellg.yggdrasil.dsl.card.transaction.commons.model.TransactionInfo;
+import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.tuple.Tuple;
 import org.junit.Before;

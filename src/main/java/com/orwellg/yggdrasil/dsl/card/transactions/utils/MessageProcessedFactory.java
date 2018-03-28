@@ -1,7 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.utils;
 
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
-import com.orwellg.yggdrasil.dsl.card.transaction.commons.model.TransactionInfo;
+import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 
 import java.time.ZoneOffset;
 import java.util.Objects;
