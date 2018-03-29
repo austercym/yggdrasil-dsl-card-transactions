@@ -12,8 +12,9 @@ import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.AccountBalance;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
-import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
+import com.orwellg.yggdrasil.card.transaction.commons.authorisation.services.AuthorisationDataService;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
 import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,11 +34,7 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
 
     private Logger LOG = LogManager.getLogger(LoadDataBolt.class);
 
-    private CardSettingsRepository cardSettingsRepository;
-
-    private SpendingTotalAmountsRepository totalAmountsRepository;
-
-    private AccountBalanceRepository accountBalanceRepository;
+    private AuthorisationDataService authorisationDataService;
 
     public LoadDataBolt(String joinId) {
         super(joinId);
@@ -65,9 +62,11 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
         ScyllaParams scyllaParams = ComponentFactory.getConfigurationParams().getCardsScyllaParams();
         String nodeList = scyllaParams.getNodeList();
         String keyspace = scyllaParams.getKeyspace();
-        cardSettingsRepository = new CardSettingsRepositoryImpl(nodeList, keyspace);
-        totalAmountsRepository = new SpendingTotalAmountsRepositoryImpl(nodeList, keyspace);
-        accountBalanceRepository = new AccountBalanceRepositoryImpl(nodeList, keyspace);
+        CardSettingsRepository cardSettingsRepository = new CardSettingsRepositoryImpl(nodeList, keyspace);
+        SpendingTotalAmountsRepository totalAmountsRepository = new SpendingTotalAmountsRepositoryImpl(nodeList, keyspace);
+        AccountBalanceRepository accountBalanceRepository = new AccountBalanceRepositoryImpl(nodeList, keyspace);
+        authorisationDataService = new AuthorisationDataService(
+                cardSettingsRepository, totalAmountsRepository, accountBalanceRepository);
     }
 
     @Override
@@ -89,13 +88,13 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
             long cardId = eventData.getDebitCardId();
             SpendGroup totalType = eventData.getSpendGroup();
 
-            CompletableFuture<CardSettings> settingsFuture = retrieveCardSettings(cardId, logPrefix);
+            CompletableFuture<CardSettings> settingsFuture = authorisationDataService.retrieveCardSettings(cardId);
             CompletableFuture<AccountBalance> accountTransactionLogFuture =
-                    retrieveAccountBalance(settingsFuture, logPrefix);
+                    authorisationDataService.retrieveAccountBalance(settingsFuture);
             CompletableFuture<SpendingTotalAmounts> totalFuture =
                     eventData.getIsBalanceEnquiry()
                             ? CompletableFuture.completedFuture(null)
-                            : retrieveTotalAmounts(cardId, totalType, new Date(), logPrefix);
+                            : authorisationDataService.retrieveTotalAmounts(cardId, totalType, new Date());
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
@@ -114,51 +113,5 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
             LOG.error("{}Error processing the authorisation data load. Message: {}", logPrefix, e.getMessage(), e);
             error(e, input);
         }
-    }
-
-    private CompletableFuture<CardSettings> retrieveCardSettings(Long cardId, String logPrefix) {
-        return CompletableFuture.supplyAsync(
-                () -> {
-                    long startTime = System.currentTimeMillis();
-                    LOG.info("{}Retrieving card settings for debitCardId={} ...", logPrefix, cardId);
-                    CardSettings cardSettings = cardSettingsRepository.getCardSettings(cardId);
-                    long stopTime = System.currentTimeMillis();
-                    long elapsedTime = stopTime - startTime;
-                    LOG.info("{}Card settings retrieved for debitCardId={}: {}. (Execution time: {} ms)", logPrefix, cardId, cardSettings, elapsedTime);
-                    return cardSettings;
-                });
-    }
-
-    private CompletableFuture<AccountBalance> retrieveAccountBalance(CompletableFuture<CardSettings> settingsFuture, String logPrefix) {
-        return settingsFuture.thenApply(settings -> {
-            long startTime = System.currentTimeMillis();
-            if (settings == null){
-                LOG.info("{}No card settings - cannot retrieve linked account balance", logPrefix);
-                return null;
-            }
-            String linkedAccountId = settings.getLinkedAccountId();
-            LOG.info("{}Retrieving account balance for account id {} ...", logPrefix, linkedAccountId);
-            AccountBalance transactionLog = accountBalanceRepository.getLastByAccountId(linkedAccountId);
-            long stopTime = System.currentTimeMillis();
-            long elapsedTime = stopTime - startTime;
-            LOG.info("{}Account balance retrieved for account id {}: {}. (Execution time: {} ms)", logPrefix, linkedAccountId, transactionLog, elapsedTime);
-            return transactionLog;
-        });
-    }
-
-    private CompletableFuture<SpendingTotalAmounts> retrieveTotalAmounts(long cardId, SpendGroup totalType, Date date, String logPrefix) {
-        return CompletableFuture.supplyAsync(
-                () -> {
-                    long startTime = System.currentTimeMillis();
-                    LOG.info(
-                            "{}Retrieving total transaction amounts for debitCardId={}, totalType={} ...",
-                            logPrefix, cardId, totalType);
-                    SpendingTotalAmounts totalAmounts = totalAmountsRepository.getTotalAmounts(cardId, totalType);
-                    long stopTime = System.currentTimeMillis();
-                    long elapsedTime = stopTime - startTime;
-                    LOG.info("{}Total transaction amounts retrieved for debitCardId={}, totalType={}: {}. (Execution time: {} ms)",
-                            logPrefix, cardId, totalType, totalAmounts, elapsedTime);
-                    return totalAmounts;
-                });
     }
 }

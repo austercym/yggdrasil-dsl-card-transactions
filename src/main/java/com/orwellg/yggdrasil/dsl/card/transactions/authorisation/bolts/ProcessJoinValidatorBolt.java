@@ -5,7 +5,8 @@ import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.AccountBalance;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
-import com.orwellg.yggdrasil.card.transaction.commons.authorisation.services.*;
+import com.orwellg.yggdrasil.card.transaction.commons.authorisation.services.AuthorisationValidationService;
+import com.orwellg.yggdrasil.card.transaction.commons.authorisation.services.ValidationResult;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,17 +17,12 @@ import org.apache.storm.tuple.Tuple;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 public class ProcessJoinValidatorBolt extends JoinFutureBolt<TransactionInfo> {
 
     private static final Logger LOG = LogManager.getLogger(ProcessJoinValidatorBolt.class);
 
-    private AuthorisationValidator statusValidator;
-    private AuthorisationValidator transactionTypeValidator;
-    private AuthorisationValidator merchantValidator;
-    private VelocityLimitsValidator velocityLimitsValidator;
-    private BalanceValidator balanceValidator;
+    private AuthorisationValidationService authorisationValidationService;
 
     public ProcessJoinValidatorBolt(String joinId) {
         super(joinId);
@@ -45,11 +41,7 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<TransactionInfo> {
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
-        statusValidator = new StatusValidator();
-        transactionTypeValidator = new TransactionTypeValidator();
-        merchantValidator = new MerchantValidator();
-        velocityLimitsValidator = new VelocityLimitsValidator();
-        balanceValidator = new BalanceValidator();
+        authorisationValidationService = new AuthorisationValidationService();
     }
 
     @Override
@@ -65,24 +57,24 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<TransactionInfo> {
             SpendingTotalAmounts totalAmounts = (SpendingTotalAmounts) input.getValueByField(Fields.SPENDING_TOTALS);
             AccountBalance accountBalance = (AccountBalance) input.getValueByField(Fields.ACCOUNT_BALANCE);
 
-            CompletableFuture<ValidationResult> statusFuture =
-                    validate("Card status", statusValidator, eventData, settings, logPrefix);
-            CompletableFuture<ValidationResult> transactionTypeFuture =
+            ValidationResult statusValidationResult =
+                    authorisationValidationService.validateCardStatus(key, eventData, settings);
+            ValidationResult transactionTypeValidationResult =
                     eventData.getIsBalanceEnquiry()
-                            ? CompletableFuture.completedFuture(null)
-                            : validate("Transaction type", transactionTypeValidator, eventData, settings, logPrefix);
-            CompletableFuture<ValidationResult> merchantFuture =
+                            ? null
+                            : authorisationValidationService.validateTransactionType(key, eventData, settings);
+            ValidationResult merchantValidationResult =
                     eventData.getIsBalanceEnquiry()
-                            ? CompletableFuture.completedFuture(null)
-                            : validate("Merchant", merchantValidator, eventData, settings, logPrefix);
-            CompletableFuture<ValidationResult> velocityLimitsFuture =
+                            ? null
+                            : authorisationValidationService.validateMerchant(key, eventData, settings);
+            ValidationResult velocityLimitsValidationResult =
                     eventData.getIsBalanceEnquiry()
-                            ? CompletableFuture.completedFuture(null)
-                            : validateVelocityLimits(eventData, settings, totalAmounts, logPrefix);
-            CompletableFuture<ValidationResult> balanceFuture =
+                            ? null
+                            : authorisationValidationService.validateVelocityLimits(key, eventData, settings, totalAmounts);
+            ValidationResult balanceValidationResult =
                     eventData.getIsBalanceEnquiry()
-                            ? CompletableFuture.completedFuture(null)
-                            : validateBalance(eventData, accountBalance, logPrefix);
+                            ? null
+                            : authorisationValidationService.validateBalance(key, eventData, accountBalance);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
@@ -90,11 +82,11 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<TransactionInfo> {
             values.put(Fields.EVENT_DATA, eventData);
             values.put(Fields.CARD_SETTINGS, settings);
             values.put(Fields.ACCOUNT_BALANCE, accountBalance);
-            values.put(Fields.STATUS_VALIDATION_RESULT, statusFuture.get());
-            values.put(Fields.TRANSACTION_TYPE_VALIDATION_RESULT, transactionTypeFuture.get());
-            values.put(Fields.MERCHANT_VALIDATION_RESULT, merchantFuture.get());
-            values.put(Fields.VELOCITY_LIMITS_VALIDATION_RESULT, velocityLimitsFuture.get());
-            values.put(Fields.BALANCE_VALIDATION_RESULT, balanceFuture.get());
+            values.put(Fields.STATUS_VALIDATION_RESULT, statusValidationResult);
+            values.put(Fields.TRANSACTION_TYPE_VALIDATION_RESULT, transactionTypeValidationResult);
+            values.put(Fields.MERCHANT_VALIDATION_RESULT, merchantValidationResult);
+            values.put(Fields.VELOCITY_LIMITS_VALIDATION_RESULT, velocityLimitsValidationResult);
+            values.put(Fields.BALANCE_VALIDATION_RESULT, balanceValidationResult);
 
             send(input, values);
 
@@ -114,37 +106,5 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<TransactionInfo> {
                 Fields.STATUS_VALIDATION_RESULT, Fields.TRANSACTION_TYPE_VALIDATION_RESULT,
                 Fields.MERCHANT_VALIDATION_RESULT, Fields.VELOCITY_LIMITS_VALIDATION_RESULT,
                 Fields.BALANCE_VALIDATION_RESULT));
-    }
-
-    private CompletableFuture<ValidationResult> validate(
-            String name, AuthorisationValidator validator, TransactionInfo message, CardSettings settings, String logPrefix) {
-        return CompletableFuture.supplyAsync(
-                () -> {
-                    ValidationResult result = validator.validate(message, settings);
-                    LOG.info("{}{} validation result: {}", logPrefix, name, result);
-                    return result;
-                });
-    }
-
-    private CompletableFuture<ValidationResult> validateVelocityLimits(
-            TransactionInfo message, CardSettings settings, SpendingTotalAmounts totalCurrent, String logPrefix) {
-        return CompletableFuture.supplyAsync(
-                () -> {
-                    ValidationResult result = velocityLimitsValidator.validate(
-                            message, settings, totalCurrent);
-                    LOG.info("{}Velocity limits validation result: {}", logPrefix, result);
-                    return result;
-                });
-    }
-
-    private CompletableFuture<ValidationResult> validateBalance(
-            TransactionInfo message, AccountBalance accountBalance, String logPrefix) {
-        return CompletableFuture.supplyAsync(
-                () -> {
-                    ValidationResult result = balanceValidator.validate(
-                            message, accountBalance);
-                    LOG.info("{}Account balance validation result: {}", logPrefix, result);
-                    return result;
-                });
     }
 }

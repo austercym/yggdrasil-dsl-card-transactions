@@ -1,31 +1,42 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.bolts;
 
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
-import com.orwellg.umbrella.avro.types.gps.ResponseMsg;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.AccountBalance;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
-import com.orwellg.umbrella.commons.types.scylla.entities.cards.ResponseCode;
-import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
+import com.orwellg.yggdrasil.card.transaction.commons.authorisation.services.AuthorisationResponseGenerator;
+import com.orwellg.yggdrasil.card.transaction.commons.authorisation.services.AuthorisationValidationResults;
 import com.orwellg.yggdrasil.card.transaction.commons.authorisation.services.ValidationResult;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.MessageProcessedFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.storm.task.OutputCollector;
+import org.apache.storm.task.TopologyContext;
 import org.apache.storm.tuple.Tuple;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 public class ResponseGeneratorBolt extends BasicRichBolt {
 
     private static final long serialVersionUID = 1L;
 
     private static final Logger LOG = LogManager.getLogger(ResponseGeneratorBolt.class);
+
+    private AuthorisationResponseGenerator authorisationResponseGenerator;
+
+    void setAuthorisationResponseGenerator(AuthorisationResponseGenerator authorisationResponseGenerator) {
+        this.authorisationResponseGenerator = authorisationResponseGenerator;
+    }
+
+    @Override
+    public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
+        super.prepare(stormConf, context, collector);
+
+        authorisationResponseGenerator = new AuthorisationResponseGenerator();
+    }
 
     @Override
     public void execute(Tuple input) {
@@ -58,48 +69,14 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
                     event.getTransactionAmount(), event.getTransactionCurrency());
             LOG.debug("{}Generating response for authorisation message...", logPrefix);
 
-            ResponseCode responseCode = ResponseCode.DO_NOT_HONOUR;
-            ResponseMsg response = new ResponseMsg();
-            BigDecimal earmarkAmount = BigDecimal.ZERO;
-            String earmarkCurrency = null;
-            if (event.getIsBalanceEnquiry()) {
-                if (statusValidationResult.getIsValid()) {
-                    responseCode = ResponseCode.ALL_GOOD;
-                    if (accountBalance != null) {
-                        response.setAvlBalance(accountBalance.getActualBalance() == null
-                                ? 0
-                                : accountBalance.getActualBalance().doubleValue());
-                        response.setCurBalance(accountBalance.getLedgerBalance() == null
-                                ? 0
-                                : accountBalance.getLedgerBalance().doubleValue());
-                    }
-                }
-            } else if (!balanceValidationResult.getIsValid()) {
-                responseCode = ResponseCode.INSUFFICIENT_FUNDS;
-            } else if (!velocityLimitsValidationResult.getIsValid()) {
-                responseCode = ResponseCode.EXCEEDS_WITHDRAWAL_AMOUNT_LIMIT;
-            } else if (statusValidationResult.getIsValid()
-                    && transactionTypeValidationResult.getIsValid()
-                    && merchantValidationResult.getIsValid()) {
-                responseCode = ResponseCode.ALL_GOOD;
-                earmarkAmount = event.getSettlementAmount();
-                earmarkCurrency = event.getSettlementCurrency();
-
-                if (accountBalance != null) {
-                    response.setAvlBalance(Optional.ofNullable(accountBalance.getActualBalance())
-                            .orElse(BigDecimal.ZERO)
-                            .subtract(event.getSettlementAmount().abs())
-                            .doubleValue());
-                    response.setCurBalance(Optional.ofNullable(accountBalance.getLedgerBalance())
-                            .orElse(BigDecimal.ZERO)
-                            .doubleValue());
-                }
-            }
-
-            response.setAcknowledgement("1");
-            response.setResponsestatus(responseCode.getCode());
-
-            MessageProcessed processedMessage = generateMessageProcessed(event, response, settings, earmarkAmount, earmarkCurrency);
+            AuthorisationValidationResults validationResults = new AuthorisationValidationResults();
+            validationResults.setBalanceValidationResult(balanceValidationResult);
+            validationResults.setMerchantValidationResult(merchantValidationResult);
+            validationResults.setStatusValidationResult(statusValidationResult);
+            validationResults.setTransactionTypeValidationResult(transactionTypeValidationResult);
+            validationResults.setVelocityLimitsValidationResult(velocityLimitsValidationResult);
+            MessageProcessed processedMessage = authorisationResponseGenerator.getMessageProcessed(
+                    event, settings, accountBalance, validationResults);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, input.getStringByField(Fields.KEY));
@@ -112,37 +89,15 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
             long elapsedTime = stopTime - startTime;
             LOG.info(
                     "{}Response code for authorisation message: {} ({})). (Execution time: {} ms)",
-                    logPrefix, response.getResponsestatus(), responseCode, elapsedTime);
+                    logPrefix,
+                    processedMessage.getEhiResponse().getResponsestatus(),
+                    processedMessage.getEhiResponse().getResponsestatus(),
+                    elapsedTime);
 
         } catch (Exception e) {
             LOG.error("Response generation failed - input={}, message={}", input, e.getMessage(), e);
             error(e, input);
         }
-    }
-
-    private MessageProcessed generateMessageProcessed(TransactionInfo authorisation, ResponseMsg response, CardSettings settings, BigDecimal earmarkAmount, String earmarkCurrency) {
-
-        LOG.debug("Generating CardMessageProcessed message");
-        MessageProcessed MessageProcessed = MessageProcessedFactory.from(authorisation);
-        MessageProcessed.setEhiResponse(response);
-        MessageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(earmarkAmount));
-        MessageProcessed.setEarmarkCurrency(earmarkCurrency);
-        MessageProcessed.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(earmarkAmount));
-        MessageProcessed.setTotalEarmarkCurrency(earmarkCurrency);
-        MessageProcessed.setClientAmount(DecimalTypeUtils.toDecimal(0));
-        MessageProcessed.setClientCurrency(earmarkCurrency);
-        MessageProcessed.setTotalClientAmount(DecimalTypeUtils.toDecimal(0));
-        MessageProcessed.setTotalClientCurrency(earmarkCurrency);
-        MessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(0));
-        MessageProcessed.setWirecardCurrency(authorisation.getSettlementCurrency());
-        MessageProcessed.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(0));
-        MessageProcessed.setTotalWirecardCurrency(authorisation.getSettlementCurrency());
-        if (settings != null) {
-            MessageProcessed.setInternalAccountCurrency(settings.getLinkedAccountCurrency());
-            MessageProcessed.setInternalAccountId(settings.getLinkedAccountId());
-        }
-        LOG.debug("Message generated. Parameters: {}", MessageProcessed);
-        return MessageProcessed;
     }
 
     @Override

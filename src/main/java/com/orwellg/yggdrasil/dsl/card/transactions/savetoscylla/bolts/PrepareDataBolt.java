@@ -3,7 +3,6 @@ package com.orwellg.yggdrasil.dsl.card.transactions.savetoscylla.bolts;
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.GenericEventProcessBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.MessageTypeMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
