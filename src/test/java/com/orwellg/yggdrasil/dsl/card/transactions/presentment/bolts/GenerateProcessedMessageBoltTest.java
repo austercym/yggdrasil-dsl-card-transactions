@@ -4,7 +4,7 @@ import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
+import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.tuple.Tuple;
 import org.junit.Before;

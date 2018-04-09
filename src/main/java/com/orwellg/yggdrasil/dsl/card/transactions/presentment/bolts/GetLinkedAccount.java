@@ -1,11 +1,12 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
+import com.orwellg.umbrella.commons.config.params.ScyllaParams;
 import com.orwellg.umbrella.commons.repositories.scylla.LinkedAccountRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.LinkedAccountRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
-import com.orwellg.yggdrasil.dsl.card.transactions.model.TransactionInfo;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -20,18 +21,17 @@ import java.util.Map;
 
 public class GetLinkedAccount extends BasicRichBolt {
 
-
     private LinkedAccountRepository repository;
     private Logger LOG = LogManager.getLogger(GetLinkedAccount.class);
+    private String propertyFile;
+
+    public GetLinkedAccount(String propertyFile) {
+        this.propertyFile = propertyFile;
+    }
 
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "retrieveValue"));
-    }
-
-    protected void setScyllaConnectionParameters() {
-        setScyllaNodes(ComponentFactory.getConfigurationParams().getCardsScyllaParams().getNodeList());
-        setScyllaKeyspace(ComponentFactory.getConfigurationParams().getCardsScyllaParams().getKeyspace());
     }
 
     protected List<LinkedAccount> retrieve(TransactionInfo presentment) {
@@ -41,7 +41,6 @@ public class GetLinkedAccount extends BasicRichBolt {
                 presentment.getTransactionDateTime().toInstant(ZoneOffset.UTC));
         return linkedAccount;
     }
-
 
     @Override
     public void execute(Tuple input) {
@@ -68,16 +67,14 @@ public class GetLinkedAccount extends BasicRichBolt {
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
-        setScyllaConnectionParameters();
-        repository = new LinkedAccountRepositoryImpl(getScyllaNodes(), getScyllaKeyspace());
+        initializeCardRepositories();
     }
 
-
-
-    private String scyllaNodes;
-    private String scyllaKeyspace;
-    public String getScyllaNodes() { return scyllaNodes; }
-    public String getScyllaKeyspace() { return scyllaKeyspace; }
-    public void setScyllaNodes(String scyllaNodes) {	this.scyllaNodes = scyllaNodes; }
-    public void setScyllaKeyspace(String scyllaKeyspace) { this.scyllaKeyspace = scyllaKeyspace; }
+    private void initializeCardRepositories() {
+        ScyllaParams scyllaParams = TopologyConfigFactory.getTopologyConfig(propertyFile)
+                .getScyllaConfig().getScyllaParams();
+        String nodeList = scyllaParams.getNodeList();
+        String keyspace = scyllaParams.getKeyspaceCardsDB();
+        repository = new LinkedAccountRepositoryImpl(nodeList, keyspace);
+    }
 }

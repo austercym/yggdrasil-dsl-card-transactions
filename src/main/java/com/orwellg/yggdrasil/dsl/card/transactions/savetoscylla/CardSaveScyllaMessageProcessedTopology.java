@@ -63,7 +63,7 @@ public class CardSaveScyllaMessageProcessedTopology extends AbstractTopology {
             processBolt.addGrouping(new ShuffleGrouping(spoutName, KafkaSpout.EVENT_SUCCESS_STREAM));
         }
 
-        GBolt<?> saveBolt = new GRichBolt(SAVE_COMPONENT, new SaveBolt(), config.getActionBoltHints());
+        GBolt<?> saveBolt = new GRichBolt(SAVE_COMPONENT, new SaveBolt(PROPERTIES_FILE), config.getActionBoltHints());
         saveBolt.addGrouping(new ShuffleGrouping(PROCESS_COMPONENT));
         // -------------------------------------------------------
 

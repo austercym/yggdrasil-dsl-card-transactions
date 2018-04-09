@@ -2,7 +2,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.bolts;
 
 class Fields extends com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.Fields {
     static final String CARD_SETTINGS = "cardSettings";
-    static final String TRANSACTION_LOG = "transactionLog";
+    static final String ACCOUNT_BALANCE = "accountBalance";
     static final String SPENDING_TOTALS = "spendingTotals";
     static final String STATUS_VALIDATION_RESULT = "statusValidationResult";
     static final String TRANSACTION_TYPE_VALIDATION_RESULT = "transactionTypeValidationResult";

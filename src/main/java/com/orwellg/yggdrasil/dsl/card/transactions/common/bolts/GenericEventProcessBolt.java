@@ -25,10 +25,12 @@ public class GenericEventProcessBolt<TEventData> extends KafkaEventProcessBolt {
     @Override
     public void sendNextStep(Tuple input, Event event) {
 
+        long startTime = System.currentTimeMillis();
         String key = event.getEvent().getKey();
         String processId = event.getProcessIdentifier().getUuid();
 
-        LOG.debug("[Key: {}][ProcessId: {}]: Processing event", key, processId);
+
+        LOG.info("[Key: {}][ProcessId: {}]: Processing event", key, processId);
 
         // Get the JSON message with the data
         TEventData eventData = gson.fromJson(event.getEvent().getData(), eventDataType);
@@ -41,7 +43,9 @@ public class GenericEventProcessBolt<TEventData> extends KafkaEventProcessBolt {
 
         send(input, values);
 
-        LOG.debug("[Key: {}][ProcessId: {}]: Event processed.", key, processId);
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        LOG.info("[Key: {}][ProcessId: {}]: Event processed. (Execution time: {} ms)", key, processId, elapsedTime);
     }
 
     protected Object process(TEventData eventData, String key, String processId) {

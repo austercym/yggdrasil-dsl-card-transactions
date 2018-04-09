@@ -61,7 +61,7 @@ public class PresentmentTopology extends AbstractTopology {
         //------------------------- Processing PresentmentMessage --------------------------------------------------------------
 
         //Get card authorisation data
-        GBolt<?> cardAuthorisationBolt = new GRichBolt(BOLT_GET_TRANSACTIONS, new GetCardTransactions(), hintsProcessors);
+        GBolt<?> cardAuthorisationBolt = new GRichBolt(BOLT_GET_TRANSACTIONS, new GetCardTransactions(PROPERTIES_FILE), hintsProcessors);
         cardAuthorisationBolt.addGrouping(new ShuffleGrouping(BOLT_KAFKA_PROCESS_MESSAGE));
 
         //see if this is offline presentment
@@ -71,7 +71,7 @@ public class PresentmentTopology extends AbstractTopology {
         //------------------------ Offline PresentmentMessage Processing -------------------------------------------------------
 
         //offline presentment - needs linked account in time of transaction
-        GBolt<?> getLinkedAccountBolt = new GRichBolt(BOLT_GET_LINKED_ACCOUNT, new GetLinkedAccount(), hintsProcessors);
+        GBolt<?> getLinkedAccountBolt = new GRichBolt(BOLT_GET_LINKED_ACCOUNT, new GetLinkedAccount(PROPERTIES_FILE), hintsProcessors);
         getLinkedAccountBolt.addGrouping(new ShuffleGrouping(BOLT_CHECK_AUTHORISATION, OFFLINE_PRESENTMENT_STREAM));
 
         GBolt<?> validateLinkedAccountBolt = new GRichBolt(BOLT_PROCESS_LINKED_ACCOUNT, new ProcessOfflineTransactionBolt(), hintsProcessors);

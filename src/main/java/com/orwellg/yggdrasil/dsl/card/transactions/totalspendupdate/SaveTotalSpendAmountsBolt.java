@@ -1,12 +1,12 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
+import com.orwellg.umbrella.commons.config.params.ScyllaParams;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
-import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -22,6 +22,11 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
     private static final Logger LOG = LogManager.getLogger(SaveTotalSpendAmountsBolt.class);
 
     private SpendingTotalAmountsRepository amountsRepository;
+    private String propertyFile;
+
+    public SaveTotalSpendAmountsBolt(String propertyFile) {
+        this.propertyFile = propertyFile;
+    }
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -29,10 +34,11 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
         setScyllaConnectionParameters();
     }
 
-    protected void setScyllaConnectionParameters() {
-        ScyllaParams scyllaParams = ComponentFactory.getConfigurationParams().getCardsScyllaParams();
+    private void setScyllaConnectionParameters() {
+        ScyllaParams scyllaParams = TopologyConfigFactory.getTopologyConfig(propertyFile)
+                .getScyllaConfig().getScyllaParams();
         String nodeList = scyllaParams.getNodeList();
-        String keyspace = scyllaParams.getKeyspace();
+        String keyspace = scyllaParams.getKeyspaceCardsDB();
         amountsRepository = new SpendingTotalAmountsRepositoryImpl(nodeList, keyspace);
     }
 

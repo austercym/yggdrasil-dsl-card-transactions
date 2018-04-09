@@ -1,11 +1,11 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.savetoscylla.bolts;
 
+import com.orwellg.umbrella.commons.config.params.ScyllaParams;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
-import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -21,6 +21,11 @@ public class SaveBolt extends BasicRichBolt {
     private static final Logger LOG = LogManager.getLogger(SaveBolt.class);
 
     private CardTransactionRepository repository;
+    private String propertyFile;
+
+    public SaveBolt(String propertyFile) {
+        this.propertyFile = propertyFile;
+    }
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -29,9 +34,10 @@ public class SaveBolt extends BasicRichBolt {
     }
 
     private void setScyllaConnectionParameters() {
-        ScyllaParams scyllaParams = ComponentFactory.getConfigurationParams().getCardsScyllaParams();
+        ScyllaParams scyllaParams = TopologyConfigFactory.getTopologyConfig(propertyFile)
+                .getScyllaConfig().getScyllaParams();
         String nodeList = scyllaParams.getNodeList();
-        String keyspace = scyllaParams.getKeyspace();
+        String keyspace = scyllaParams.getKeyspaceCardsDB();
         repository = new CardTransactionRepositoryImpl(nodeList, keyspace);
     }
 
