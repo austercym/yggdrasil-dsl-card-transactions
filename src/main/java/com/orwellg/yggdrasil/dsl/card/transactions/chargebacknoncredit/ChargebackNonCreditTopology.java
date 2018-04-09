@@ -56,7 +56,7 @@ public class ChargebackNonCreditTopology extends AbstractTopology {
                 config.getActionBoltHints());
         mapBolt.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER_COMPONENT, KafkaSpout.EVENT_SUCCESS_STREAM));
 
-        GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadTransactionListBolt(), config.getActionBoltHints());
+        GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadTransactionListBolt(PROPERTIES_FILE), config.getActionBoltHints());
         getDataBolt.addGrouping(new ShuffleGrouping(MAP_EVENT));
 
         GBolt<?> processBolt = new GRichBolt(PROCESS_MESSAGE, new ProcessNonFinancialMessageBolt(),

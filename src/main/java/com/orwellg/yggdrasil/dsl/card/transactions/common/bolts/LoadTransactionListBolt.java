@@ -1,12 +1,12 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
+import com.orwellg.umbrella.commons.config.params.ScyllaParams;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
-import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -25,6 +25,11 @@ public class LoadTransactionListBolt extends BasicRichBolt {
     private Logger LOG = LogManager.getLogger(LoadTransactionListBolt.class);
 
     private CardTransactionRepository transactionRepository;
+    private String propertyFile;
+
+    public LoadTransactionListBolt(String propertyFile) {
+        this.propertyFile = propertyFile;
+    }
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -34,9 +39,10 @@ public class LoadTransactionListBolt extends BasicRichBolt {
     }
 
     private void initializeCardRepositories() {
-        ScyllaParams scyllaParams = ComponentFactory.getConfigurationParams().getCardsScyllaParams();
+        ScyllaParams scyllaParams = TopologyConfigFactory.getTopologyConfig(propertyFile)
+                .getScyllaConfig().getScyllaParams();
         String nodeList = scyllaParams.getNodeList();
-        String keyspace = scyllaParams.getKeyspace();
+        String keyspace = scyllaParams.getKeyspaceCardsDB();
         transactionRepository = new CardTransactionRepositoryImpl(nodeList, keyspace);
     }
 

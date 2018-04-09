@@ -56,7 +56,7 @@ public class AuthorisationReversalTopology extends AbstractTopology {
         kafkaEventProcess.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER_COMPONENT, KafkaSpout.EVENT_SUCCESS_STREAM));
 
         // Get data from DB
-        GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadDataBolt(GET_DATA), config.getActionBoltHints());
+        GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadDataBolt(GET_DATA, PROPERTIES_FILE), config.getActionBoltHints());
         getDataBolt.addGrouping(new ShuffleGrouping(KAFKA_EVENT_SUCCESS_PROCESS));
 
         // Generate processed message

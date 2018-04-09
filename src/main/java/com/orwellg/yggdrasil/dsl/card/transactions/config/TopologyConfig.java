@@ -1,6 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.config;
 
 import com.orwellg.umbrella.commons.beans.config.kafka.SubscriberKafkaConfiguration;
+import com.orwellg.umbrella.commons.config.ScyllaConfig;
 import com.orwellg.yggdrasil.commons.config.NetworkConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,7 +14,7 @@ public class TopologyConfig extends com.orwellg.umbrella.commons.storm.config.to
 
     private static final Logger LOG = LogManager.getLogger(TopologyConfig.class);
 
-    public NetworkConfig networkConfig;
+    private NetworkConfig networkConfig;
 
     public NetworkConfig getNetworkConfig() { return networkConfig; }
 

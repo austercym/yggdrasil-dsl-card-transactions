@@ -12,7 +12,6 @@ import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
 import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfig;
 import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfigFactory;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.Config;
@@ -75,7 +74,7 @@ public class TotalSpendUpdateDSLTopology {
         }
 
         // Read last total spend amounts from DB
-        GBolt<?> readDataBolt = new GRichBolt(READ_DATA, new LoadDataBolt(READ_DATA), config.getActionBoltHints());
+        GBolt<?> readDataBolt = new GRichBolt(READ_DATA, new LoadDataBolt(READ_DATA, PROPERTIES_FILE), config.getActionBoltHints());
         readDataBolt.addGrouping(new ShuffleGrouping(KAFKA_EVENT_SUCCESS_PROCESS));
 
         // Recalculate total spend amounts
@@ -83,7 +82,7 @@ public class TotalSpendUpdateDSLTopology {
         recalculateBolt.addGrouping(new ShuffleGrouping(READ_DATA));
 
         // Save new total spend amounts
-        GBolt<?> saveBolt = new GRichBolt(SAVE_SPEND_AMOUNTS, new SaveTotalSpendAmountsBolt(), config.getActionBoltHints());
+        GBolt<?> saveBolt = new GRichBolt(SAVE_SPEND_AMOUNTS, new SaveTotalSpendAmountsBolt(PROPERTIES_FILE), config.getActionBoltHints());
         saveBolt.addGrouping(new ShuffleGrouping(RECALCULATE_SPEND_AMOUNTS));
 
         //
@@ -117,7 +116,6 @@ public class TotalSpendUpdateDSLTopology {
 
             Thread.sleep(3000000);
             cluster.shutdown();
-            ComponentFactory.getConfigurationParams().close();
         } else {
             StormSubmitter.submitTopology(TOPOLOGY_NAME, conf, topology);
         }

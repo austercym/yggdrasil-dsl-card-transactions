@@ -1,11 +1,12 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
+import com.orwellg.umbrella.commons.config.params.ScyllaParams;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.generics.scylla.ScyllaRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -21,17 +22,23 @@ public class GetCardTransactions extends ScyllaRichBolt<List<CardTransaction>, T
 
     private CardTransactionRepository repository;
     private static final Logger LOG = LogManager.getLogger(GetCardTransactions.class);
+    private String propertyFile;
+
+    public GetCardTransactions(String propertyFile) {
+        this.propertyFile = propertyFile;
+    }
 
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList("key", "processId", "eventData", "retrieveValue"));
     }
 
-
     @Override
     protected void setScyllaConnectionParameters() {
-        setScyllaNodes(ComponentFactory.getConfigurationParams().getCardsScyllaParams().getNodeList());
-        setScyllaKeyspace(ComponentFactory.getConfigurationParams().getCardsScyllaParams().getKeyspace());
+        ScyllaParams scyllaParams = TopologyConfigFactory.getTopologyConfig(propertyFile)
+                .getScyllaConfig().getScyllaParams();
+        setScyllaNodes(scyllaParams.getNodeList());
+        setScyllaKeyspace(scyllaParams.getKeyspaceCardsDB());
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.bolts;
 
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
+import com.orwellg.umbrella.commons.config.params.ScyllaParams;
 import com.orwellg.umbrella.commons.repositories.scylla.AccountBalanceRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.CardSettingsRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
@@ -14,8 +15,7 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
 import com.orwellg.yggdrasil.card.transaction.commons.authorisation.services.AuthorisationDataService;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
-import com.orwellg.yggdrasil.dsl.card.transactions.config.ScyllaParams;
-import com.orwellg.yggdrasil.dsl.card.transactions.utils.factory.ComponentFactory;
+import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -35,9 +35,11 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
     private Logger LOG = LogManager.getLogger(LoadDataBolt.class);
 
     private AuthorisationDataService authorisationDataService;
+    private String propertyFile;
 
-    public LoadDataBolt(String joinId) {
+    public LoadDataBolt(String joinId, String propertyFile) {
         super(joinId);
+        this.propertyFile = propertyFile;
     }
 
     @Override
@@ -59,9 +61,10 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
     }
 
     private void initializeCardRepositories() {
-        ScyllaParams scyllaParams = ComponentFactory.getConfigurationParams().getCardsScyllaParams();
+        ScyllaParams scyllaParams = TopologyConfigFactory.getTopologyConfig(propertyFile)
+                .getScyllaConfig().getScyllaParams();
         String nodeList = scyllaParams.getNodeList();
-        String keyspace = scyllaParams.getKeyspace();
+        String keyspace = scyllaParams.getKeyspaceCardsDB();
         CardSettingsRepository cardSettingsRepository = new CardSettingsRepositoryImpl(nodeList, keyspace);
         SpendingTotalAmountsRepository totalAmountsRepository = new SpendingTotalAmountsRepositoryImpl(nodeList, keyspace);
         AccountBalanceRepository accountBalanceRepository = new AccountBalanceRepositoryImpl(nodeList, keyspace);
@@ -88,13 +91,15 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
             long cardId = eventData.getDebitCardId();
             SpendGroup totalType = eventData.getSpendGroup();
 
-            CompletableFuture<CardSettings> settingsFuture = authorisationDataService.retrieveCardSettings(cardId);
-            CompletableFuture<AccountBalance> accountTransactionLogFuture =
-                    authorisationDataService.retrieveAccountBalance(settingsFuture);
+            CompletableFuture<CardSettings> settingsFuture = CompletableFuture.supplyAsync(() ->
+                    authorisationDataService.retrieveCardSettings(cardId));
+            CompletableFuture<AccountBalance> accountTransactionLogFuture = settingsFuture.thenApply(settings ->
+                    authorisationDataService.retrieveAccountBalance(settings));
             CompletableFuture<SpendingTotalAmounts> totalFuture =
                     eventData.getIsBalanceEnquiry()
                             ? CompletableFuture.completedFuture(null)
-                            : authorisationDataService.retrieveTotalAmounts(cardId, totalType, new Date());
+                            : CompletableFuture.supplyAsync(() ->
+                            authorisationDataService.retrieveTotalAmounts(cardId, totalType, new Date()));
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
