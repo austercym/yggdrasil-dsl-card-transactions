@@ -198,6 +198,38 @@
 				<zookeeper.host>localhost:2181</zookeeper.host>
 			</properties>
 		</profile>
+		<!-- AWS / UAT -->
+		<profile>
+			<id>aws</id>
+			<properties>
+				<zookeeper.host>hdf-group1-0:2181,hdf-group1-1:2181,hdf-group2-1:2181</zookeeper.host>
+			</properties>
+
+			<dependencies>
+				<dependency>
+					<groupId>org.apache.storm</groupId>
+					<artifactId>storm-core</artifactId>
+					<version>${storm.version}</version>
+					<scope>provided</scope>
+					<exclusions>
+						<exclusion>
+							<groupId>org.slf4j</groupId>
+							<artifactId>slf4j-log4j12</artifactId>
+						</exclusion>
+						<exclusion>
+							<groupId>log4j</groupId>
+							<artifactId>log4j</artifactId>
+						</exclusion>
+					</exclusions>
+				</dependency>
+				<dependency>
+					<groupId>org.apache.storm</groupId>
+					<artifactId>storm-cassandra</artifactId>
+					<version>${storm.version}</version>
+					<scope>compile</scope>
+				</dependency>
+			</dependencies>
+		</profile>
 		<!-- Production environment @ production server -->
 		<profile>
 			<id>production</id>
