@@ -11,8 +11,8 @@ import com.orwellg.umbrella.commons.storm.topology.generic.grouping.ShuffleGroup
 import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
-import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfig;
-import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfigFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfig;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import com.orwellg.yggdrasil.dsl.card.transactions.savetoscylla.bolts.PrepareDataBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.savetoscylla.bolts.SaveBolt;
 import org.apache.logging.log4j.LogManager;

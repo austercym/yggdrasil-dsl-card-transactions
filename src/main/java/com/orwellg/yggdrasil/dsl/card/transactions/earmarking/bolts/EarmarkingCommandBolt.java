@@ -12,7 +12,7 @@ import com.orwellg.yggdrasil.commons.factories.ClusterFactory;
 import com.orwellg.yggdrasil.commons.net.Cluster;
 import com.orwellg.yggdrasil.commons.net.Node;
 import com.orwellg.yggdrasil.commons.utils.enums.SpecialAccountTypes;
-import com.orwellg.yggdrasil.dsl.card.transactions.config.TopologyConfigFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import com.orwellg.yggdrasil.dsl.card.transactions.earmarking.EarmarkingTopology;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
