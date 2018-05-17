@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
+package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate.bolts;
 
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.commons.config.params.ScyllaParams;
