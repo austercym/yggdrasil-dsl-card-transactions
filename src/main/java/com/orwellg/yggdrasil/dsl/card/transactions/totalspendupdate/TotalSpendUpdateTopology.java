@@ -4,6 +4,7 @@ import com.orwellg.umbrella.commons.beans.config.kafka.SubscriberKafkaConfigurat
 import com.orwellg.umbrella.commons.storm.topology.TopologyFactory;
 import com.orwellg.umbrella.commons.storm.topology.component.base.AbstractTopology;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.EventErrorBolt;
+import com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventGeneratorBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GBolt;
 import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GRichBolt;
@@ -38,6 +39,8 @@ public class TotalSpendUpdateTopology extends AbstractTopology {
     private static final String READ_DATA = BOLT_NAME_PREFIX + "ReadData";
     private static final String RECALCULATE_SPEND_AMOUNTS = BOLT_NAME_PREFIX + "RecalculateSpendAmounts";
     private static final String SAVE_SPEND_AMOUNTS = BOLT_NAME_PREFIX + "SaveSpendAmounts";
+    private static final String EVENT_GENERATOR = BOLT_NAME_PREFIX + "EventGenerator";
+    private static final String KAFKA_EVENT_SUCCESS_PRODUCER = BOLT_NAME_PREFIX + "KafkaProducer";
 
     @Override
     public StormTopology load() {
@@ -76,6 +79,13 @@ public class TotalSpendUpdateTopology extends AbstractTopology {
         // Save new total spend amounts
         GBolt<?> saveBolt = new GRichBolt(SAVE_SPEND_AMOUNTS, new SaveTotalSpendAmountsBolt(PROPERTIES_FILE), config.getActionBoltHints());
         saveBolt.addGrouping(new ShuffleGrouping(RECALCULATE_SPEND_AMOUNTS));
+
+        GBolt<?> eventGeneratorBolt = new GRichBolt(EVENT_GENERATOR, new KafkaEventGeneratorBolt(), config.getActionBoltHints());
+        eventGeneratorBolt.addGrouping(new ShuffleGrouping(SAVE_SPEND_AMOUNTS));
+
+        // Send a event with the result
+        GBolt<?> kafkaEventSuccessProducer = new GRichBolt(KAFKA_EVENT_SUCCESS_PRODUCER, new KafkaBoltWrapper(config.getKafkaPublisherBoltConfig(), String.class, String.class).getKafkaBolt(), config.getEventResponseHints());
+        kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping(EVENT_GENERATOR));
         // -------------------------------------------------------
 
         // -------------------------------------------------------
@@ -92,7 +102,7 @@ public class TotalSpendUpdateTopology extends AbstractTopology {
 
         // Topology
         StormTopology topology = TopologyFactory.generateTopology(kafkaEventReaders,
-                Arrays.asList(kafkaEventProcess, readDataBolt, recalculateBolt, saveBolt, errorHandlingBolt, kafkaEventErrorProducer));
+                Arrays.asList(kafkaEventProcess, readDataBolt, recalculateBolt, saveBolt, eventGeneratorBolt, kafkaEventSuccessProducer, errorHandlingBolt, kafkaEventErrorProducer));
 
         LOG.info("{} Topology created, submitting it to storm...", TOPOLOGY_NAME);
 

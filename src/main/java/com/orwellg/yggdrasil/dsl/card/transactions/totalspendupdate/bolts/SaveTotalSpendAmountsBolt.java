@@ -6,6 +6,7 @@ import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepo
 import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
+import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,7 +46,7 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList(
-                Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.NEW_TOTAL_SPEND_AMOUNTS));
+                Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_NAME, Fields.RESULT));
     }
 
     @Override
@@ -69,8 +70,8 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
             values.put(Fields.PROCESS_ID, processId);
-            values.put(Fields.EVENT_DATA, eventData);
-            values.put(Fields.NEW_TOTAL_SPEND_AMOUNTS, newSpendAmounts);
+            values.put(Fields.EVENT_NAME, CardTransactionEvents.TOTAL_SPEND_UPDATED.getEventName());
+            values.put(Fields.RESULT, newSpendAmounts);
             send(input, values);
         } catch (Exception e) {
             LOG.error("{}Error saving total spend amounts. Message: {},", logPrefix, e.getMessage(), e);
