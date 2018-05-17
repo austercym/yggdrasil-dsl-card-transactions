@@ -5,6 +5,7 @@ import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepositor
 import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
+import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,7 +45,7 @@ public class SaveBolt extends BasicRichBolt {
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList(
-                Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA));
+                Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_NAME, Fields.RESULT));
     }
 
     @Override
@@ -62,7 +63,8 @@ public class SaveBolt extends BasicRichBolt {
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
             values.put(Fields.PROCESS_ID, processId);
-            values.put(Fields.EVENT_DATA, transaction);
+            values.put(Fields.EVENT_NAME, CardTransactionEvents.SAVED_TO_SCYLLA.getEventName());
+            values.put(Fields.RESULT, transaction);
             send(input, values);
         } catch (Exception e) {
             LOG.error("{}Error occurred when saving card transaction to Scylla. Message: {},", logPrefix, e.getMessage(), e);

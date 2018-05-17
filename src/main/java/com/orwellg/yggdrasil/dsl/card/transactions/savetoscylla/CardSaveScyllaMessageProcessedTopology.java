@@ -4,6 +4,7 @@ import com.orwellg.umbrella.commons.beans.config.kafka.SubscriberKafkaConfigurat
 import com.orwellg.umbrella.commons.storm.topology.TopologyFactory;
 import com.orwellg.umbrella.commons.storm.topology.component.base.AbstractTopology;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.EventErrorBolt;
+import com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventGeneratorBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GBolt;
 import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GRichBolt;
@@ -35,6 +36,8 @@ public class CardSaveScyllaMessageProcessedTopology extends AbstractTopology {
     private static final String SAVE_COMPONENT = BOLT_NAME_PREFIX + "Save";
     private static final String ERROR_HANDLING = BOLT_NAME_PREFIX + "ErrorHandling";
     private static final String ERROR_PRODUCER_COMPONENT = BOLT_NAME_PREFIX + "ErrorProducer";
+    private static final String EVENT_GENERATOR = BOLT_NAME_PREFIX + "EventGenerator";
+    private static final String KAFKA_EVENT_SUCCESS_PRODUCER = BOLT_NAME_PREFIX + "KafkaProducer";
 
     @Override
     public StormTopology load() {
@@ -65,6 +68,13 @@ public class CardSaveScyllaMessageProcessedTopology extends AbstractTopology {
 
         GBolt<?> saveBolt = new GRichBolt(SAVE_COMPONENT, new SaveBolt(PROPERTIES_FILE), config.getActionBoltHints());
         saveBolt.addGrouping(new ShuffleGrouping(PROCESS_COMPONENT));
+
+        GBolt<?> eventGeneratorBolt = new GRichBolt(EVENT_GENERATOR, new KafkaEventGeneratorBolt(), config.getActionBoltHints());
+        eventGeneratorBolt.addGrouping(new ShuffleGrouping(SAVE_COMPONENT));
+
+        // Send a event with the result
+        GBolt<?> kafkaEventSuccessProducer = new GRichBolt(KAFKA_EVENT_SUCCESS_PRODUCER, new KafkaBoltWrapper(config.getKafkaPublisherBoltConfig(), String.class, String.class).getKafkaBolt(), config.getEventResponseHints());
+        kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping(EVENT_GENERATOR));
         // -------------------------------------------------------
 
         // -------------------------------------------------------
@@ -81,7 +91,7 @@ public class CardSaveScyllaMessageProcessedTopology extends AbstractTopology {
 
         // Topology
         StormTopology topology = TopologyFactory.generateTopology(kafkaEventReaders,
-                Arrays.asList(processBolt, saveBolt, errorHandlingBolt, kafkaEventErrorProducer));
+                Arrays.asList(processBolt, saveBolt, eventGeneratorBolt, kafkaEventSuccessProducer, errorHandlingBolt, kafkaEventErrorProducer));
 
         LOG.info("{} Topology created, submitting it to storm...", TOPOLOGY_NAME);
 
