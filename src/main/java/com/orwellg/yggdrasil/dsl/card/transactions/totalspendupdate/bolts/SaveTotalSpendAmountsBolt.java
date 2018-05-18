@@ -58,7 +58,6 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
         LOG.info("{}Saving total spend amounts", logPrefix);
 
         try {
-            MessageProcessed eventData = (MessageProcessed) input.getValueByField(Fields.EVENT_DATA);
             SpendingTotalAmounts newSpendAmounts = (SpendingTotalAmounts) input.getValueByField(Fields.NEW_TOTAL_SPEND_AMOUNTS);
 
             if (newSpendAmounts == null) {
