@@ -6,6 +6,7 @@ import com.orwellg.umbrella.commons.storm.topology.TopologyFactory;
 import com.orwellg.umbrella.commons.storm.topology.component.base.AbstractTopology;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.EventErrorBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaCommandGeneratorBolt;
+import com.orwellg.umbrella.commons.storm.topology.component.bolt.KafkaEventGeneratorBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GBolt;
 import com.orwellg.umbrella.commons.storm.topology.generic.bolt.GRichBolt;
@@ -31,7 +32,7 @@ public class AccountingTopology extends AbstractTopology {
     private static final Logger LOG = LogManager.getLogger(AccountingTopology.class);
 
     public static final String PROPERTIES_FILE = "accounting-topology.properties";
-    public static final String NO_ACCOUNTING_STREAM = "NoAccounting";
+    public static final String NO_ACCOUNTING_STREAM = "no-accounting";
     private static final String TOPOLOGY_NAME = "yggdrasil-card-accounting";
     private static final String BOLT_NAME_PREFIX = "accounting";
     private static final String KAFKA_EVENT_READER_FORMAT = BOLT_NAME_PREFIX + "Reader%d";
@@ -41,6 +42,8 @@ public class AccountingTopology extends AbstractTopology {
     private static final String ERROR_PRODUCER_COMPONENT = BOLT_NAME_PREFIX + "ErrorProducer";
     private static final String ACCOUNTING_KAFKA_COMMAND_COMPONENT = BOLT_NAME_PREFIX + "KafkaCommandComponent";
     private static final String ACCOUNTING_PUBLISH_COMMAND_COMPONENT = BOLT_NAME_PREFIX + "PublishComponent";
+    private static final String EVENT_GENERATOR = BOLT_NAME_PREFIX + "EventGenerator";
+    private static final String KAFKA_EVENT_SUCCESS_PRODUCER = BOLT_NAME_PREFIX + "KafkaProducer";
 
     @Override
     public StormTopology load() {
@@ -78,6 +81,14 @@ public class AccountingTopology extends AbstractTopology {
         GBolt<?> kafkaAccountingCommandProducerBolt = new GRichBolt(ACCOUNTING_PUBLISH_COMMAND_COMPONENT, new KafkaBoltFieldNameWrapper(config.getKafkaPublisherBoltConfig(), String.class, String.class).getKafkaBolt(), config.getActionBoltHints());
         kafkaAccountingCommandProducerBolt.addGrouping(new ShuffleGrouping(ACCOUNTING_KAFKA_COMMAND_COMPONENT));
 
+        // No accounting required stream
+        GBolt<?> eventGeneratorBolt = new GRichBolt(EVENT_GENERATOR, new KafkaEventGeneratorBolt(), config.getActionBoltHints());
+        eventGeneratorBolt.addGrouping(new ShuffleGrouping(COMMAND_GENERATOR, NO_ACCOUNTING_STREAM));
+
+        // Send a event with the result
+        GBolt<?> kafkaEventSuccessProducer = new GRichBolt(KAFKA_EVENT_SUCCESS_PRODUCER, new KafkaBoltWrapper(config.getKafkaPublisherBoltConfig(), String.class, String.class).getKafkaBolt(), config.getEventResponseHints());
+        kafkaEventSuccessProducer.addGrouping(new ShuffleGrouping(EVENT_GENERATOR));
+
         // -------------------------------------------------------
 
         // -------------------------------------------------------
@@ -94,7 +105,7 @@ public class AccountingTopology extends AbstractTopology {
 
         // Topology
         StormTopology topology = TopologyFactory.generateTopology(kafkaEventReaders,
-                Arrays.asList(processBolt, commandGeneratorBolt, eventAccountingCommandGeneratorBolt, kafkaAccountingCommandProducerBolt, errorHandlingBolt, kafkaEventErrorProducer));
+                Arrays.asList(processBolt, commandGeneratorBolt, eventAccountingCommandGeneratorBolt, kafkaAccountingCommandProducerBolt, errorHandlingBolt, kafkaEventErrorProducer, eventGeneratorBolt, kafkaEventSuccessProducer));
 
         LOG.info("{} Topology created, submitting it to storm...", TOPOLOGY_NAME);
 

@@ -30,6 +30,7 @@ public class AccountingCommandBoltTest {
     @Before
     public void setUp() {
         bolt = new AccountingCommandBolt();
+        bolt.prepare(null, null, null);
         bolt.declareFieldsDefinition();
     }
 

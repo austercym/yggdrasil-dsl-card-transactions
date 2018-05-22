@@ -1,19 +1,21 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.accounting.bolts;
 
+import com.google.gson.Gson;
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.command.accounting.*;
 import com.orwellg.umbrella.avro.types.commons.TransactionType;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
+import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.umbrella.commons.utils.enums.CommandTypes;
+import com.orwellg.umbrella.commons.utils.enums.KafkaHeaders;
 import com.orwellg.umbrella.commons.utils.enums.Systems;
-import com.orwellg.umbrella.commons.utils.enums.TransactionEvents;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import com.orwellg.yggdrasil.commons.factories.ClusterFactory;
 import com.orwellg.yggdrasil.commons.net.Cluster;
 import com.orwellg.yggdrasil.commons.net.Node;
 import com.orwellg.yggdrasil.commons.utils.enums.SpecialAccountTypes;
 import com.orwellg.yggdrasil.dsl.card.transactions.accounting.AccountingTopology;
-import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,6 +33,7 @@ public class AccountingCommandBolt extends BasicRichBolt {
     private static final Logger LOG = LogManager.getLogger(AccountingCommandBolt.class);
 
     private Cluster processorCluster;
+    private Gson gson;
 
     void setProcessorCluster(Cluster processorCluster) {
         this.processorCluster = processorCluster;
@@ -42,6 +45,7 @@ public class AccountingCommandBolt extends BasicRichBolt {
         super.prepare(stormConf, context, collector);
         processorCluster = ClusterFactory.createCluster(
                 TopologyConfigFactory.getTopologyConfig(AccountingTopology.PROPERTIES_FILE).getNetworkConfig());
+        this.gson = new Gson();
     }
 
     @Override
@@ -49,9 +53,9 @@ public class AccountingCommandBolt extends BasicRichBolt {
         addFielsDefinition(Arrays.asList(
                 Fields.KEY, Fields.PROCESS_ID, Fields.RESULT,
                 Fields.COMMAND_NAME, Fields.COMMAND_KEY,
-                Fields.EVENT_NAME, Fields.EVENT_DATA, Fields.TOPIC));
+                Fields.TOPIC, Fields.HEADERS));
         addFielsDefinition(AccountingTopology.NO_ACCOUNTING_STREAM, Arrays.asList(
-                Fields.KEY, Fields.PROCESS_ID));
+                Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_NAME, Fields.RESULT));
     }
 
     @Override
@@ -62,6 +66,11 @@ public class AccountingCommandBolt extends BasicRichBolt {
             String processId = input.getStringByField(Fields.PROCESS_ID);
             MessageProcessed processed = (MessageProcessed) input.getValueByField(Fields.EVENT_DATA);
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
+            String headers = input.getStringByField(Fields.HEADERS);
+            String accountingResponseTopic = TopologyConfigFactory
+                    .getTopologyConfig(AccountingTopology.PROPERTIES_FILE)
+                    .getKafkaPublisherBoltConfig()
+                    .getTopic().getName().get(0);
 
             if (isAccountingRequired(processed)) {
                 LOG.debug("{}Generating accounting command", logPrefix);
@@ -95,9 +104,9 @@ public class AccountingCommandBolt extends BasicRichBolt {
                 values.put(Fields.RESULT, command);
                 values.put(Fields.COMMAND_KEY, processId);
                 values.put(Fields.COMMAND_NAME, CommandTypes.ACCOUNTING_COMMAND_RECEIVED.getCommandName());
-                values.put(Fields.EVENT_NAME, TransactionEvents.INCOMING_TRANSACTION_RECEIVED.getEventName());
-                values.put(Fields.EVENT_DATA, processed);
                 values.put(Fields.TOPIC, processorNode.getTopic());
+                values.put(Fields.HEADERS, addHeaderValue(
+                        headers, KafkaHeaders.REPLY_TO.getKafkaHeader(), accountingResponseTopic.getBytes()));
                 send(input, values);
             } else {
                 LOG.info("{}No accounting operation required", logPrefix);
@@ -105,6 +114,8 @@ public class AccountingCommandBolt extends BasicRichBolt {
                 Map<String, Object> values = new HashMap<>();
                 values.put(Fields.KEY, key);
                 values.put(Fields.PROCESS_ID, processId);
+                values.put(Fields.EVENT_NAME, CardTransactionEvents.ACCOUNTING_COMPLETED.getEventName());
+                values.put(Fields.RESULT, processed);
                 send(AccountingTopology.NO_ACCOUNTING_STREAM, input, values);
             }
         } catch (Exception e) {

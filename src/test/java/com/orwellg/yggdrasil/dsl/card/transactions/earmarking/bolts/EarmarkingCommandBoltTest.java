@@ -1,6 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.earmarking.bolts;
 
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageType;
 import com.orwellg.umbrella.avro.types.command.accounting.AccountingCommandData;
 import com.orwellg.umbrella.avro.types.command.accounting.BalanceUpdateType;
 import com.orwellg.umbrella.avro.types.command.accounting.TransactionDirection;
@@ -30,6 +31,7 @@ public class EarmarkingCommandBoltTest {
     @Before
     public void setUp() {
         bolt = new EarmarkingCommandBolt();
+        bolt.prepare(null, null, null);
         bolt.declareFieldsDefinition();
     }
 
@@ -107,6 +109,7 @@ public class EarmarkingCommandBoltTest {
         processed.setEarmarkAmount(DecimalTypeUtils.toDecimal(19.09));
         processed.setEarmarkCurrency("bar");
         processed.setInternalAccountId("42");
+        processed.setMessageType(MessageType.PRESENTMENT);
 
         Tuple input = mock(Tuple.class);
         when(input.getValueByField(com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.Fields.EVENT_DATA)).thenReturn(processed);
