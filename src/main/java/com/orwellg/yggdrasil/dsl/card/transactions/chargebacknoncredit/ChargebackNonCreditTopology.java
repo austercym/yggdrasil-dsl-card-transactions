@@ -39,6 +39,11 @@ public class ChargebackNonCreditTopology extends AbstractTopology {
 
     @Override
     public StormTopology load() {
+        return load(null);
+    }
+
+    @Override
+    public StormTopology load(String s) {
         // Read configuration params from the topology properties file and zookeeper
         TopologyConfig config = TopologyConfigFactory.getTopologyConfig(PROPERTIES_FILE);
 

@@ -43,6 +43,11 @@ public class PresentmentTopology extends AbstractTopology {
 
     @Override
     public StormTopology load() {
+        return load(null);
+    }
+
+    @Override
+    public StormTopology load(String s) {
         LOG.debug("Creating Card Presentments processing topology");
 
         TopologyConfig config = TopologyConfigFactory.getTopologyConfig(PROPERTIES_FILE);
