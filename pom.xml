@@ -29,7 +29,7 @@
 		<dependency>
 			<groupId>com.orwellg.yggdrasil</groupId>
 			<artifactId>yggdrasil-card-transaction-commons</artifactId>
-			<version>0.0.4-SNAPSHOT</version>
+			<version>0.0.5-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.orwellg.umbrella</groupId>

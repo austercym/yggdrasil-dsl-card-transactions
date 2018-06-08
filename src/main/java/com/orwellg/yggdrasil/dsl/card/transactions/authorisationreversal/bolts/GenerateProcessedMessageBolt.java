@@ -5,10 +5,13 @@ import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
-import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
+import com.orwellg.yggdrasil.card.transaction.commons.DuplicateChecker;
 import com.orwellg.yggdrasil.card.transaction.commons.MessageProcessedFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.storm.task.OutputCollector;
+import org.apache.storm.task.TopologyContext;
 import org.apache.storm.tuple.Tuple;
 
 import java.util.Arrays;
@@ -19,6 +22,18 @@ import java.util.Map;
 public class GenerateProcessedMessageBolt extends BasicRichBolt {
 
     private static final Logger LOG = LogManager.getLogger(GenerateProcessedMessageBolt.class);
+
+    private DuplicateChecker duplicateChecker;
+
+    void setDuplicateChecker(DuplicateChecker duplicateChecker) {
+        this.duplicateChecker = duplicateChecker;
+    }
+
+    @Override
+    public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
+        super.prepare(stormConf, context, collector);
+        setDuplicateChecker(new DuplicateChecker());
+    }
 
     @Override
     public void declareFieldsDefinition() {
@@ -42,14 +57,21 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
                 throw new IllegalArgumentException("Empty transaction list - cannot process authorisation reversal");
             }
             CardTransaction lastTransaction = transactionList.get(0);
-            if (event.getSettlementAmount().compareTo(lastTransaction.getEarmarkAmount().abs()) > 0) {
-                throw new IllegalArgumentException("Authorisation reversal amount is greater than earmarked amount");
-            }
-            if (event.getSettlementAmount().compareTo(lastTransaction.getWirecardAmount().abs()) < 0) {
-                throw new IllegalArgumentException("Authorisation reversal amount is greater than amount sent to Wirecard");
+            boolean isDuplicate = duplicateChecker.isDuplicate(event, transactionList);
+
+            if (isDuplicate) {
+                LOG.info(
+                        "{}Processing duplicated message. ProviderMessageId: {}",
+                        logPrefix, event.getProviderMessageId());
+            } else {
+                if (event.getSettlementAmount().compareTo(lastTransaction.getEarmarkAmount().abs()) > 0) {
+                    throw new IllegalArgumentException("Authorisation reversal amount is greater than earmarked amount");
+                }
             }
 
-            MessageProcessed processedMessage = generateMessageProcessed(event, lastTransaction, logPrefix);
+            MessageProcessed processedMessage = isDuplicate
+                    ? MessageProcessedFactory.from(event, lastTransaction)
+                    : generateMessageProcessed(event, lastTransaction, logPrefix);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
@@ -69,24 +91,23 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
 
         LOG.debug("{}Generating GPS message processed", logPrefix);
 
-        MessageProcessed MessageProcessed = MessageProcessedFactory.from(transactionInfo);
+        MessageProcessed messageProcessed = MessageProcessedFactory.from(transactionInfo);
 
-        MessageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(transactionInfo.getSettlementAmount()));
-        MessageProcessed.setEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
-        MessageProcessed.setWirecardAmount(DecimalTypeUtils.toDecimal(transactionInfo.getSettlementAmount().negate()));
-        MessageProcessed.setWirecardCurrency(transactionInfo.getSettlementCurrency());
+        messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(transactionInfo.getSettlementAmount()));
+        messageProcessed.setEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
 
-        MessageProcessed.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(
+        messageProcessed.setTotalClientAmount(DecimalTypeUtils.toDecimal(lastTransaction.getClientAmount()));
+        messageProcessed.setTotalClientCurrency(lastTransaction.getClientCurrency());
+        messageProcessed.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(
                 lastTransaction.getEarmarkAmount().add(transactionInfo.getSettlementAmount())));
-        MessageProcessed.setTotalEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
-        MessageProcessed.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(
-                lastTransaction.getWirecardAmount().subtract(transactionInfo.getSettlementAmount())));
-        MessageProcessed.setTotalWirecardCurrency(transactionInfo.getSettlementCurrency());
+        messageProcessed.setTotalEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
+        messageProcessed.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(lastTransaction.getWirecardAmount()));
+        messageProcessed.setTotalWirecardCurrency(transactionInfo.getSettlementCurrency());
 
-        MessageProcessed.setInternalAccountCurrency(lastTransaction.getInternalAccountCurrency());
-        MessageProcessed.setInternalAccountId(lastTransaction.getInternalAccountId());
+        messageProcessed.setInternalAccountCurrency(lastTransaction.getInternalAccountCurrency());
+        messageProcessed.setInternalAccountId(lastTransaction.getInternalAccountId());
 
-        LOG.debug("{}GPS message processed generated: {}", logPrefix, MessageProcessed);
-        return MessageProcessed;
+        LOG.debug("{}GPS message processed generated: {}", logPrefix, messageProcessed);
+        return messageProcessed;
     }
 }
