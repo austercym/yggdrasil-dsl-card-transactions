@@ -1,9 +1,11 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
+import com.orwellg.umbrella.avro.types.commons.Decimal;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
+import com.orwellg.yggdrasil.card.transaction.commons.DuplicateChecker;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.tuple.Tuple;
@@ -11,6 +13,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collections;
 
 import static com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils.isEqual;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,6 +28,10 @@ public class GenerateProcessedMessageBoltTest {
     public void setUp() {
         bolt = new GenerateProcessedMessageBolt();
         bolt.declareFieldsDefinition();
+    }
+
+    private boolean isNullOrZero(Decimal amount) {
+        return amount == null || amount.getValue().compareTo(BigDecimal.ZERO) == 0;
     }
 
     @Test
@@ -46,6 +54,10 @@ public class GenerateProcessedMessageBoltTest {
 
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
+
+        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
+        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(false);
+        bolt.setDuplicateChecker(duplicateChecker);
 
         // act
         bolt.execute(input);
@@ -91,11 +103,15 @@ public class GenerateProcessedMessageBoltTest {
 
         Tuple input = mock(Tuple.class);
         when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(transaction);
-        when(input.contains(Fields.LAST_TRANSACTION)).thenReturn(true);
-        when(input.getValueByField(Fields.LAST_TRANSACTION)).thenReturn(authorisation);
+        when(input.contains(Fields.TRANSACTION_LIST)).thenReturn(true);
+        when(input.getValueByField(Fields.TRANSACTION_LIST)).thenReturn(Collections.singletonList(authorisation));
 
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
+
+        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
+        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(false);
+        bolt.setDuplicateChecker(duplicateChecker);
 
         // act
         bolt.execute(input);
@@ -141,11 +157,15 @@ public class GenerateProcessedMessageBoltTest {
 
         Tuple input = mock(Tuple.class);
         when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(transaction);
-        when(input.contains(Fields.LAST_TRANSACTION)).thenReturn(true);
-        when(input.getValueByField(Fields.LAST_TRANSACTION)).thenReturn(firstPresentment);
+        when(input.contains(Fields.TRANSACTION_LIST)).thenReturn(true);
+        when(input.getValueByField(Fields.TRANSACTION_LIST)).thenReturn(Collections.singletonList(firstPresentment));
 
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
+
+        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
+        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(false);
+        bolt.setDuplicateChecker(duplicateChecker);
 
         // act
         bolt.execute(input);
@@ -191,11 +211,15 @@ public class GenerateProcessedMessageBoltTest {
 
         Tuple input = mock(Tuple.class);
         when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(transaction);
-        when(input.contains(Fields.LAST_TRANSACTION)).thenReturn(true);
-        when(input.getValueByField(Fields.LAST_TRANSACTION)).thenReturn(firstPresentment);
+        when(input.contains(Fields.TRANSACTION_LIST)).thenReturn(true);
+        when(input.getValueByField(Fields.TRANSACTION_LIST)).thenReturn(Collections.singletonList(firstPresentment));
 
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
+
+        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
+        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(false);
+        bolt.setDuplicateChecker(duplicateChecker);
 
         // act
         bolt.execute(input);
@@ -218,6 +242,60 @@ public class GenerateProcessedMessageBoltTest {
                                 && "bar".equals(item.getWirecardCurrency())
                                 && isEqual(item.getTotalWirecardAmount(), 1.06)
                                 && "bar".equals(item.getTotalWirecardCurrency())
+                                && "42".equals(item.getInternalAccountId())
+                                && "foo".equals(item.getInternalAccountCurrency())
+                        )));
+    }
+
+    @Test
+    public void executeWhenDuplicatedMessageShouldNotAffectBalances() {
+        // arrange
+        Message message = new Message();
+        message.setTxnType("P");
+        TransactionInfo transaction = new TransactionInfo();
+        transaction.setMessage(message);
+        transaction.setSettlementAmount(BigDecimal.valueOf(19.09));
+        transaction.setSettlementCurrency("bar");
+        CardTransaction previousPresentment = new CardTransaction();
+        previousPresentment.setEarmarkAmount(BigDecimal.ZERO);
+        previousPresentment.setEarmarkCurrency("foo");
+        previousPresentment.setClientAmount(BigDecimal.valueOf(-20.15));
+        previousPresentment.setClientCurrency("foo");
+        previousPresentment.setWirecardAmount(BigDecimal.valueOf(20.15));
+        previousPresentment.setWirecardCurrency("foo");
+        previousPresentment.setInternalAccountId("42");
+        previousPresentment.setInternalAccountCurrency("foo");
+
+        Tuple input = mock(Tuple.class);
+        when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(transaction);
+        when(input.contains(Fields.TRANSACTION_LIST)).thenReturn(true);
+        when(input.getValueByField(Fields.TRANSACTION_LIST)).thenReturn(Collections.singletonList(previousPresentment));
+
+        OutputCollector collector = mock(OutputCollector.class);
+        bolt.setCollector(collector);
+
+        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
+        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(true);
+        bolt.setDuplicateChecker(duplicateChecker);
+
+        // act
+        bolt.execute(input);
+
+        // assert
+        verify(collector).emit(
+                any(Tuple.class),
+                argThat(result -> result.stream()
+                        .filter(MessageProcessed.class::isInstance)
+                        .map(MessageProcessed.class::cast)
+                        .anyMatch(item -> isNullOrZero(item.getEarmarkAmount())
+                                && isEqual(item.getTotalEarmarkAmount(), 0)
+                                && "foo".equals(item.getTotalEarmarkCurrency())
+                                && isNullOrZero(item.getClientAmount())
+                                && isEqual(item.getTotalClientAmount(), -20.15)
+                                && "foo".equals(item.getTotalClientCurrency())
+                                && isNullOrZero(item.getWirecardAmount())
+                                && isEqual(item.getTotalWirecardAmount(), 20.15)
+                                && "foo".equals(item.getTotalWirecardCurrency())
                                 && "42".equals(item.getInternalAccountId())
                                 && "foo".equals(item.getInternalAccountCurrency())
                         )));
