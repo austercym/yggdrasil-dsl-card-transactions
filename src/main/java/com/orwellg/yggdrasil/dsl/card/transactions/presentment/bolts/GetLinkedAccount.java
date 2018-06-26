@@ -1,10 +1,12 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
+import com.datastax.driver.core.Session;
 import com.orwellg.umbrella.commons.config.params.ScyllaParams;
 import com.orwellg.umbrella.commons.repositories.scylla.LinkedAccountRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.LinkedAccountRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
+import com.orwellg.umbrella.commons.utils.scylla.ScyllaManager;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
@@ -73,8 +75,8 @@ public class GetLinkedAccount extends BasicRichBolt {
     private void initializeCardRepositories() {
         ScyllaParams scyllaParams = TopologyConfigFactory.getTopologyConfig(propertyFile)
                 .getScyllaConfig().getScyllaParams();
-        String nodeList = scyllaParams.getNodeList();
-        String keyspace = scyllaParams.getKeyspaceCardsDB();
-        repository = new LinkedAccountRepositoryImpl(nodeList, keyspace);
+        ScyllaManager scyllaManager = ScyllaManager.getInstance(scyllaParams);
+        Session session = scyllaManager.getSession(scyllaParams.getKeyspaceCardsDB());
+        repository = new LinkedAccountRepositoryImpl(session);
     }
 }
