@@ -10,7 +10,7 @@ import org.apache.storm.task.TopologyContext;
 import java.util.Arrays;
 import java.util.Map;
 
-public class EventToTransactionInfoBolt extends GenericEventProcessBolt<Message> {
+public class EventToTransactionInfoBolt extends GenericEventMappingBolt<Message> {
 
 	private static final long serialVersionUID = 1L;
 
@@ -29,7 +29,7 @@ public class EventToTransactionInfoBolt extends GenericEventProcessBolt<Message>
 	}
 
 	@Override
-	protected Object process(Message eventData, String key, String processId) {
+	protected Object mapEvent(Message eventData, String key, String processId) {
 		return mapper.map(eventData);
 	}
 

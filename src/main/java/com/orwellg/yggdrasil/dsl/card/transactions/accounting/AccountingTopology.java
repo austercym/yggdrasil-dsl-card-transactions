@@ -16,7 +16,7 @@ import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltFieldNameWrappe
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
 import com.orwellg.yggdrasil.dsl.card.transactions.accounting.bolts.AccountingCommandBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.GenericEventProcessBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.GenericEventMappingBolt;
 import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfig;
 import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
@@ -72,7 +72,7 @@ public class AccountingTopology extends AbstractTopology {
         // -------------------------------------------------------
         // Process events
         // -------------------------------------------------------
-        GBolt<?> processBolt = new GRichBolt(PROCESS_COMPONENT, new GenericEventProcessBolt<>(MessageProcessed.class), config.getActionBoltHints());
+        GBolt<?> processBolt = new GRichBolt(PROCESS_COMPONENT, new GenericEventMappingBolt<>(MessageProcessed.class), config.getActionBoltHints());
         for (String spoutName : spoutNames) {
             processBolt.addGrouping(new ShuffleGrouping(spoutName, KafkaSpout.EVENT_SUCCESS_STREAM));
         }

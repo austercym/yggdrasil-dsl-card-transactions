@@ -7,11 +7,10 @@ import org.apache.logging.log4j.Logger;
 import org.apache.storm.tuple.Tuple;
 
 import java.lang.reflect.Type;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GenericEventProcessBolt<TEventData> extends KafkaEventProcessBolt {
+public abstract class GenericEventProcessBolt<TEventData> extends KafkaEventProcessBolt {
 
     private static final long serialVersionUID = 1L;
 
@@ -34,12 +33,12 @@ public class GenericEventProcessBolt<TEventData> extends KafkaEventProcessBolt {
 
         // Get the JSON message with the data
         TEventData eventData = gson.fromJson(event.getEvent().getData(), eventDataType);
-        Object processed = process(eventData, key, processId);
 
         Map<String, Object> values = new HashMap<>();
         values.put(Fields.KEY, key);
         values.put(Fields.PROCESS_ID, processId);
-        values.put(Fields.EVENT_DATA, processed);
+
+        process(values, eventData, key, processId);
 
         send(input, values);
 
@@ -48,12 +47,5 @@ public class GenericEventProcessBolt<TEventData> extends KafkaEventProcessBolt {
         LOG.info("[Key: {}][ProcessId: {}]: Event processed. (Execution time: {} ms)", key, processId, elapsedTime);
     }
 
-    protected Object process(TEventData eventData, String key, String processId) {
-        return eventData;
-    }
-
-    @Override
-    public void declareFieldsDefinition() {
-        addFielsDefinition(Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA));
-    }
+    protected abstract void process(Map<String, Object> values, TEventData eventData, String key, String processId);
 }
