@@ -1,8 +1,10 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
+import com.orwellg.umbrella.avro.types.commons.Decimal;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
+import com.orwellg.yggdrasil.card.transaction.commons.DuplicateChecker;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.tuple.Tuple;
@@ -13,6 +15,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
+import static com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils.isEqual;
 import static org.mockito.Mockito.*;
 
 public class GenericMessageProcessingBoltTest {
@@ -23,6 +26,10 @@ public class GenericMessageProcessingBoltTest {
     public void setUp() {
         bolt = new GenericMessageProcessingBolt();
         bolt.declareFieldsDefinition();
+    }
+
+    private boolean isNullOrZero(Decimal amount) {
+        return amount == null || amount.getValue().compareTo(BigDecimal.ZERO) == 0;
     }
 
     @Test
@@ -49,6 +56,10 @@ public class GenericMessageProcessingBoltTest {
 
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
+
+        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
+        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(false);
+        bolt.setDuplicateChecker(duplicateChecker);
 
         // act
         bolt.execute(input);
@@ -120,6 +131,10 @@ public class GenericMessageProcessingBoltTest {
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
 
+        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
+        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(false);
+        bolt.setDuplicateChecker(duplicateChecker);
+
         // act
         bolt.execute(input);
 
@@ -190,6 +205,10 @@ public class GenericMessageProcessingBoltTest {
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
 
+        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
+        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(false);
+        bolt.setDuplicateChecker(duplicateChecker);
+
         // act
         bolt.execute(input);
 
@@ -259,6 +278,10 @@ public class GenericMessageProcessingBoltTest {
 
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
+
+        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
+        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(false);
+        bolt.setDuplicateChecker(duplicateChecker);
 
         // act
         bolt.execute(input);
@@ -334,6 +357,10 @@ public class GenericMessageProcessingBoltTest {
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
 
+        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
+        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(true);
+        bolt.setDuplicateChecker(duplicateChecker);
+
         // act
         bolt.execute(input);
 
@@ -343,33 +370,21 @@ public class GenericMessageProcessingBoltTest {
                 argThat(result -> result.stream()
                         .filter(MessageProcessed.class::isInstance)
                         .map(MessageProcessed.class::cast)
-                        .anyMatch(item -> item.getWirecardAmount() != null
+                        .anyMatch(item -> isNullOrZero(item.getWirecardAmount())
                                 &&
-                                item.getWirecardAmount().getValue().compareTo(BigDecimal.ZERO) == 0
+                                isNullOrZero(item.getClientAmount())
                                 &&
-                                "FOO".equals(item.getWirecardCurrency())
+                                isNullOrZero(item.getEarmarkAmount())
                                 &&
-                                item.getClientAmount() != null
-                                &&
-                                item.getClientAmount().getValue().compareTo(BigDecimal.ZERO) == 0
-                                &&
-                                "BAR".equals(item.getClientCurrency())
-                                &&
-                                item.getTotalWirecardAmount() != null
-                                &&
-                                item.getTotalWirecardAmount().getValue().compareTo(BigDecimal.valueOf(3.08)) == 0
+                                isEqual(item.getTotalWirecardAmount(), 3.08)
                                 &&
                                 "BAR".equals(item.getTotalWirecardCurrency())
                                 &&
-                                item.getTotalClientAmount() != null
-                                &&
-                                item.getTotalClientAmount().getValue().compareTo(BigDecimal.valueOf(-3.08)) == 0
+                                isEqual(item.getTotalClientAmount(), -3.08)
                                 &&
                                 "BAR".equals(item.getTotalClientCurrency())
                                 &&
-                                item.getTotalEarmarkAmount() != null
-                                &&
-                                item.getTotalEarmarkAmount().getValue().compareTo(BigDecimal.ZERO) == 0
+                                isEqual(item.getTotalEarmarkAmount(), 0)
                                 &&
                                 "BAR".equals(item.getTotalEarmarkCurrency())
                                 &&
@@ -395,6 +410,10 @@ public class GenericMessageProcessingBoltTest {
 
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
+
+        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
+        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(false);
+        bolt.setDuplicateChecker(duplicateChecker);
 
         // act
         bolt.execute(input);

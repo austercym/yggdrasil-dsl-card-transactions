@@ -1,13 +1,12 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate.bolts;
 
-import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
-import com.orwellg.umbrella.commons.config.params.ScyllaParams;
+import com.datastax.driver.core.Session;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
-import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.config.ScyllaSessionFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -36,11 +35,8 @@ public class SaveTotalSpendAmountsBolt extends BasicRichBolt {
     }
 
     private void setScyllaConnectionParameters() {
-        ScyllaParams scyllaParams = TopologyConfigFactory.getTopologyConfig(propertyFile)
-                .getScyllaConfig().getScyllaParams();
-        String nodeList = scyllaParams.getNodeList();
-        String keyspace = scyllaParams.getKeyspaceCardsDB();
-        amountsRepository = new SpendingTotalAmountsRepositoryImpl(nodeList, keyspace);
+        Session session = ScyllaSessionFactory.getSession(propertyFile);
+        amountsRepository = new SpendingTotalAmountsRepositoryImpl(session);
     }
 
     @Override

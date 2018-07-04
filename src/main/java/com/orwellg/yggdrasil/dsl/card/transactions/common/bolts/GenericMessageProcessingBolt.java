@@ -5,11 +5,14 @@ import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
-import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
+import com.orwellg.yggdrasil.card.transaction.commons.DuplicateChecker;
 import com.orwellg.yggdrasil.card.transaction.commons.MessageProcessedFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.storm.task.OutputCollector;
+import org.apache.storm.task.TopologyContext;
 import org.apache.storm.tuple.Tuple;
 
 import java.math.BigDecimal;
@@ -21,6 +24,18 @@ import java.util.Map;
 public class GenericMessageProcessingBolt extends BasicRichBolt {
 
     private static final Logger LOG = LogManager.getLogger(GenericMessageProcessingBolt.class);
+
+    private DuplicateChecker duplicateChecker;
+
+    void setDuplicateChecker(DuplicateChecker duplicateChecker) {
+        this.duplicateChecker = duplicateChecker;
+    }
+
+    @Override
+    public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
+        super.prepare(stormConf, context, collector);
+        setDuplicateChecker(new DuplicateChecker());
+    }
 
     @Override
     public void declareFieldsDefinition() {
@@ -39,17 +54,18 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
             LOG.debug("{}Processing", logPrefix);
-            MessageProcessed result = MessageProcessedFactory.from(eventData);
+            MessageProcessed result;
 
             if (transactionList == null || transactionList.isEmpty()) {
                 throw new IllegalArgumentException("Empty transaction list - cannot process");
             }
 
             CardTransaction lastTransaction = transactionList.get(0);
-            if (isDuplicatedMessage(eventData, transactionList)) {
+            if (duplicateChecker.isDuplicate(eventData, transactionList)) {
                 LOG.info("{}Ignore message. It has been already processed.", logPrefix);
-                copyValuesFromLatestTransaction(eventData, result, lastTransaction);
+                result = MessageProcessedFactory.from(eventData, lastTransaction);
             } else {
+                result = MessageProcessedFactory.from(eventData);
                 calculateNewValues(eventData, result, lastTransaction);
             }
 
@@ -85,30 +101,5 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
 
         result.setInternalAccountId(lastTransaction.getInternalAccountId());
         result.setInternalAccountCurrency(lastTransaction.getInternalAccountCurrency());
-    }
-
-    private void copyValuesFromLatestTransaction(TransactionInfo eventData, MessageProcessed result, CardTransaction lastTransaction) {
-        result.setWirecardAmount(DecimalTypeUtils.toDecimal(BigDecimal.ZERO));
-        result.setWirecardCurrency(eventData.getSettlementCurrency());
-        result.setClientAmount(DecimalTypeUtils.toDecimal(BigDecimal.ZERO));
-        result.setClientCurrency(lastTransaction.getInternalAccountCurrency());
-
-        result.setTotalWirecardAmount(DecimalTypeUtils.toDecimal(
-                ObjectUtils.firstNonNull(lastTransaction.getWirecardAmount(), BigDecimal.ZERO)));
-        result.setTotalWirecardCurrency(lastTransaction.getWirecardCurrency());
-        result.setTotalClientAmount(DecimalTypeUtils.toDecimal(
-                ObjectUtils.firstNonNull(lastTransaction.getClientAmount(), BigDecimal.ZERO)));
-        result.setTotalClientCurrency(lastTransaction.getClientCurrency());
-        result.setTotalEarmarkAmount(DecimalTypeUtils.toDecimal(
-                ObjectUtils.firstNonNull(lastTransaction.getEarmarkAmount(), BigDecimal.ZERO)));
-        result.setTotalEarmarkCurrency(lastTransaction.getEarmarkCurrency());
-
-        result.setInternalAccountId(lastTransaction.getInternalAccountId());
-        result.setInternalAccountCurrency(lastTransaction.getInternalAccountCurrency());
-    }
-
-    private boolean isDuplicatedMessage(TransactionInfo eventData, List<CardTransaction> transactionList) {
-        return transactionList.stream().anyMatch(
-                t -> eventData.getProviderMessageId().equals(t.getProviderMessageId()));
     }
 }

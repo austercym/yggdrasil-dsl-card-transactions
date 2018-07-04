@@ -20,7 +20,7 @@ public class CheckAuthorisationBolt extends BasicRichBolt {
 
     @Override
     public void declareFieldsDefinition() {
-        addFielsDefinition(Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.LAST_TRANSACTION));
+        addFielsDefinition(Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.TRANSACTION_LIST));
         addFielsDefinition(PresentmentTopology.OFFLINE_PRESENTMENT_STREAM, Arrays.asList(Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA));
     }
 
@@ -41,7 +41,7 @@ public class CheckAuthorisationBolt extends BasicRichBolt {
                 LOG.info("Key: {} | ProcessId: {} | Processing Online Presentment. ProviderMessageId: {}, ProviderTransactionId: {}", key, originalProcessId, eventData.getProviderMessageId(), eventData.getProviderTransactionId());
 
                 Map<String, Object> values = getReturnValues(key, originalProcessId, eventData);
-                values.put(Fields.LAST_TRANSACTION, cardTransactions.get(0));
+                values.put(Fields.TRANSACTION_LIST, cardTransactions);
                 send(tuple, values);
             }
             else {

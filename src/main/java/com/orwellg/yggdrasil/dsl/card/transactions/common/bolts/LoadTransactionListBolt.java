@@ -1,12 +1,12 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
-import com.orwellg.umbrella.commons.config.params.ScyllaParams;
+import com.datastax.driver.core.Session;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
+import com.orwellg.yggdrasil.card.transaction.commons.config.ScyllaSessionFactory;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
-import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -39,11 +39,8 @@ public class LoadTransactionListBolt extends BasicRichBolt {
     }
 
     private void initializeCardRepositories() {
-        ScyllaParams scyllaParams = TopologyConfigFactory.getTopologyConfig(propertyFile)
-                .getScyllaConfig().getScyllaParams();
-        String nodeList = scyllaParams.getNodeList();
-        String keyspace = scyllaParams.getKeyspaceCardsDB();
-        transactionRepository = new CardTransactionRepositoryImpl(nodeList, keyspace);
+        Session session = ScyllaSessionFactory.getSession(propertyFile);
+        transactionRepository = new CardTransactionRepositoryImpl(session);
     }
 
     @Override

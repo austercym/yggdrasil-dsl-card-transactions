@@ -1,9 +1,9 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate.bolts;
 
+import com.datastax.driver.core.Session;
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.cards.MessageType;
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
-import com.orwellg.umbrella.commons.config.params.ScyllaParams;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
@@ -12,7 +12,7 @@ import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
-import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.config.ScyllaSessionFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -60,12 +60,9 @@ public class LoadDataBolt extends JoinFutureBolt<MessageProcessed> {
     }
 
     private void initializeCardRepositories() {
-        ScyllaParams scyllaParams = TopologyConfigFactory.getTopologyConfig(propertyFile)
-                .getScyllaConfig().getScyllaParams();
-        String nodeList = scyllaParams.getNodeList();
-        String keyspace = scyllaParams.getKeyspaceCardsDB();
-        amountsRepository = new SpendingTotalAmountsRepositoryImpl(nodeList, keyspace);
-        cardTransactionRepository = new CardTransactionRepositoryImpl(nodeList, keyspace);
+        Session session = ScyllaSessionFactory.getSession(propertyFile);
+        amountsRepository = new SpendingTotalAmountsRepositoryImpl(session);
+        cardTransactionRepository = new CardTransactionRepositoryImpl(session);
     }
 
     @Override
