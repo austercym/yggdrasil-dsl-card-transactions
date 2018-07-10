@@ -3,8 +3,11 @@ package com.orwellg.yggdrasil.dsl.card.transactions.accounting.bolts;
 import com.google.gson.Gson;
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.command.accounting.*;
+import com.orwellg.umbrella.avro.types.commons.KeyValue;
 import com.orwellg.umbrella.avro.types.commons.TransactionType;
+import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
+import com.orwellg.umbrella.commons.types.cards.CardAccountingTags;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.umbrella.commons.utils.enums.CommandTypes;
@@ -25,6 +28,8 @@ import org.apache.storm.tuple.Tuple;
 
 import java.math.BigDecimal;
 import java.util.*;
+
+import static com.orwellg.yggdrasil.dsl.card.transactions.common.AccountingTagsGenerator.getAccountingTags;
 
 public class AccountingCommandBolt extends BasicRichBolt {
 
@@ -153,6 +158,7 @@ public class AccountingCommandBolt extends BasicRichBolt {
             TransactionType transactionType, String processId) {
         AccountingCommandData commandData = new AccountingCommandData();
         commandData.setAccountingInfo(new AccountingInfo());
+        commandData.setEntryOrigin(Systems.CARDS_GPS.getSystem());
 
         AccountInfo debitAccountInfo = new AccountInfo();
         debitAccountInfo.setAccountId(debitAccount);
@@ -172,6 +178,8 @@ public class AccountingCommandBolt extends BasicRichBolt {
         commandData.getTransactionInfo().setSystem(Systems.CARDS_GPS.getSystem());
         commandData.getTransactionInfo().setDirection(TransactionDirection.INTERNAL);
         commandData.getTransactionInfo().setTransactionType(transactionType);
+
+        commandData.setAccountingTags(getAccountingTags(processed));
         return commandData;
     }
 
