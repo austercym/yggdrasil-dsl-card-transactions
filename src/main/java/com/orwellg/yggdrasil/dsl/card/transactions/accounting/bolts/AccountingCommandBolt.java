@@ -112,6 +112,7 @@ public class AccountingCommandBolt extends BasicRichBolt {
                 values.put(Fields.TOPIC, processorNode.getTopic());
                 values.put(Fields.HEADERS, addHeaderValue(
                         headers, KafkaHeaders.REPLY_TO.getKafkaHeader(), accountingResponseTopic.getBytes()));
+                LOG.debug("{}Reply to header: {}", logPrefix, accountingResponseTopic);
                 send(input, values);
             } else {
                 LOG.info("{}No accounting operation required", logPrefix);
