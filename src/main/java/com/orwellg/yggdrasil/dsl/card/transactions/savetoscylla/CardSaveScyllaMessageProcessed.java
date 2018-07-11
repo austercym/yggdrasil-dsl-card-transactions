@@ -1,6 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.savetoscylla;
 
-import com.orwellg.yggdrasil.dsl.card.transactions.common.TopologySubmitter;
+import com.orwellg.yggdrasil.card.transaction.commons.utils.TopologySubmitter;
 
 public class CardSaveScyllaMessageProcessed {
 

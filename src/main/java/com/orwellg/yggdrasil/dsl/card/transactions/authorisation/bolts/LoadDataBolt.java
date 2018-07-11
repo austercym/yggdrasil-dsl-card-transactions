@@ -2,7 +2,6 @@ package com.orwellg.yggdrasil.dsl.card.transactions.authorisation.bolts;
 
 import com.datastax.driver.core.Session;
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
-import com.orwellg.umbrella.commons.config.params.ScyllaParams;
 import com.orwellg.umbrella.commons.repositories.scylla.AccountBalanceRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.CardSettingsRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
@@ -16,8 +15,8 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
 import com.orwellg.umbrella.commons.utils.scylla.ScyllaManager;
 import com.orwellg.yggdrasil.card.transaction.commons.authorisation.services.AuthorisationDataService;
+import com.orwellg.yggdrasil.card.transaction.commons.config.ScyllaSessionFactory;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
-import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -63,10 +62,7 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
     }
 
     private void initializeCardRepositories() {
-        ScyllaParams scyllaParams = TopologyConfigFactory.getTopologyConfig(propertyFile)
-                .getScyllaConfig().getScyllaParams();
-        ScyllaManager scyllaManager = ScyllaManager.getInstance(scyllaParams);
-        Session session = scyllaManager.getSession(scyllaParams.getKeyspaceCardsDB());
+        Session session = ScyllaSessionFactory.getSession(propertyFile);
         CardSettingsRepository cardSettingsRepository = new CardSettingsRepositoryImpl(session);
         SpendingTotalAmountsRepository totalAmountsRepository = new SpendingTotalAmountsRepositoryImpl(session);
         AccountBalanceRepository accountBalanceRepository = new AccountBalanceRepositoryImpl(session);

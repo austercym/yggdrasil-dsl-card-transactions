@@ -2,6 +2,8 @@ package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.yggdrasil.card.transaction.commons.CardMessageMapper;
+import com.orwellg.yggdrasil.card.transaction.commons.bolts.Fields;
+import com.orwellg.yggdrasil.card.transaction.commons.bolts.GenericEventMappingBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;

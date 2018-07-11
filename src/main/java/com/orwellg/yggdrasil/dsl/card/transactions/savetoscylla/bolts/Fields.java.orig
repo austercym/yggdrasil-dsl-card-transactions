@@ -1,0 +1,10 @@
+package com.orwellg.yggdrasil.dsl.card.transactions.savetoscylla.bolts;
+
+<<<<<<< .merge_file_a02972
+public class Fields extends com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.Fields {
+    public static final String CARD_TRANSACTION = "CardTransaction";
+    public static final String TRANSACTION_MATCHING = "TransactionMatching";
+=======
+public class Fields extends com.orwellg.yggdrasil.card.transaction.commons.bolts.Fields {
+>>>>>>> .merge_file_a05624
+}

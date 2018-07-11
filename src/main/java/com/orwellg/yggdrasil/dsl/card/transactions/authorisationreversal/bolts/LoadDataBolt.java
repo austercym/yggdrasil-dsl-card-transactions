@@ -1,7 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisationreversal.bolts;
 
 import com.datastax.driver.core.Session;
-import com.orwellg.umbrella.commons.config.params.ScyllaParams;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.cards.TransactionMatchingRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
@@ -11,6 +10,7 @@ import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.utils.scylla.ScyllaManager;
 import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.config.ScyllaSessionFactory;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -58,10 +58,7 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
     }
 
     private void initializeCardRepositories() {
-        ScyllaParams scyllaParams = TopologyConfigFactory.getTopologyConfig(propertyFile)
-                .getScyllaConfig().getScyllaParams();
-        ScyllaManager scyllaManager = ScyllaManager.getInstance(scyllaParams);
-        Session session = scyllaManager.getSession(scyllaParams.getKeyspaceCardsDB());
+        Session session = ScyllaSessionFactory.getSession(propertyFile);
         transactionRepository = new CardTransactionRepositoryImpl(session);
         matchingRepository = new TransactionMatchingRepositoryImpl(session);
     }
@@ -81,7 +78,7 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
             List<CardTransaction> transactionList = transactionRepository.getCardTransaction(eventData.getProviderTransactionId());
 
             // TODO: based on matching algorithm from documentation implement repository method
-            transactionMatcher.matchAuthorisation(eventData);
+//            transactionMatcher.matchAuthorisation(eventData);
 //            matchingRepository.matchAuthorisation(eventData);
 
             Map<String, Object> values = new HashMap<>();

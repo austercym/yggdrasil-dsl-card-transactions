@@ -26,6 +26,8 @@ import org.apache.storm.tuple.Tuple;
 import java.math.BigDecimal;
 import java.util.*;
 
+import static com.orwellg.yggdrasil.dsl.card.transactions.common.AccountingTagsGenerator.getAccountingTags;
+
 public class EarmarkingCommandBolt extends BasicRichBolt {
 
     private static final long serialVersionUID = 1L;
@@ -115,6 +117,7 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
                 values.put(Fields.TOPIC, processorNode.getTopic());
                 values.put(Fields.HEADERS, addHeaderValue(
                         headers, KafkaHeaders.REPLY_TO.getKafkaHeader(), accountingResponseTopic.getBytes()));
+                LOG.debug("{}Reply to header: {}", logPrefix, accountingResponseTopic);
                 send(input, values);
             } else {
                 LOG.info("{}No earmark operation required", logPrefix);
@@ -154,6 +157,7 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
             TransactionType transactionType, String processId) {
         AccountingCommandData commandData = new AccountingCommandData();
         commandData.setAccountingInfo(new AccountingInfo());
+        commandData.setEntryOrigin(Systems.CARDS_GPS.getSystem());
 
         AccountInfo debitAccountInfo = new AccountInfo();
         debitAccountInfo.setAccountId(debitAccount);
@@ -174,6 +178,8 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
         commandData.getTransactionInfo().setDirection(TransactionDirection.INTERNAL);
         commandData.getTransactionInfo().setTransactionType(transactionType);
         commandData.getTransactionInfo().setData(gson.toJson(processed));
+
+        commandData.setAccountingTags(getAccountingTags(processed));
         return commandData;
     }
 

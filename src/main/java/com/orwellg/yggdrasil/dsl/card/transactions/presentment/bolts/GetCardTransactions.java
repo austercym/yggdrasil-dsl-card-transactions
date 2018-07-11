@@ -1,14 +1,12 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
 import com.datastax.driver.core.Session;
-import com.orwellg.umbrella.commons.config.params.ScyllaParams;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.generics.scylla.ScyllaRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
-import com.orwellg.umbrella.commons.utils.scylla.ScyllaManager;
+import com.orwellg.yggdrasil.card.transaction.commons.config.ScyllaSessionFactory;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
-import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -37,10 +35,6 @@ public class GetCardTransactions extends ScyllaRichBolt<List<CardTransaction>, T
 
     @Override
     protected void setScyllaConnectionParameters() {
-        ScyllaParams scyllaParams = TopologyConfigFactory.getTopologyConfig(propertyFile)
-                .getScyllaConfig().getScyllaParams();
-        setScyllaNodes(scyllaParams.getNodeList());
-        setScyllaKeyspace(scyllaParams.getKeyspaceCardsDB());
     }
 
     @Override
@@ -51,10 +45,7 @@ public class GetCardTransactions extends ScyllaRichBolt<List<CardTransaction>, T
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
-        ScyllaParams scyllaParams = TopologyConfigFactory.getTopologyConfig(propertyFile)
-                .getScyllaConfig().getScyllaParams();
-        ScyllaManager scyllaManager = ScyllaManager.getInstance(scyllaParams);
-        Session session = scyllaManager.getSession(scyllaParams.getKeyspaceCardsDB());
+        Session session = ScyllaSessionFactory.getSession(propertyFile);
         repository = new CardTransactionRepositoryImpl(session);
     }
 

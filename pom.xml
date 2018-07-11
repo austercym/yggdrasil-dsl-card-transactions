@@ -29,12 +29,12 @@
 		<dependency>
 			<groupId>com.orwellg.yggdrasil</groupId>
 			<artifactId>yggdrasil-card-transaction-commons</artifactId>
-			<version>0.0.7-SNAPSHOT</version>
+			<version>0.0.11-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.orwellg.umbrella</groupId>
 			<artifactId>umbrella-commons</artifactId>
-			<version>0.2.0</version>
+			<version>0.2.2</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
