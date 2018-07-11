@@ -8,6 +8,7 @@ import com.orwellg.umbrella.avro.types.command.accounting.TransactionDirection;
 import com.orwellg.umbrella.avro.types.commons.TransactionType;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.Systems;
+import com.orwellg.yggdrasil.card.transaction.commons.bolts.Fields;
 import com.orwellg.yggdrasil.commons.net.Cluster;
 import com.orwellg.yggdrasil.commons.net.Node;
 import com.orwellg.yggdrasil.commons.utils.enums.SpecialAccountTypes;
@@ -44,7 +45,7 @@ public class EarmarkingCommandBoltTest {
         processed.setWirecardAmount(DecimalTypeUtils.toDecimal(-19.09));
 
         Tuple input = mock(Tuple.class);
-        when(input.getValueByField(com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.Fields.EVENT_DATA)).thenReturn(processed);
+        when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(processed);
 
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
@@ -65,7 +66,7 @@ public class EarmarkingCommandBoltTest {
         processed.setInternalAccountId("42");
 
         Tuple input = mock(Tuple.class);
-        when(input.getValueByField(com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.Fields.EVENT_DATA)).thenReturn(processed);
+        when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(processed);
 
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
@@ -112,7 +113,7 @@ public class EarmarkingCommandBoltTest {
         processed.setMessageType(MessageType.PRESENTMENT);
 
         Tuple input = mock(Tuple.class);
-        when(input.getValueByField(com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.Fields.EVENT_DATA)).thenReturn(processed);
+        when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(processed);
 
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);

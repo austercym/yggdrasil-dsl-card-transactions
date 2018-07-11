@@ -15,7 +15,7 @@ import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltFieldNameWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
-import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.GenericEventProcessBolt;
+import com.orwellg.yggdrasil.card.transaction.commons.bolts.GenericEventProcessBolt;
 import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfig;
 import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import com.orwellg.yggdrasil.dsl.card.transactions.earmarking.bolts.EarmarkingCommandBolt;
