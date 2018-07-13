@@ -2,17 +2,17 @@ package com.orwellg.yggdrasil.dsl.card.transactions.savetoscylla.bolts;
 
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
-import com.orwellg.yggdrasil.card.transaction.commons.bolts.GenericEventProcessBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionMatching;
-import com.orwellg.yggdrasil.dsl.card.transactions.services.MapperFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.bolts.GenericEventProcessBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.services.TransactionMatchingTagsGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
-import org.modelmapper.ModelMapper;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class PrepareDataBolt extends GenericEventProcessBolt<MessageProcessed> {
@@ -20,7 +20,7 @@ public class PrepareDataBolt extends GenericEventProcessBolt<MessageProcessed> {
     private static final long serialVersionUID = 1L;
 
     private static final Logger LOG = LogManager.getLogger(PrepareDataBolt.class);
-    private ModelMapper mapper;
+    private TransactionMatchingTagsGenerator mapper;
 
     public PrepareDataBolt() {
         super(MessageProcessed.class);
@@ -29,7 +29,7 @@ public class PrepareDataBolt extends GenericEventProcessBolt<MessageProcessed> {
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
-        mapper = MapperFactory.getMapper();
+        mapper = new TransactionMatchingTagsGenerator();
     }
 
     @Override
@@ -43,7 +43,7 @@ public class PrepareDataBolt extends GenericEventProcessBolt<MessageProcessed> {
         CardTransaction cardTransaction = mapEventToCardTransaction(messageProcessed, key, processId);
         values.put(Fields.CARD_TRANSACTION, cardTransaction);
 
-        TransactionMatching transactionMatching = mapper.map(messageProcessed, TransactionMatching.class);
+        List<TransactionMatching> transactionMatching = mapper.createLookupTags(messageProcessed);
         values.put(Fields.TRANSACTION_MATCHING, transactionMatching);
     }
 

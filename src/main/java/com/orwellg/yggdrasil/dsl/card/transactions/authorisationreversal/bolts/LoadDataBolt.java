@@ -8,10 +8,9 @@ import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.TransactionMa
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
-import com.orwellg.umbrella.commons.utils.scylla.ScyllaManager;
-import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import com.orwellg.yggdrasil.card.transaction.commons.config.ScyllaSessionFactory;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
+import com.orwellg.yggdrasil.card.transaction.commons.transactionmatching.TransactionMatcher;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -30,9 +29,8 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
     private Logger LOG = LogManager.getLogger(LoadDataBolt.class);
 
     private CardTransactionRepository transactionRepository;
-
     private TransactionMatchingRepository matchingRepository;
-
+    private TransactionMatcher transactionMatcher;
     private String propertyFile;
 
     public LoadDataBolt(String joinId, String propertyFile) {
@@ -55,6 +53,7 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
         super.prepare(stormConf, context, collector);
 
         initializeCardRepositories();
+        transactionMatcher = new TransactionMatcher(matchingRepository);
     }
 
     private void initializeCardRepositories() {
@@ -77,9 +76,8 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
             LOG.info("{}Retrieving transaction list for GpsTransactionLink {}", logPrefix, eventData.getProviderTransactionId());
             List<CardTransaction> transactionList = transactionRepository.getCardTransaction(eventData.getProviderTransactionId());
 
-            // TODO: based on matching algorithm from documentation implement repository method
-//            transactionMatcher.matchAuthorisation(eventData);
-//            matchingRepository.matchAuthorisation(eventData);
+            // TODO: pass id to next bolt
+            String matchingTransactionId = transactionMatcher.getMatchingTransactionId(eventData.getMessage());
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);

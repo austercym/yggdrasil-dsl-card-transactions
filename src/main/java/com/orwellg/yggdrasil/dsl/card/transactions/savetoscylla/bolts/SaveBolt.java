@@ -18,6 +18,7 @@ import org.apache.storm.tuple.Tuple;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SaveBolt extends BasicRichBolt {
@@ -63,8 +64,9 @@ public class SaveBolt extends BasicRichBolt {
             transactionRepository.addTransaction(transaction);
 
             LOG.info("{}Saving transaction matching to Scylla", logPrefix);
-            TransactionMatching matching = (TransactionMatching) input.getValueByField(Fields.TRANSACTION_MATCHING);
-            matchingRepository.addTransactionMatching(matching);
+            List<TransactionMatching> matchingList = (List<TransactionMatching>) input.getValueByField(Fields.TRANSACTION_MATCHING);
+            matchingList.forEach(matching ->
+                    matchingRepository.addTransactionMatching(matching));
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
