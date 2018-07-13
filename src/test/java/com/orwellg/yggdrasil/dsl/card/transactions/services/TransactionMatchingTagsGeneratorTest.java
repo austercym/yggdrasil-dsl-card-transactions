@@ -23,6 +23,7 @@ public class TransactionMatchingTagsGeneratorTest {
     public void createLookupTagsShouldContainAllRequiredTagCombinations() {
         // arrange
         MessageProcessed messageProcessed = new MessageProcessed();
+        messageProcessed.setTransactionId("foo");
         Message request = new Message();
         request.setTransLink("tl");
         request.setTraceidLifecycle("ti");
