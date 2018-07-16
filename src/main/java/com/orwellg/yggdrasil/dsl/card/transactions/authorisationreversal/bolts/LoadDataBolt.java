@@ -3,7 +3,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.authorisationreversal.bolts;
 import com.datastax.driver.core.Session;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.cards.TransactionMatchingRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.TransactionMatchingRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
@@ -73,11 +73,12 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
         String logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
         try {
-            LOG.info("{}Retrieving transaction list for GpsTransactionLink {}", logPrefix, eventData.getProviderTransactionId());
-            List<CardTransaction> transactionList = transactionRepository.getCardTransaction(eventData.getProviderTransactionId());
+            LOG.info("{}Matching transaction for: {}", logPrefix, eventData);
+            eventData.setTransactionId(transactionMatcher.getMatchingTransactionId(eventData.getMessage()));
 
-            // TODO: pass id to next bolt
-            String matchingTransactionId = transactionMatcher.getMatchingTransactionId(eventData.getMessage());
+            LOG.info("{}Retrieving transaction list for TransactionId {}", logPrefix, eventData.getTransactionId());
+            List<CardTransaction> transactionList = transactionRepository.getCardTransaction(
+                    eventData.getTransactionId());
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);

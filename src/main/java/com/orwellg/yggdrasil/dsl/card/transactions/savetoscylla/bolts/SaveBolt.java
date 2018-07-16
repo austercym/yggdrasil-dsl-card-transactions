@@ -3,7 +3,7 @@ package com.orwellg.yggdrasil.dsl.card.transactions.savetoscylla.bolts;
 import com.datastax.driver.core.Session;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.cards.TransactionMatchingRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.TransactionMatchingRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;

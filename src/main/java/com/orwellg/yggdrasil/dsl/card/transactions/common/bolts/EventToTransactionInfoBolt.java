@@ -4,8 +4,6 @@ import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.yggdrasil.card.transaction.commons.CardMessageMapper;
 import com.orwellg.yggdrasil.card.transaction.commons.bolts.Fields;
 import com.orwellg.yggdrasil.card.transaction.commons.bolts.GenericEventMappingBolt;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 
@@ -15,8 +13,6 @@ import java.util.Map;
 public class EventToTransactionInfoBolt extends GenericEventMappingBolt<Message> {
 
 	private static final long serialVersionUID = 1L;
-
-	private final static Logger LOG = LogManager.getLogger(EventToTransactionInfoBolt.class);
 
 	private CardMessageMapper mapper;
 

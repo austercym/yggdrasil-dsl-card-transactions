@@ -2,12 +2,15 @@ package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
 import com.datastax.driver.core.Session;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.cards.TransactionMatchingRepository;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.CardTransactionRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.TransactionMatchingRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.yggdrasil.card.transaction.commons.bolts.Fields;
 import com.orwellg.yggdrasil.card.transaction.commons.config.ScyllaSessionFactory;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
+import com.orwellg.yggdrasil.card.transaction.commons.transactionmatching.TransactionMatcher;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -26,6 +29,8 @@ public class LoadTransactionListBolt extends BasicRichBolt {
     private Logger LOG = LogManager.getLogger(LoadTransactionListBolt.class);
 
     private CardTransactionRepository transactionRepository;
+    private TransactionMatchingRepository matchingRepository;
+    private TransactionMatcher transactionMatcher;
     private String propertyFile;
 
     public LoadTransactionListBolt(String propertyFile) {
@@ -37,11 +42,13 @@ public class LoadTransactionListBolt extends BasicRichBolt {
         super.prepare(stormConf, context, collector);
 
         initializeCardRepositories();
+        transactionMatcher = new TransactionMatcher(matchingRepository);
     }
 
     private void initializeCardRepositories() {
         Session session = ScyllaSessionFactory.getSession(propertyFile);
         transactionRepository = new CardTransactionRepositoryImpl(session);
+        matchingRepository = new TransactionMatchingRepositoryImpl(session);
     }
 
     @Override
@@ -59,6 +66,9 @@ public class LoadTransactionListBolt extends BasicRichBolt {
             String processId = input.getStringByField(Fields.PROCESS_ID);
             TransactionInfo eventData = (TransactionInfo) input.getValueByField(Fields.EVENT_DATA);
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
+
+            LOG.info("{}Matching transaction for: {}", logPrefix, eventData);
+            eventData.setTransactionId(transactionMatcher.getMatchingTransactionId(eventData.getMessage()));
 
             List<CardTransaction> transactionList = getTransactionList(eventData.getProviderTransactionId(), logPrefix);
 

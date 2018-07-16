@@ -4,7 +4,6 @@ import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionMatching;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionMatchingTags;
-import com.orwellg.yggdrasil.card.transaction.commons.CurrencyMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,8 +11,6 @@ import java.util.List;
 import static org.apache.commons.lang3.Validate.notNull;
 
 public class TransactionMatchingTagsGenerator {
-
-    private final CurrencyMapper currencyMapper = new CurrencyMapper();
 
     public List<TransactionMatching> createLookupTags(MessageProcessed messageProcessed) {
         notNull(messageProcessed);
@@ -48,7 +45,7 @@ public class TransactionMatchingTagsGenerator {
 
         list.add(createTransactionMatching(messageProcessed.getTransactionId(), request, TransactionMatchingTags.create()
                 .withAcquirerReferenceData(request.getAcquirerReferenceData031())
-                .withTransactionCurrency(currencyMapper.currencyFromNumericCode(request.getTxnCCy()))
+                .withTransactionCurrency(request.getTxnCCy())
                 .withAuthCode(request.getAuthCodeDE38())
                 .withPosTime(request.getPOSTimeDE12())
                 .withRetRefNo(request.getRetRefNoDE37())));

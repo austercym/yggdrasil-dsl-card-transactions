@@ -50,6 +50,7 @@ public class PrepareDataBolt extends GenericEventProcessBolt<MessageProcessed> {
     private CardTransaction mapEventToCardTransaction(MessageProcessed message, String key, String processId) {
 
         CardTransaction transaction = new CardTransaction();
+        transaction.setTransactionId(message.getTransactionId());
         transaction.setProviderTransactionId(message.getProviderTransactionId());
         transaction.setProviderMessageId(message.getProviderMessageId());
         transaction.setProviderTransactionDateTime(Instant.ofEpochMilli(message.getProviderTransactionTime()));
