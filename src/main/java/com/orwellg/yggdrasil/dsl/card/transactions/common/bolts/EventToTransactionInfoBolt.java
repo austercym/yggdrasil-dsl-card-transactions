@@ -3,20 +3,16 @@ package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.yggdrasil.card.transaction.commons.CardMessageMapper;
 import com.orwellg.yggdrasil.card.transaction.commons.bolts.Fields;
-import com.orwellg.yggdrasil.card.transaction.commons.bolts.GenericEventProcessBolt;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.orwellg.yggdrasil.card.transaction.commons.bolts.GenericEventMappingBolt;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 
 import java.util.Arrays;
 import java.util.Map;
 
-public class EventToTransactionInfoBolt extends GenericEventProcessBolt<Message> {
+public class EventToTransactionInfoBolt extends GenericEventMappingBolt<Message> {
 
 	private static final long serialVersionUID = 1L;
-
-	private final static Logger LOG = LogManager.getLogger(EventToTransactionInfoBolt.class);
 
 	private CardMessageMapper mapper;
 
@@ -31,7 +27,7 @@ public class EventToTransactionInfoBolt extends GenericEventProcessBolt<Message>
 	}
 
 	@Override
-	protected Object process(Message eventData, String key, String processId) {
+	protected Object mapEvent(Message eventData, String key, String processId) {
 		return mapper.map(eventData);
 	}
 

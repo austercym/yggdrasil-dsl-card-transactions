@@ -64,9 +64,9 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
                         "{}Processing duplicated message. ProviderMessageId: {}",
                         logPrefix, event.getProviderMessageId());
             } else {
-                if (event.getSettlementAmount().compareTo(lastTransaction.getEarmarkAmount().abs()) > 0) {
-                    throw new IllegalArgumentException("Authorisation reversal amount is greater than earmarked amount");
-                }
+            if (event.getSettlementAmount().compareTo(lastTransaction.getEarmarkAmount().abs()) > 0) {
+                throw new IllegalArgumentException("Authorisation reversal amount is greater than earmarked amount");
+            }
             }
 
             MessageProcessed processedMessage = isDuplicate
@@ -106,6 +106,8 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
 
         messageProcessed.setInternalAccountCurrency(lastTransaction.getInternalAccountCurrency());
         messageProcessed.setInternalAccountId(lastTransaction.getInternalAccountId());
+
+        messageProcessed.setRequest(transactionInfo.getMessage());
 
         LOG.debug("{}GPS message processed generated: {}", logPrefix, messageProcessed);
         return messageProcessed;

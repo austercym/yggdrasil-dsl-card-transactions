@@ -49,7 +49,7 @@ public class ResponseGeneratorBoltTest {
         bolt.setCollector(collector);
 
         MessageProcessed expectedResult = new MessageProcessed();
-        when(authorisationResponseGenerator.getMessageProcessed(any(), any(), any(), any()))
+        when(authorisationResponseGenerator.getMessageProcessed(any(), any(), any(), any(), any()))
                 .thenReturn(expectedResult);
 
         // act

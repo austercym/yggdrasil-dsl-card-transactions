@@ -15,6 +15,7 @@ import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltFieldNameWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
+import com.orwellg.yggdrasil.card.transaction.commons.bolts.GenericEventMappingBolt;
 import com.orwellg.yggdrasil.card.transaction.commons.bolts.GenericEventProcessBolt;
 import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfig;
 import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
@@ -72,7 +73,7 @@ public class EarmarkingTopology extends AbstractTopology {
         // -------------------------------------------------------
         // Process events
         // -------------------------------------------------------
-        GBolt<?> processBolt = new GRichBolt(PROCESS_COMPONENT, new GenericEventProcessBolt<>(MessageProcessed.class), config.getActionBoltHints());
+        GBolt<?> processBolt = new GRichBolt(PROCESS_COMPONENT, new GenericEventMappingBolt<>(MessageProcessed.class), config.getActionBoltHints());
         for (String spoutName : spoutNames) {
             processBolt.addGrouping(new ShuffleGrouping(spoutName, KafkaSpout.EVENT_SUCCESS_STREAM));
         }

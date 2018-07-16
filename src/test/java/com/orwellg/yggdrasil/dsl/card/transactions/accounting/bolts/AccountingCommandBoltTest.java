@@ -29,7 +29,7 @@ public class AccountingCommandBoltTest {
 
     @Before
     public void setUp() {
-        bolt = new AccountingCommandBolt();
+        bolt = new TestableAccountingCommandBolt();
         bolt.prepare(null, null, null);
         bolt.declareFieldsDefinition();
     }

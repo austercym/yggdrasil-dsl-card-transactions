@@ -76,7 +76,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
             validationResults.setTransactionTypeValidationResult(transactionTypeValidationResult);
             validationResults.setVelocityLimitsValidationResult(velocityLimitsValidationResult);
             MessageProcessed processedMessage = authorisationResponseGenerator.getMessageProcessed(
-                    event, settings, accountBalance, validationResults);
+                    processId, event, settings, accountBalance, validationResults);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, input.getStringByField(Fields.KEY));

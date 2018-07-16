@@ -6,7 +6,7 @@ import com.orwellg.umbrella.avro.types.cards.MessageType;
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.impl.CardTransactionRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
@@ -116,7 +116,7 @@ public class LoadDataBolt extends JoinFutureBolt<MessageProcessed> {
                 });
     }
 
-    private CompletableFuture<SpendingTotalAmounts> retrieveTotalAmounts(long cardId, SpendGroup totalType, String logPrefix) {
+    private CompletableFuture<SpendingTotalAmounts> retrieveTotalAmounts(String cardId, SpendGroup totalType, String logPrefix) {
         return CompletableFuture.supplyAsync(
                 () -> {
                     LOG.info(

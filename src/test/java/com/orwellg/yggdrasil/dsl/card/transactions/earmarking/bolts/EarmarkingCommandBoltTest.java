@@ -31,7 +31,7 @@ public class EarmarkingCommandBoltTest {
 
     @Before
     public void setUp() {
-        bolt = new EarmarkingCommandBolt();
+        bolt = new TestableEarmarkingCommandBolt();
         bolt.prepare(null, null, null);
         bolt.declareFieldsDefinition();
     }

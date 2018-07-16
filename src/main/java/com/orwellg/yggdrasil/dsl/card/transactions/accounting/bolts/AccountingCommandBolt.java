@@ -48,9 +48,13 @@ public class AccountingCommandBolt extends BasicRichBolt {
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
+        initialiseProcessorCluster();
+        this.gson = new Gson();
+    }
+
+    protected void initialiseProcessorCluster() {
         processorCluster = ClusterFactory.createCluster(
                 TopologyConfigFactory.getTopologyConfig(AccountingTopology.PROPERTIES_FILE).getNetworkConfig());
-        this.gson = new Gson();
     }
 
     @Override
