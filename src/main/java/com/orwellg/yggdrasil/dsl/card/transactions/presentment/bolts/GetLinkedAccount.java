@@ -35,9 +35,9 @@ public class GetLinkedAccount extends BasicRichBolt {
     }
 
     protected List<LinkedAccount> retrieve(TransactionInfo presentment) {
-        long cardTransactionId = presentment.getDebitCardId();
+        String debitCardId = presentment.getDebitCardId();
         List<LinkedAccount> linkedAccount = repository.getLinkedAccountByDate(
-                cardTransactionId,
+                debitCardId,
                 presentment.getTransactionDateTime().toInstant(ZoneOffset.UTC));
         return linkedAccount;
     }

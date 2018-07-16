@@ -116,7 +116,7 @@ public class LoadDataBolt extends JoinFutureBolt<MessageProcessed> {
                 });
     }
 
-    private CompletableFuture<SpendingTotalAmounts> retrieveTotalAmounts(long cardId, SpendGroup totalType, String logPrefix) {
+    private CompletableFuture<SpendingTotalAmounts> retrieveTotalAmounts(String cardId, SpendGroup totalType, String logPrefix) {
         return CompletableFuture.supplyAsync(
                 () -> {
                     LOG.info(

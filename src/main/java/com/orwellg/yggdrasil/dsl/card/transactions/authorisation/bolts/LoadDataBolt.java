@@ -86,7 +86,7 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
         LOG.info("{}Starting processing the join data load for key {}", logPrefix, key);
 
         try {
-            long cardId = eventData.getDebitCardId();
+            String cardId = eventData.getDebitCardId();
             SpendGroup totalType = eventData.getSpendGroup();
 
             CompletableFuture<CardSettings> settingsFuture = CompletableFuture.supplyAsync(() ->
