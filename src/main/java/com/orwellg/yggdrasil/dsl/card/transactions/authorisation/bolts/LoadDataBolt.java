@@ -5,18 +5,21 @@ import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.commons.repositories.scylla.AccountBalanceRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.CardSettingsRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
+import com.orwellg.umbrella.commons.repositories.scylla.cards.TransactionMatchingRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.AccountBalanceRepositoryImpl;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.CardSettingsRepositoryImpl;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.TransactionMatchingRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.AccountBalance;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
-import com.orwellg.umbrella.commons.utils.scylla.ScyllaManager;
 import com.orwellg.yggdrasil.card.transaction.commons.authorisation.services.AuthorisationDataService;
 import com.orwellg.yggdrasil.card.transaction.commons.config.ScyllaSessionFactory;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
+import com.orwellg.yggdrasil.card.transaction.commons.transactionmatching.TransactionMatcher;
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -66,15 +69,17 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
         CardSettingsRepository cardSettingsRepository = new CardSettingsRepositoryImpl(session);
         SpendingTotalAmountsRepository totalAmountsRepository = new SpendingTotalAmountsRepositoryImpl(session);
         AccountBalanceRepository accountBalanceRepository = new AccountBalanceRepositoryImpl(session);
+        TransactionMatchingRepository matchingRepository = new TransactionMatchingRepositoryImpl(session);
+        TransactionMatcher transactionMatcher = new TransactionMatcher(matchingRepository);
         authorisationDataService = new AuthorisationDataService(
-                cardSettingsRepository, totalAmountsRepository, accountBalanceRepository);
+                cardSettingsRepository, totalAmountsRepository, accountBalanceRepository, transactionMatcher);
     }
 
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList(
                 Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA,
-                Fields.CARD_SETTINGS, Fields.ACCOUNT_BALANCE, Fields.SPENDING_TOTALS));
+                Fields.CARD_SETTINGS, Fields.ACCOUNT_BALANCE, Fields.SPENDING_TOTALS, Fields.TRANSACTION_ID));
     }
 
     @Override
@@ -89,6 +94,10 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
             String cardId = eventData.getDebitCardId();
             SpendGroup totalType = eventData.getSpendGroup();
 
+            CompletableFuture<String> transactionIdFuture = CompletableFuture.supplyAsync(() ->
+                    StringUtils.defaultIfEmpty(
+                            authorisationDataService.tryMatchTransaction(eventData.getMessage()),
+                            processId));
             CompletableFuture<CardSettings> settingsFuture = CompletableFuture.supplyAsync(() ->
                     authorisationDataService.retrieveCardSettings(cardId));
             CompletableFuture<AccountBalance> accountTransactionLogFuture = settingsFuture.thenApply(settings ->
@@ -106,6 +115,7 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
             values.put(Fields.CARD_SETTINGS, settingsFuture.get());
             values.put(Fields.ACCOUNT_BALANCE, accountTransactionLogFuture.get());
             values.put(Fields.SPENDING_TOTALS, totalFuture.get());
+            values.put(Fields.TRANSACTION_ID, transactionIdFuture.get());
 
             send(input, values);
 

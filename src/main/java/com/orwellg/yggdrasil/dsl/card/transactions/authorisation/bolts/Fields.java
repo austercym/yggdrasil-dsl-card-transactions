@@ -9,6 +9,5 @@ class Fields extends com.orwellg.yggdrasil.card.transaction.commons.bolts.Fields
     static final String MERCHANT_VALIDATION_RESULT = "merchantValidationResult";
     static final String VELOCITY_LIMITS_VALIDATION_RESULT = "velocityLimitsValidationResult";
     static final String BALANCE_VALIDATION_RESULT = "balanceValidationResult";
-    static final String MESSAGE = "message";
-    static final String TOPIC = "topic";
+    static final String TRANSACTION_ID = "transactionId";
 }

@@ -56,6 +56,7 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<TransactionInfo> {
             CardSettings settings = (CardSettings) input.getValueByField(Fields.CARD_SETTINGS);
             SpendingTotalAmounts totalAmounts = (SpendingTotalAmounts) input.getValueByField(Fields.SPENDING_TOTALS);
             AccountBalance accountBalance = (AccountBalance) input.getValueByField(Fields.ACCOUNT_BALANCE);
+            String transactionId = input.getStringByField(Fields.TRANSACTION_ID);
 
             ValidationResult statusValidationResult =
                     authorisationValidationService.validateCardStatus(key, eventData, settings);
@@ -82,6 +83,7 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<TransactionInfo> {
             values.put(Fields.EVENT_DATA, eventData);
             values.put(Fields.CARD_SETTINGS, settings);
             values.put(Fields.ACCOUNT_BALANCE, accountBalance);
+            values.put(Fields.TRANSACTION_ID, transactionId);
             values.put(Fields.STATUS_VALIDATION_RESULT, statusValidationResult);
             values.put(Fields.TRANSACTION_TYPE_VALIDATION_RESULT, transactionTypeValidationResult);
             values.put(Fields.MERCHANT_VALIDATION_RESULT, merchantValidationResult);
@@ -103,6 +105,7 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<TransactionInfo> {
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList(
                 Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA, Fields.CARD_SETTINGS, Fields.ACCOUNT_BALANCE,
+                Fields.TRANSACTION_ID,
                 Fields.STATUS_VALIDATION_RESULT, Fields.TRANSACTION_TYPE_VALIDATION_RESULT,
                 Fields.MERCHANT_VALIDATION_RESULT, Fields.VELOCITY_LIMITS_VALIDATION_RESULT,
                 Fields.BALANCE_VALIDATION_RESULT));
