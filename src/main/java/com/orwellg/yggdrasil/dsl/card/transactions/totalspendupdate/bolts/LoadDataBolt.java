@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import static com.orwellg.yggdrasil.card.transaction.commons.utils.MessageTypeUtil.isAuthorisation;
+
 public class LoadDataBolt extends JoinFutureBolt<MessageProcessed> {
 
     private static final long serialVersionUID = 1L;
@@ -110,7 +112,7 @@ public class LoadDataBolt extends JoinFutureBolt<MessageProcessed> {
                         return null;
                     }
                     return cardTransactions.stream()
-                            .filter(i -> MessageType.AUTHORISATION.equals(i.getMessageType()))
+                            .filter(i -> isAuthorisation(i.getMessageType()))
                             .findFirst()
                             .orElse(null);
                 });

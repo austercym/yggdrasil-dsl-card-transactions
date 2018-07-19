@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.orwellg.yggdrasil.card.transaction.commons.utils.MessageTypeUtil.isAuthorisation;
+
 public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
 
     private static final Logger LOG = LogManager.getLogger(RecalculateTotalSpendAmountsBolt.class);
@@ -80,7 +82,7 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
     private boolean isAcceptedAuthorisation(MessageProcessed eventData) {
         return eventData != null && eventData.getEhiResponse() != null
                 &&
-                MessageType.AUTHORISATION.equals(eventData.getMessageType())
+                isAuthorisation(eventData.getMessageType())
                 &&
                 "00".equals(eventData.getEhiResponse().getResponsestatus());
     }
