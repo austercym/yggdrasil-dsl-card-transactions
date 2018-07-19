@@ -1,11 +1,13 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
 import com.orwellg.umbrella.avro.types.gps.Message;
-import com.orwellg.yggdrasil.card.transaction.commons.CardMessageMapper;
+import com.orwellg.yggdrasil.card.transaction.commons.MapperFactory;
 import com.orwellg.yggdrasil.card.transaction.commons.bolts.Fields;
 import com.orwellg.yggdrasil.card.transaction.commons.bolts.GenericEventMappingBolt;
+import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
+import org.modelmapper.ModelMapper;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -14,7 +16,7 @@ public class EventToTransactionInfoBolt extends GenericEventMappingBolt<Message>
 
 	private static final long serialVersionUID = 1L;
 
-	private CardMessageMapper mapper;
+	private ModelMapper mapper;
 
 	public EventToTransactionInfoBolt() {
 		super(Message.class);
@@ -23,12 +25,12 @@ public class EventToTransactionInfoBolt extends GenericEventMappingBolt<Message>
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		super.prepare(stormConf, context, collector);
-		mapper = new CardMessageMapper();
+		mapper = MapperFactory.getMapper();
 	}
 
 	@Override
 	protected Object mapEvent(Message eventData, String key, String processId) {
-		return mapper.map(eventData);
+		return mapper.map(eventData, TransactionInfo.class);
 	}
 
 	@Override
