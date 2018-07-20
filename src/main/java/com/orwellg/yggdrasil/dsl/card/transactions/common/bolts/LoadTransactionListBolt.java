@@ -70,7 +70,7 @@ public class LoadTransactionListBolt extends BasicRichBolt {
             LOG.info("{}Matching transaction for: {}", logPrefix, eventData);
             eventData.setTransactionId(transactionMatcher.getMatchingTransactionId(eventData.getMessage()));
 
-            List<CardTransaction> transactionList = getTransactionList(eventData.getProviderTransactionId(), logPrefix);
+            List<CardTransaction> transactionList = getTransactionList(eventData.getTransactionId(), logPrefix);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
@@ -86,10 +86,10 @@ public class LoadTransactionListBolt extends BasicRichBolt {
         }
     }
 
-    private List<CardTransaction> getTransactionList(String gpsTransactionLink, String logPrefix) {
-        LOG.info("{}Retrieving transaction list for ProviderTransactionId={} ...", logPrefix, gpsTransactionLink);
-        List<CardTransaction> transactionList = transactionRepository.getCardTransaction(gpsTransactionLink);
-        LOG.info("{}Retrieved transaction list for ProviderTransactionId={}: {}", logPrefix, gpsTransactionLink, transactionList);
+    private List<CardTransaction> getTransactionList(String transactionId, String logPrefix) {
+        LOG.info("{}Retrieving transaction list for TransactionId={} ...", logPrefix, transactionId);
+        List<CardTransaction> transactionList = transactionRepository.getCardTransaction(transactionId);
+        LOG.info("{}Retrieved transaction list for TransactionId={}: {}", logPrefix, transactionId, transactionList);
         return transactionList;
     }
 }

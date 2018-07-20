@@ -1,4 +1,4 @@
-package com.orwellg.yggdrasil.dsl.card.transactions.authorisationreversal;
+package com.orwellg.yggdrasil.dsl.card.transactions.externallyauthorised;
 
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
@@ -13,23 +13,23 @@ import com.orwellg.umbrella.commons.storm.topology.generic.grouping.ShuffleGroup
 import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
-import com.orwellg.yggdrasil.dsl.card.transactions.authorisationreversal.bolts.GenerateProcessedMessageBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.EventToTransactionInfoBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.LoadTransactionListBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.externallyauthorised.bolts.GenerateProcessedMessageBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.generated.StormTopology;
 
 import java.util.Arrays;
 
-public class AuthorisationReversalTopology extends AbstractTopology {
+public class ExternallyAuthorisedTopology extends AbstractTopology {
 
-    public static final String PROPERTIES_FILE = "authorisation-reversal-topology.properties";
-    private static final Logger LOG = LogManager.getLogger(AuthorisationReversalTopology.class);
-    private static final String TOPOLOGY_NAME = "yggdrasil-card-authorisation-reversal";
-    private static final String BOLT_NAME_PREFIX = "AuthorisationReversal";
+    public static final String PROPERTIES_FILE = "externally-authorised-topology.properties";
+    private static final Logger LOG = LogManager.getLogger(ExternallyAuthorisedTopology.class);
+    private static final String TOPOLOGY_NAME = "yggdrasil-cards-externally-authorised";
+    private static final String BOLT_NAME_PREFIX = "externallyAuthorised";
     private static final String KAFKA_EVENT_READER_COMPONENT = BOLT_NAME_PREFIX + "Reader";
-    private static final String KAFKA_EVENT_SUCCESS_PROCESS = BOLT_NAME_PREFIX + "KafkaEventSuccessProcess";
+    private static final String PROCESS_COMPONENT = BOLT_NAME_PREFIX + "Process";
     private static final String GET_DATA = BOLT_NAME_PREFIX + "GetData";
     private static final String PROCESSED_MESSAGE_GENERATION = BOLT_NAME_PREFIX + "ProcessedMessageGeneration";
     private static final String EVENT_GENERATOR = BOLT_NAME_PREFIX + "EventGenerator";
@@ -57,12 +57,13 @@ public class AuthorisationReversalTopology extends AbstractTopology {
         // -------------------------------------------------------
         // Process events
         // -------------------------------------------------------
-        GBolt<?> kafkaEventProcess = new GRichBolt(KAFKA_EVENT_SUCCESS_PROCESS, new EventToTransactionInfoBolt(), config.getEventProcessHints());
-        kafkaEventProcess.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER_COMPONENT, KafkaSpout.EVENT_SUCCESS_STREAM));
+        GBolt<?> processBolt = new GRichBolt(PROCESS_COMPONENT, new EventToTransactionInfoBolt(),
+                config.getActionBoltHints());
+        processBolt.addGrouping(new ShuffleGrouping(KAFKA_EVENT_READER_COMPONENT, KafkaSpout.EVENT_SUCCESS_STREAM));
 
         // Get data from DB
         GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadTransactionListBolt(PROPERTIES_FILE), config.getActionBoltHints());
-        getDataBolt.addGrouping(new ShuffleGrouping(KAFKA_EVENT_SUCCESS_PROCESS));
+        getDataBolt.addGrouping(new ShuffleGrouping(PROCESS_COMPONENT));
 
         // Generate processed message
         GBolt<?> processedMessageBolt = new GRichBolt(PROCESSED_MESSAGE_GENERATION, new GenerateProcessedMessageBolt(), config.getActionBoltHints());
@@ -88,7 +89,9 @@ public class AuthorisationReversalTopology extends AbstractTopology {
 
         // Topology
         StormTopology topology = TopologyFactory.generateTopology(kafkaEventReader,
-                Arrays.asList(kafkaEventProcess, getDataBolt, processedMessageBolt, eventGeneratorBolt, kafkaEventSuccessProducer, errorHandlingBolt, kafkaEventErrorProducer));
+                Arrays.asList(
+                        processBolt, getDataBolt, processedMessageBolt, eventGeneratorBolt, kafkaEventSuccessProducer,
+                        errorHandlingBolt, kafkaEventErrorProducer));
 
         LOG.info("{} Topology created, submitting it to storm...", TOPOLOGY_NAME);
 
