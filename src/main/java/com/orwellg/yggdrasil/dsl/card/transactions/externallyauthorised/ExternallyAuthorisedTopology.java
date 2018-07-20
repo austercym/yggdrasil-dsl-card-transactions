@@ -26,7 +26,7 @@ public class ExternallyAuthorisedTopology extends AbstractTopology {
 
     public static final String PROPERTIES_FILE = "externally-authorised-topology.properties";
     private static final Logger LOG = LogManager.getLogger(ExternallyAuthorisedTopology.class);
-    private static final String TOPOLOGY_NAME = "yggdrasil-cards-externally-authorised";
+    private static final String TOPOLOGY_NAME = "yggdrasil-card-externally-authorised";
     private static final String BOLT_NAME_PREFIX = "externallyAuthorised";
     private static final String KAFKA_EVENT_READER_COMPONENT = BOLT_NAME_PREFIX + "Reader";
     private static final String PROCESS_COMPONENT = BOLT_NAME_PREFIX + "Process";
