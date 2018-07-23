@@ -1,12 +1,14 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageType;
 import com.orwellg.umbrella.avro.types.commons.Decimal;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.yggdrasil.card.transaction.commons.DuplicateChecker;
 import com.orwellg.yggdrasil.card.transaction.commons.bolts.Fields;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
+import com.orwellg.yggdrasil.card.transaction.commons.validation.TransactionOrderValidatorFactory;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.tuple.Tuple;
 import org.junit.Before;
@@ -25,8 +27,9 @@ public class GenericMessageProcessingBoltTest {
 
     @Before
     public void setUp() {
-        bolt = new GenericMessageProcessingBolt();
+        bolt = new GenericMessageProcessingBolt(MessageType.FINANCIAL_REVERSAL);
         bolt.declareFieldsDefinition();
+        bolt.setOrderValidator(TransactionOrderValidatorFactory.getAlwaysValid());
     }
 
     private boolean isNullOrZero(Decimal amount) {

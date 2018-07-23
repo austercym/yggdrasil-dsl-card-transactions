@@ -1,6 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.authorisationreversal.bolts;
 
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageType;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
@@ -8,6 +9,9 @@ import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.card.transaction.commons.DuplicateChecker;
 import com.orwellg.yggdrasil.card.transaction.commons.MessageProcessedFactory;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
+import com.orwellg.yggdrasil.card.transaction.commons.validation.TransactionOrderValidator;
+import com.orwellg.yggdrasil.card.transaction.commons.validation.TransactionOrderValidatorFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.validation.ValidationResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -24,15 +28,21 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
     private static final Logger LOG = LogManager.getLogger(GenerateProcessedMessageBolt.class);
 
     private DuplicateChecker duplicateChecker;
+    private TransactionOrderValidator orderValidator;
 
     void setDuplicateChecker(DuplicateChecker duplicateChecker) {
         this.duplicateChecker = duplicateChecker;
+    }
+
+    void setOrderValidator(TransactionOrderValidator orderValidator) {
+        this.orderValidator = orderValidator;
     }
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
         setDuplicateChecker(new DuplicateChecker());
+        setOrderValidator(TransactionOrderValidatorFactory.get(MessageType.AUTH_REVERSAL));
     }
 
     @Override
@@ -64,9 +74,11 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
                         "{}Processing duplicated message. ProviderMessageId: {}",
                         logPrefix, event.getProviderMessageId());
             } else {
-            if (event.getSettlementAmount().compareTo(lastTransaction.getEarmarkAmount().abs()) > 0) {
-                throw new IllegalArgumentException("Authorisation reversal amount is greater than earmarked amount");
-            }
+                orderValidator.validate(transactionList).throwIfInvalid();
+
+                if (event.getSettlementAmount().compareTo(lastTransaction.getEarmarkAmount().abs()) > 0) {
+                    throw new IllegalArgumentException("Authorisation reversal amount is greater than earmarked amount");
+                }
             }
 
             MessageProcessed processedMessage = isDuplicate

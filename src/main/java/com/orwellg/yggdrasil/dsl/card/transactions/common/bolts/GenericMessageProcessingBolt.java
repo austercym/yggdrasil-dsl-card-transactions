@@ -1,6 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.common.bolts;
 
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
+import com.orwellg.umbrella.avro.types.cards.MessageType;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
@@ -9,6 +10,8 @@ import com.orwellg.yggdrasil.card.transaction.commons.DuplicateChecker;
 import com.orwellg.yggdrasil.card.transaction.commons.MessageProcessedFactory;
 import com.orwellg.yggdrasil.card.transaction.commons.bolts.Fields;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
+import com.orwellg.yggdrasil.card.transaction.commons.validation.TransactionOrderValidator;
+import com.orwellg.yggdrasil.card.transaction.commons.validation.TransactionOrderValidatorFactory;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,15 +30,26 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
     private static final Logger LOG = LogManager.getLogger(GenericMessageProcessingBolt.class);
 
     private DuplicateChecker duplicateChecker;
+    private TransactionOrderValidator orderValidator;
+    private MessageType messageType;
+
+    public GenericMessageProcessingBolt(MessageType messageType) {
+        this.messageType = messageType;
+    }
 
     void setDuplicateChecker(DuplicateChecker duplicateChecker) {
         this.duplicateChecker = duplicateChecker;
+    }
+
+    void setOrderValidator(TransactionOrderValidator orderValidator) {
+        this.orderValidator = orderValidator;
     }
 
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
         setDuplicateChecker(new DuplicateChecker());
+        setOrderValidator(TransactionOrderValidatorFactory.get(messageType));
     }
 
     @Override
@@ -66,6 +80,8 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
                 LOG.info("{}Ignore message. It has been already processed.", logPrefix);
                 result = MessageProcessedFactory.from(eventData, lastTransaction);
             } else {
+                orderValidator.validate(transactionList).throwIfInvalid();
+
                 result = MessageProcessedFactory.from(eventData);
                 calculateNewValues(eventData, result, lastTransaction);
             }

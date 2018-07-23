@@ -1,5 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.secondpresentment;
 
+import com.orwellg.umbrella.avro.types.cards.MessageType;
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
 import com.orwellg.umbrella.commons.storm.topology.TopologyFactory;
@@ -64,7 +65,9 @@ public class SecondPresentmentTopology extends AbstractTopology {
         GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadTransactionListBolt(PROPERTIES_FILE), config.getActionBoltHints());
         getDataBolt.addGrouping(new ShuffleGrouping(MAP_EVENT));
 
-        GBolt<?> processBolt = new GRichBolt(PROCESS_MESSAGE, new GenericMessageProcessingBolt(),
+        GBolt<?> processBolt = new GRichBolt(
+                PROCESS_MESSAGE,
+                new GenericMessageProcessingBolt(MessageType.SEC_PRESENTMENT),
                 config.getActionBoltHints());
         processBolt.addGrouping(new ShuffleGrouping(GET_DATA));
 

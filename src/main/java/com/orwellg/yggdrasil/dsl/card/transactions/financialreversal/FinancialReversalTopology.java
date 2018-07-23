@@ -1,5 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.financialreversal;
 
+import com.orwellg.umbrella.avro.types.cards.MessageType;
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfig;
 import com.orwellg.umbrella.commons.storm.config.topology.TopologyConfigFactory;
 import com.orwellg.umbrella.commons.storm.topology.TopologyFactory;
@@ -14,8 +15,8 @@ import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
 import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.EventToTransactionInfoBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.LoadTransactionListBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.GenericMessageProcessingBolt;
+import com.orwellg.yggdrasil.dsl.card.transactions.common.bolts.LoadTransactionListBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.generated.StormTopology;
@@ -64,7 +65,10 @@ public class FinancialReversalTopology extends AbstractTopology {
         GBolt<?> getDataBolt = new GRichBolt(GET_DATA, new LoadTransactionListBolt(PROPERTIES_FILE), config.getActionBoltHints());
         getDataBolt.addGrouping(new ShuffleGrouping(MAP_EVENT));
 
-        GBolt<?> processBolt = new GRichBolt(PROCESS_MESSAGE, new GenericMessageProcessingBolt(), config.getActionBoltHints());
+        GBolt<?> processBolt = new GRichBolt(
+                PROCESS_MESSAGE,
+                new GenericMessageProcessingBolt(MessageType.FINANCIAL_REVERSAL),
+                config.getActionBoltHints());
         processBolt.addGrouping(new ShuffleGrouping(GET_DATA));
 
         GBolt<?> eventGeneratorBolt = new GRichBolt(EVENT_GENERATOR, new KafkaEventGeneratorBolt(), config.getActionBoltHints());
