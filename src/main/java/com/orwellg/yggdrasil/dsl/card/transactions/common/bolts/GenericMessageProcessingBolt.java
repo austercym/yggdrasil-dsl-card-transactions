@@ -7,7 +7,7 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.card.transaction.commons.DuplicateChecker;
-import com.orwellg.yggdrasil.card.transaction.commons.MessageProcessedFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.MessageProcessedBuilder;
 import com.orwellg.yggdrasil.card.transaction.commons.bolts.Fields;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import com.orwellg.yggdrasil.card.transaction.commons.validation.TransactionOrderValidator;
@@ -78,11 +78,11 @@ public class GenericMessageProcessingBolt extends BasicRichBolt {
             CardTransaction lastTransaction = transactionList.get(0);
             if (duplicateChecker.isDuplicate(eventData, transactionList)) {
                 LOG.info("{}Ignore message. It has been already processed.", logPrefix);
-                result = MessageProcessedFactory.from(eventData, lastTransaction);
+                result = MessageProcessedBuilder.from(eventData, lastTransaction);
             } else {
                 orderValidator.validate(transactionList).throwIfInvalid();
 
-                result = MessageProcessedFactory.from(eventData);
+                result = MessageProcessedBuilder.from(eventData);
                 calculateNewValues(eventData, result, lastTransaction);
             }
 

@@ -7,7 +7,7 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.card.transaction.commons.DuplicateChecker;
-import com.orwellg.yggdrasil.card.transaction.commons.MessageProcessedFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.MessageProcessedBuilder;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -82,7 +82,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
                 LOG.info(
                         " Key: {} | ProcessId: {} | Processing duplicated message. ProviderMessageId: {}",
                         key, originalProcessId, presentment.getProviderMessageId());
-                messageProcessed = MessageProcessedFactory.from(presentment, lastTransaction);
+                messageProcessed = MessageProcessedBuilder.from(presentment, lastTransaction);
             } else {
                 if (lastTransaction != null) {
                     lastEarmarkAmount = ObjectUtils.firstNonNull(lastTransaction.getEarmarkAmount(), BigDecimal.ZERO);
@@ -102,7 +102,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
                     throw new Exception("Either last transaction or linked account must be provided");
                 }
 
-                messageProcessed = MessageProcessedFactory.from(presentment);
+                messageProcessed = MessageProcessedBuilder.from(presentment);
 
                 messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(earmarkAmount));
                 messageProcessed.setEarmarkCurrency(clientAccountCurrency);

@@ -7,11 +7,10 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.card.transaction.commons.DuplicateChecker;
-import com.orwellg.yggdrasil.card.transaction.commons.MessageProcessedFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.MessageProcessedBuilder;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import com.orwellg.yggdrasil.card.transaction.commons.validation.TransactionOrderValidator;
 import com.orwellg.yggdrasil.card.transaction.commons.validation.TransactionOrderValidatorFactory;
-import com.orwellg.yggdrasil.card.transaction.commons.validation.ValidationResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -82,7 +81,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
             }
 
             MessageProcessed processedMessage = isDuplicate
-                    ? MessageProcessedFactory.from(event, lastTransaction)
+                    ? MessageProcessedBuilder.from(event, lastTransaction)
                     : generateMessageProcessed(event, lastTransaction, logPrefix);
 
             Map<String, Object> values = new HashMap<>();
@@ -103,7 +102,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
 
         LOG.debug("{}Generating GPS message processed", logPrefix);
 
-        MessageProcessed messageProcessed = MessageProcessedFactory.from(transactionInfo);
+        MessageProcessed messageProcessed = MessageProcessedBuilder.from(transactionInfo);
 
         messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(transactionInfo.getSettlementAmount()));
         messageProcessed.setEarmarkCurrency(lastTransaction.getInternalAccountCurrency());

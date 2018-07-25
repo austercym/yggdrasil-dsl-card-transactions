@@ -4,16 +4,19 @@ import com.datastax.driver.core.Session;
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.commons.repositories.scylla.AccountBalanceRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.CardSettingsRepository;
+import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.cards.TransactionMatchingRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.AccountBalanceRepositoryImpl;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.CardSettingsRepositoryImpl;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.TransactionMatchingRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.AccountBalance;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
 import com.orwellg.yggdrasil.card.transaction.commons.authorisation.services.AuthorisationDataService;
 import com.orwellg.yggdrasil.card.transaction.commons.config.ScyllaSessionFactory;
@@ -26,10 +29,7 @@ import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.tuple.Tuple;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
@@ -70,16 +70,18 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
         SpendingTotalAmountsRepository totalAmountsRepository = new SpendingTotalAmountsRepositoryImpl(session);
         AccountBalanceRepository accountBalanceRepository = new AccountBalanceRepositoryImpl(session);
         TransactionMatchingRepository matchingRepository = new TransactionMatchingRepositoryImpl(session);
+        CardTransactionRepository transactionRepository = new CardTransactionRepositoryImpl(session);
         TransactionMatcher transactionMatcher = new TransactionMatcher(matchingRepository);
         authorisationDataService = new AuthorisationDataService(
-                cardSettingsRepository, totalAmountsRepository, accountBalanceRepository, transactionMatcher);
+                cardSettingsRepository, totalAmountsRepository, accountBalanceRepository, transactionRepository, transactionMatcher);
     }
 
     @Override
     public void declareFieldsDefinition() {
         addFielsDefinition(Arrays.asList(
                 Fields.KEY, Fields.PROCESS_ID, Fields.EVENT_DATA,
-                Fields.CARD_SETTINGS, Fields.ACCOUNT_BALANCE, Fields.SPENDING_TOTALS, Fields.TRANSACTION_ID));
+                Fields.CARD_SETTINGS, Fields.ACCOUNT_BALANCE, Fields.SPENDING_TOTALS, Fields.TRANSACTION_ID,
+                Fields.TRANSACTION_LIST));
     }
 
     @Override
@@ -107,6 +109,10 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
                             ? CompletableFuture.completedFuture(null)
                             : CompletableFuture.supplyAsync(() ->
                             authorisationDataService.retrieveTotalAmounts(cardId, totalType, new Date()));
+            String transactionId = transactionIdFuture.get();
+            List<CardTransaction> transactionList = StringUtils.isNotEmpty(transactionId)
+                    ? authorisationDataService.retrieveHistory(transactionId)
+                    : null;
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
@@ -115,7 +121,8 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
             values.put(Fields.CARD_SETTINGS, settingsFuture.get());
             values.put(Fields.ACCOUNT_BALANCE, accountTransactionLogFuture.get());
             values.put(Fields.SPENDING_TOTALS, totalFuture.get());
-            values.put(Fields.TRANSACTION_ID, transactionIdFuture.get());
+            values.put(Fields.TRANSACTION_ID, transactionId);
+            values.put(Fields.TRANSACTION_LIST, transactionList);
 
             send(input, values);
 

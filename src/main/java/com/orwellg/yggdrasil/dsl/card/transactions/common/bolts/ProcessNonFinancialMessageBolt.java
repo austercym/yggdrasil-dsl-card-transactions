@@ -7,7 +7,7 @@ import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.card.transaction.commons.bolts.Fields;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
-import com.orwellg.yggdrasil.card.transaction.commons.MessageProcessedFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.MessageProcessedBuilder;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,7 +40,7 @@ public class ProcessNonFinancialMessageBolt extends BasicRichBolt {
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
             LOG.debug("{}Processing", logPrefix);
-            MessageProcessed result = MessageProcessedFactory.from(eventData);
+            MessageProcessed result = MessageProcessedBuilder.from(eventData);
 
             if (eventData.getSettlementAmount().compareTo(BigDecimal.ZERO) != 0) {
                 throw new IllegalArgumentException("Settlement amount cannot be non zero for a non financial transaction");

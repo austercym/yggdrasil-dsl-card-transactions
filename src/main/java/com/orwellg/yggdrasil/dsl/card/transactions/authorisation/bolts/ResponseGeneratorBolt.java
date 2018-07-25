@@ -4,6 +4,7 @@ import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.AccountBalance;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
+import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.card.transaction.commons.authorisation.services.AuthorisationResponseGenerator;
 import com.orwellg.yggdrasil.card.transaction.commons.authorisation.services.AuthorisationValidationResults;
@@ -17,6 +18,7 @@ import org.apache.storm.tuple.Tuple;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ResponseGeneratorBolt extends BasicRichBolt {
@@ -62,6 +64,8 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
                     (ValidationResult) input.getValueByField(Fields.VELOCITY_LIMITS_VALIDATION_RESULT);
             ValidationResult balanceValidationResult =
                     (ValidationResult) input.getValueByField(Fields.BALANCE_VALIDATION_RESULT);
+            List<CardTransaction> transactionList =
+                    (List<CardTransaction>) input.getValueByField(Fields.TRANSACTION_LIST);
 
             String logPrefix = String.format(
                     "[Key: %s, TransLink: %s, TxnId: %s, DebitCardId: %s, Token: %s, Amount: %s %s] ",
@@ -77,7 +81,7 @@ public class ResponseGeneratorBolt extends BasicRichBolt {
             validationResults.setTransactionTypeValidationResult(transactionTypeValidationResult);
             validationResults.setVelocityLimitsValidationResult(velocityLimitsValidationResult);
             MessageProcessed processedMessage = authorisationResponseGenerator.getMessageProcessed(
-                    transactionId, event, settings, accountBalance, validationResults);
+                    event, settings, accountBalance, transactionList, validationResults);
 
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, input.getStringByField(Fields.KEY));

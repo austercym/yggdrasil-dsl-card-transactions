@@ -42,6 +42,8 @@ public class GenerateProcessedMessageBoltTest {
                     historicalTransaction.setWirecardAmount(BigDecimal.ZERO);
                     historicalTransaction.setEarmarkAmount(BigDecimal.valueOf(earmarkAmount));
                     historicalTransaction.setProviderMessageId(String.valueOf(id));
+                    historicalTransaction.setInternalAccountId("account");
+                    historicalTransaction.setInternalAccountCurrency("ZLT");
                     return historicalTransaction;
                 })
                 .collect(Collectors.toList());

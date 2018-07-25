@@ -5,7 +5,6 @@ import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.commons.Decimal;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
-import com.orwellg.yggdrasil.card.transaction.commons.DuplicateChecker;
 import com.orwellg.yggdrasil.card.transaction.commons.bolts.Fields;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import org.apache.storm.task.OutputCollector;
@@ -69,10 +68,6 @@ public class GenerateProcessedMessageBoltTest {
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
 
-        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
-        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(false);
-        bolt.setDuplicateChecker(duplicateChecker);
-
         // act
         bolt.execute(input);
 
@@ -100,10 +95,6 @@ public class GenerateProcessedMessageBoltTest {
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
 
-        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
-        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(false);
-        bolt.setDuplicateChecker(duplicateChecker);
-
         // act
         bolt.execute(input);
 
@@ -130,10 +121,6 @@ public class GenerateProcessedMessageBoltTest {
 
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
-
-        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
-        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(false);
-        bolt.setDuplicateChecker(duplicateChecker);
 
         // act
         bolt.execute(input);
@@ -177,10 +164,6 @@ public class GenerateProcessedMessageBoltTest {
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
 
-        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
-        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(false);
-        bolt.setDuplicateChecker(duplicateChecker);
-
         // act
         bolt.execute(input);
 
@@ -205,52 +188,6 @@ public class GenerateProcessedMessageBoltTest {
     }
 
     @Test
-    public void executeWhenDuplicatedMessageShouldNotAffectBalances() {
-        // arrange
-        TransactionInfo transaction = new TransactionInfo();
-        transaction.setSettlementAmount(BigDecimal.valueOf(-19.09));
-        transaction.setSettlementCurrency("FOO");
-        transaction.setProviderMessageId("42");
-        Message message = new Message();
-        message.setTxnType("A");
-        message.setTxnStatCode("I");
-        transaction.setMessage(message);
-
-        Tuple input = mock(Tuple.class);
-        when(input.getValueByField(Fields.EVENT_DATA)).thenReturn(transaction);
-        when(input.getValueByField(Fields.TRANSACTION_LIST)).thenReturn(createTransactionHistory(-20.15));
-
-        OutputCollector collector = mock(OutputCollector.class);
-        bolt.setCollector(collector);
-
-        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
-        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(true);
-        bolt.setDuplicateChecker(duplicateChecker);
-
-        // act
-        bolt.execute(input);
-
-        // assert
-        verify(collector).emit(
-                any(Tuple.class),
-                argThat(result -> result.stream()
-                        .filter(MessageProcessed.class::isInstance)
-                        .map(MessageProcessed.class::cast)
-                        .anyMatch(messageProcessed ->
-                                isNullOrZero(messageProcessed.getClientAmount())
-                                        &&
-                                        isNullOrZero(messageProcessed.getEarmarkAmount())
-                                        &&
-                                        isNullOrZero(messageProcessed.getWirecardAmount())
-                                        &&
-                                        isEqual(messageProcessed.getTotalClientAmount(), 0)
-                                        &&
-                                        isEqual(messageProcessed.getTotalEarmarkAmount(), -20.15)
-                                        &&
-                                        isEqual(messageProcessed.getTotalWirecardAmount(), 0))));
-    }
-
-    @Test
     public void executeWhenTimeoutShouldRevertBalanceChanges() {
         // arrange
         TransactionInfo transaction = new TransactionInfo();
@@ -268,10 +205,6 @@ public class GenerateProcessedMessageBoltTest {
 
         OutputCollector collector = mock(OutputCollector.class);
         bolt.setCollector(collector);
-
-        DuplicateChecker duplicateChecker = mock(DuplicateChecker.class);
-        when(duplicateChecker.isDuplicate(any(), any())).thenReturn(false);
-        bolt.setDuplicateChecker(duplicateChecker);
 
         // act
         bolt.execute(input);

@@ -5,14 +5,11 @@ import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
-import com.orwellg.yggdrasil.card.transaction.commons.DuplicateChecker;
-import com.orwellg.yggdrasil.card.transaction.commons.MessageProcessedFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.MessageProcessedBuilder;
 import com.orwellg.yggdrasil.card.transaction.commons.bolts.Fields;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.storm.task.OutputCollector;
-import org.apache.storm.task.TopologyContext;
 import org.apache.storm.tuple.Tuple;
 
 import java.math.BigDecimal;
@@ -24,18 +21,6 @@ import java.util.Map;
 public class GenerateProcessedMessageBolt extends BasicRichBolt {
 
     private static final Logger LOG = LogManager.getLogger(GenerateProcessedMessageBolt.class);
-
-    private DuplicateChecker duplicateChecker;
-
-    void setDuplicateChecker(DuplicateChecker duplicateChecker) {
-        this.duplicateChecker = duplicateChecker;
-    }
-
-    @Override
-    public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
-        super.prepare(stormConf, context, collector);
-        setDuplicateChecker(new DuplicateChecker());
-    }
 
     @Override
     public void declareFieldsDefinition() {
@@ -64,12 +49,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
             MessageProcessed result;
             if (transactionList == null || transactionList.isEmpty()) {
                 LOG.info("{}No matching authorisation - no account balance changes required", logPrefix);
-                result = MessageProcessedFactory.from(event);
-            } else if (duplicateChecker.isDuplicate(event, transactionList)) {
-                LOG.info(
-                        "{}Processing duplicated message. ProviderMessageId: {}",
-                        logPrefix, event.getProviderMessageId());
-                result = MessageProcessedFactory.from(event, transactionList.get(0));
+                result = MessageProcessedBuilder.from(event);
             } else {
                 CardTransaction previousTransaction = transactionList.get(0);
                 LOG.info(
@@ -77,11 +57,16 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
                         logPrefix, previousTransaction.getMessageType(),
                         previousTransaction.getEarmarkAmount(), previousTransaction.getEarmarkCurrency(),
                         previousTransaction.getProviderMessageId());
-                if (BigDecimal.ZERO.compareTo(previousTransaction.getEarmarkAmount()) == 0) {
+                if (previousTransaction.getEarmarkAmount().compareTo(BigDecimal.ZERO) == 0) {
                     LOG.info(
                             "{}No earmark placed for the previous authorisation - no account balance changes required",
                             logPrefix);
-                    result = MessageProcessedFactory.from(event);
+                    result = MessageProcessedBuilder.from(event);
+                } else if (previousTransaction.getEarmarkAmount().compareTo(BigDecimal.ZERO) > 0) {
+                    LOG.info(
+                            "{}Earmark cleared for the previous authorisation - no account balance changes required",
+                            logPrefix);
+                    result = MessageProcessedBuilder.from(event);
                 } else if (event.getSettlementAmount().compareTo(previousTransaction.getEarmarkAmount()) != 0) {
                     throw new IllegalArgumentException("Settlement amount is different than earmarked amount");
                 } else {
@@ -105,7 +90,7 @@ public class GenerateProcessedMessageBolt extends BasicRichBolt {
     private MessageProcessed revertPreviousAuthorisation(
             TransactionInfo transactionInfo, CardTransaction lastTransaction) {
 
-        MessageProcessed messageProcessed = MessageProcessedFactory.from(transactionInfo);
+        MessageProcessed messageProcessed = MessageProcessedBuilder.from(transactionInfo);
 
         messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(transactionInfo.getSettlementAmount().abs()));
         messageProcessed.setEarmarkCurrency(lastTransaction.getInternalAccountCurrency());
