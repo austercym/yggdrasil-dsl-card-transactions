@@ -3,11 +3,8 @@ package com.orwellg.yggdrasil.dsl.card.transactions.accounting.bolts;
 import com.google.gson.Gson;
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.command.accounting.*;
-import com.orwellg.umbrella.avro.types.commons.KeyValue;
 import com.orwellg.umbrella.avro.types.commons.TransactionType;
-import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
-import com.orwellg.umbrella.commons.types.cards.CardAccountingTags;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.umbrella.commons.utils.enums.CommandTypes;
@@ -184,7 +181,7 @@ public class AccountingCommandBolt extends BasicRichBolt {
         commandData.getTransactionInfo().setDirection(TransactionDirection.INTERNAL);
         commandData.getTransactionInfo().setTransactionType(transactionType);
 
-        commandData.setAccountingTags(getAccountingTags(processed));
+        commandData.setAccountingTags(getAccountingTags(processId, processed));
         return commandData;
     }
 

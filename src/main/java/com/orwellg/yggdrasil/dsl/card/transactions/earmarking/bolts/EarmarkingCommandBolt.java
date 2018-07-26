@@ -179,7 +179,7 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
         commandData.getTransactionInfo().setTransactionType(transactionType);
         commandData.getTransactionInfo().setData(gson.toJson(processed));
 
-        commandData.setAccountingTags(getAccountingTags(processed));
+        commandData.setAccountingTags(getAccountingTags(processId, processed));
         return commandData;
     }
 

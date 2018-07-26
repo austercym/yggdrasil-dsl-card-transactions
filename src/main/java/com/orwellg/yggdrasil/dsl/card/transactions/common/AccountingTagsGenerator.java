@@ -1,19 +1,21 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.common;
 
+import com.google.common.collect.Lists;
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.commons.KeyValue;
 import com.orwellg.umbrella.avro.types.gps.Message;
 import com.orwellg.umbrella.commons.types.cards.CardAccountingTags;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public final class AccountingTagsGenerator {
 
-    public static List<KeyValue> getAccountingTags(MessageProcessed processed) {
+    public static List<KeyValue> getAccountingTags(String processId, MessageProcessed processed) {
         Message request = processed.getRequest();
-        List<KeyValue> tags = new ArrayList<>();
+        List<KeyValue> tags = Lists.newArrayList(
+                new KeyValue(CardAccountingTags.TRANSACTION_ID.getTag(), processed.getTransactionId()),
+                new KeyValue(CardAccountingTags.PROCESS_ID.getTag(), processId));
         if (processed.getMessageType() != null) {
             Collections.addAll(
                     tags,
