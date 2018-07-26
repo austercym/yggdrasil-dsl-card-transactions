@@ -10,13 +10,19 @@ import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.umbrella.commons.utils.enums.CommandTypes;
 import com.orwellg.umbrella.commons.utils.enums.KafkaHeaders;
 import com.orwellg.umbrella.commons.utils.enums.Systems;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfig;
 import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import com.orwellg.yggdrasil.commons.factories.ClusterFactory;
 import com.orwellg.yggdrasil.commons.net.Cluster;
 import com.orwellg.yggdrasil.commons.net.Node;
 import com.orwellg.yggdrasil.commons.utils.enums.SpecialAccountTypes;
 import com.orwellg.yggdrasil.dsl.card.transactions.earmarking.EarmarkingTopology;
+import com.orwellg.yggdrasil.net.client.producer.CommandProducerConfig;
+import com.orwellg.yggdrasil.net.client.producer.GeneratorIdCommandProducer;
 import org.apache.commons.lang.StringUtils;
+import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.common.security.auth.SecurityProtocol;
+import org.apache.kafka.common.utils.Time;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -24,6 +30,7 @@ import org.apache.storm.task.TopologyContext;
 import org.apache.storm.tuple.Tuple;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.*;
 
 import static com.orwellg.yggdrasil.dsl.card.transactions.common.AccountingTagsGenerator.getAccountingTags;
@@ -35,23 +42,40 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
     private static final Logger LOG = LogManager.getLogger(EarmarkingCommandBolt.class);
 
     private Cluster processorCluster;
+    private GeneratorIdCommandProducer idGenerator;
     private Gson gson;
 
     void setProcessorCluster(Cluster processorCluster) {
         this.processorCluster = processorCluster;
     }
 
+    void setIdGenerator(GeneratorIdCommandProducer idGenerator) {
+        this.idGenerator = idGenerator;
+    }
+
     @SuppressWarnings("rawtypes")
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
-        initialiseProcessorCluster();
+        TopologyConfig topologyConfig = TopologyConfigFactory.getTopologyConfig(EarmarkingTopology.PROPERTIES_FILE);
+        initialiseProcessorCluster(topologyConfig);
+        initialiseIdGeneratorClient(topologyConfig);
         this.gson = new Gson();
     }
 
-    protected void initialiseProcessorCluster() {
-        processorCluster = ClusterFactory.createCluster(
-                TopologyConfigFactory.getTopologyConfig(EarmarkingTopology.PROPERTIES_FILE).getNetworkConfig());
+    protected void initialiseProcessorCluster(TopologyConfig topologyConfig) {
+        setProcessorCluster(ClusterFactory.createCluster(
+                topologyConfig.getNetworkConfig()));
+    }
+
+    private void initialiseIdGeneratorClient(TopologyConfig topologyConfig) {
+        Properties props = new Properties();
+        props.setProperty(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, SecurityProtocol.PLAINTEXT.name());
+        props.setProperty(CommandProducerConfig.BOOTSTRAP_SERVERS_CONFIG, topologyConfig.getZookeeperConnection());
+        props.setProperty(CommandProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+        props.setProperty(CommandProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+
+        setIdGenerator(new GeneratorIdCommandProducer(new CommandProducerConfig(props), 1, Time.SYSTEM));
     }
 
     @Override
@@ -94,7 +118,8 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
                             wirecardAccountId,
                             BalanceUpdateType.NONE,
                             TransactionType.DEBIT,
-                            processId);
+                            processId,
+                            logPrefix);
                 } else if (isReleaseEarmark(processed)) {
                     LOG.info("{}Release available balance", logPrefix);
                     command = generateCommand(
@@ -104,7 +129,8 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
                             processed.getInternalAccountId(),
                             BalanceUpdateType.AVAILABLE,
                             TransactionType.CREDIT,
-                            processId);
+                            processId,
+                            logPrefix);
                 }
                 LOG.info("{}Accounting command created: {}", logPrefix, command);
 
@@ -154,7 +180,11 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
             MessageProcessed processed,
             String debitAccount, BalanceUpdateType debitAccountUpdateType,
             String creditAccount, BalanceUpdateType creditAccountUpdateType,
-            TransactionType transactionType, String processId) {
+            TransactionType transactionType, String processId, String logPrefix) {
+
+        String accountingId = generateId(logPrefix);
+        LOG.info("{}Generating earmark accounting command with id: {}", logPrefix, accountingId);
+
         AccountingCommandData commandData = new AccountingCommandData();
         commandData.setAccountingInfo(new AccountingInfo());
         commandData.setEntryOrigin(Systems.CARDS_GPS.getSystem());
@@ -173,7 +203,7 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
         commandData.getTransactionInfo().setAmount(DecimalTypeUtils.toDecimal(
                 processed.getEarmarkAmount().getValue().abs()));
         commandData.getTransactionInfo().setCurrency(processed.getEarmarkCurrency());
-        commandData.getTransactionInfo().setId(processId);
+        commandData.getTransactionInfo().setId(accountingId);
         commandData.getTransactionInfo().setSystem(Systems.CARDS_GPS.getSystem());
         commandData.getTransactionInfo().setDirection(TransactionDirection.INTERNAL);
         commandData.getTransactionInfo().setTransactionType(transactionType);
@@ -196,5 +226,16 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
             processorNode = listNodes.get(randomNode);
         }
         return processorNode;
+    }
+
+    private String generateId(String logPrefix) {
+        try {
+            return idGenerator.getGeneralUniqueId();
+        } catch (Exception e) {
+            LOG.warn(
+                    "{}Id generator client exception, a random id has been generated",
+                    logPrefix, e);
+            return UUID.randomUUID().toString() + "_" + Instant.now().hashCode();
+        }
     }
 }

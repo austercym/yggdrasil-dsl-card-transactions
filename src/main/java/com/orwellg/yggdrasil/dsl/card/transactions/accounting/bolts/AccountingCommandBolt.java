@@ -92,7 +92,8 @@ public class AccountingCommandBolt extends BasicRichBolt {
                             processed.getInternalAccountId(),
                             wirecardAccountId,
                             TransactionType.DEBIT,
-                            processId);
+                            processId,
+                            logPrefix);
                 } else if (isClientCredit(processed)) {
                     LOG.info("{}Credit client", logPrefix);
                     command = generateCommand(
@@ -100,7 +101,8 @@ public class AccountingCommandBolt extends BasicRichBolt {
                             wirecardAccountId,
                             processed.getInternalAccountId(),
                             TransactionType.CREDIT,
-                            processId);
+                            processId,
+                            logPrefix);
                 }
                 LOG.info("{}Accounting command created: {}", logPrefix, command);
 
@@ -157,7 +159,10 @@ public class AccountingCommandBolt extends BasicRichBolt {
     private AccountingCommandData generateCommand(
             MessageProcessed processed,
             String debitAccount, String creditAccount,
-            TransactionType transactionType, String processId) {
+            TransactionType transactionType, String processId, String logPrefix) {
+
+        LOG.info("{}Generating accounting command with id: {}", logPrefix, processId);
+
         AccountingCommandData commandData = new AccountingCommandData();
         commandData.setAccountingInfo(new AccountingInfo());
         commandData.setEntryOrigin(Systems.CARDS_GPS.getSystem());
