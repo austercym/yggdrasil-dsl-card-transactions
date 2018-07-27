@@ -106,16 +106,19 @@ public class AccountingCommandBolt extends BasicRichBolt {
                 }
                 LOG.info("{}Accounting command created: {}", logPrefix, command);
 
+                String processorNodeTopic = processorNode.getTopic();
+                LOG.info("{}Processor node topic: {}", logPrefix, processorNodeTopic);
+
                 Map<String, Object> values = new HashMap<>();
                 values.put(Fields.KEY, key);
                 values.put(Fields.PROCESS_ID, processId);
                 values.put(Fields.RESULT, command);
                 values.put(Fields.COMMAND_KEY, processId);
                 values.put(Fields.COMMAND_NAME, CommandTypes.ACCOUNTING_COMMAND_RECEIVED.getCommandName());
-                values.put(Fields.TOPIC, processorNode.getTopic());
+                values.put(Fields.TOPIC, processorNodeTopic);
                 values.put(Fields.HEADERS, addHeaderValue(
                         headers, KafkaHeaders.REPLY_TO.getKafkaHeader(), accountingResponseTopic.getBytes()));
-                LOG.debug("{}Reply to header: {}", logPrefix, accountingResponseTopic);
+                LOG.info("{}Reply-To header: {}", logPrefix, accountingResponseTopic);
                 send(input, values);
             } else {
                 LOG.info("{}No accounting operation required", logPrefix);

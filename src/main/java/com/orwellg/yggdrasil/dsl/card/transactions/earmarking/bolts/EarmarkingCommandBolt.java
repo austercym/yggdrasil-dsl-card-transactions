@@ -108,6 +108,7 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
                 String wirecardAccountId = processorNode.getSpecialAccount(SpecialAccountTypes.GPS.getLiteral());
 
                 AccountingCommandData command = null;
+                String accountingId = generateId(logPrefix);
                 if (isPutEarmark(processed)) {
                     LOG.info("{}Block available balance", logPrefix);
 
@@ -119,6 +120,7 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
                             BalanceUpdateType.NONE,
                             TransactionType.DEBIT,
                             processId,
+                            accountingId,
                             logPrefix);
                 } else if (isReleaseEarmark(processed)) {
                     LOG.info("{}Release available balance", logPrefix);
@@ -130,20 +132,24 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
                             BalanceUpdateType.AVAILABLE,
                             TransactionType.CREDIT,
                             processId,
+                            accountingId,
                             logPrefix);
                 }
                 LOG.info("{}Accounting command created: {}", logPrefix, command);
+
+                String processorNodeTopic = processorNode.getTopic();
+                LOG.info("{}Processor node topic: {}", logPrefix, processorNodeTopic);
 
                 Map<String, Object> values = new HashMap<>();
                 values.put(Fields.KEY, key);
                 values.put(Fields.PROCESS_ID, processId);
                 values.put(Fields.RESULT, command);
-                values.put(Fields.COMMAND_KEY, processId);
+                values.put(Fields.COMMAND_KEY, accountingId);
                 values.put(Fields.COMMAND_NAME, CommandTypes.ACCOUNTING_COMMAND_RECEIVED.getCommandName());
-                values.put(Fields.TOPIC, processorNode.getTopic());
+                values.put(Fields.TOPIC, processorNodeTopic);
                 values.put(Fields.HEADERS, addHeaderValue(
                         headers, KafkaHeaders.REPLY_TO.getKafkaHeader(), accountingResponseTopic.getBytes()));
-                LOG.debug("{}Reply to header: {}", logPrefix, accountingResponseTopic);
+                LOG.info("{}Reply-To header: {}", logPrefix, accountingResponseTopic);
                 send(input, values);
             } else {
                 LOG.info("{}No earmark operation required", logPrefix);
@@ -180,9 +186,8 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
             MessageProcessed processed,
             String debitAccount, BalanceUpdateType debitAccountUpdateType,
             String creditAccount, BalanceUpdateType creditAccountUpdateType,
-            TransactionType transactionType, String processId, String logPrefix) {
+            TransactionType transactionType, String processId, String accountingId, String logPrefix) {
 
-        String accountingId = generateId(logPrefix);
         LOG.info("{}Generating earmark accounting command with id: {}", logPrefix, accountingId);
 
         AccountingCommandData commandData = new AccountingCommandData();
