@@ -6,8 +6,8 @@ import com.orwellg.umbrella.avro.types.cards.MessageType;
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
-import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
+import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt;
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
@@ -83,8 +83,9 @@ public class LoadDataBolt extends JoinFutureBolt<MessageProcessed> {
         try {
             CompletableFuture<SpendingTotalAmounts> totalAmountsFuture = retrieveTotalAmounts(
                     eventData.getDebitCardId(), eventData.getSpendGroup(), logPrefix);
-            CompletableFuture<CardTransaction> cardTransactionFuture = MessageType.PRESENTMENT.equals(eventData.getMessageType())
-                    ? retrieveCardTransaction(eventData.getProviderTransactionId(), logPrefix)
+            CompletableFuture<CardTransaction> cardTransactionFuture =
+                    isPresentment(eventData)
+                            ? retrieveCardTransaction(eventData.getTransactionId(), logPrefix)
                     : CompletableFuture.completedFuture(null);
 
             Map<String, Object> values = new HashMap<>();
@@ -102,12 +103,16 @@ public class LoadDataBolt extends JoinFutureBolt<MessageProcessed> {
         }
     }
 
-    private CompletableFuture<CardTransaction> retrieveCardTransaction(String gpsTransactionLink, String logPrefix) {
+    private boolean isPresentment(MessageProcessed eventData) {
+        return MessageType.PRESENTMENT.equals(eventData.getMessageType());
+    }
+
+    private CompletableFuture<CardTransaction> retrieveCardTransaction(String transactionId, String logPrefix) {
         return CompletableFuture.supplyAsync(
                 () -> {
-                    LOG.info("{}Retrieving card transactions for ProviderTransactionId={} ...", logPrefix, gpsTransactionLink);
-                    List<CardTransaction> cardTransactions = cardTransactionRepository.getCardTransaction(gpsTransactionLink);
-                    LOG.info("{}Card transactions retrieved for ProviderTransactionId={}: {}", logPrefix, gpsTransactionLink, cardTransactions);
+                    LOG.info("{}Retrieving card transactions for TransactionId={} ...", logPrefix, transactionId);
+                    List<CardTransaction> cardTransactions = cardTransactionRepository.getCardTransaction(transactionId);
+                    LOG.info("{}Card transactions retrieved for TransactionId={}: {}", logPrefix, transactionId, cardTransactions);
                     if (cardTransactions == null || cardTransactions.isEmpty()) {
                         return null;
                     }

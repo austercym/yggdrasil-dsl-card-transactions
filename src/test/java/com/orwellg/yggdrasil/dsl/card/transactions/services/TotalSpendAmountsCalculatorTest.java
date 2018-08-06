@@ -386,4 +386,54 @@ public class TotalSpendAmountsCalculatorTest {
         assertTrue(BigDecimal.valueOf(19).compareTo(result.getDailyTotal()) == 0);
         assertTrue(BigDecimal.valueOf(2015).compareTo(result.getAnnualTotal()) == 0);
     }
+
+    @Test
+    public void revertAuthorisationEarmarkWhenAuthorisationTodayTransactionAndTodayTotalSpendShouldDecreaseDailyAndAnnualTotalSpend() throws ParseException {
+        // arrange
+        MessageProcessed messageProcessed = new MessageProcessed();
+        messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-19 19:09:42").getTime());
+        messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(9));
+
+        SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
+        lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-19T07:55:42Z"));
+        lastSpendingTotalAmounts.setDailyTotal(BigDecimal.valueOf(19));
+        lastSpendingTotalAmounts.setAnnualTotal(BigDecimal.valueOf(2015));
+
+        Instant mockedNow = Instant.parse("2015-09-19t21:15:20Z");
+        when(dateTimeServiceMock.now()).thenReturn(mockedNow);
+
+        // act
+        SpendingTotalAmounts result = calculator.revertAuthorisationEarmark(messageProcessed, lastSpendingTotalAmounts);
+
+        // assert
+        assertNotNull(result);
+        assertEquals(mockedNow, result.getTimestamp());
+        assertEquals(0, BigDecimal.valueOf(10).compareTo(result.getDailyTotal()));
+        assertEquals(0, BigDecimal.valueOf(2006).compareTo(result.getAnnualTotal()));
+    }
+
+    @Test
+    public void revertAuthorisationEarmarkWhenAuthorisationYesterdayTransactionAndTodayTotalSpendShouldDecreaseAnnualTotalSpend() throws ParseException {
+        // arrange
+        MessageProcessed messageProcessed = new MessageProcessed();
+        messageProcessed.setTransactionTimestamp(sdf.parse("2015-09-18 19:09:42").getTime());
+        messageProcessed.setEarmarkAmount(DecimalTypeUtils.toDecimal(9));
+
+        SpendingTotalAmounts lastSpendingTotalAmounts = new SpendingTotalAmounts();
+        lastSpendingTotalAmounts.setTimestamp(Instant.parse("2015-09-19T07:55:42Z"));
+        lastSpendingTotalAmounts.setDailyTotal(BigDecimal.valueOf(19));
+        lastSpendingTotalAmounts.setAnnualTotal(BigDecimal.valueOf(2015));
+
+        Instant mockedNow = Instant.parse("2015-09-19t21:15:20Z");
+        when(dateTimeServiceMock.now()).thenReturn(mockedNow);
+
+        // act
+        SpendingTotalAmounts result = calculator.revertAuthorisationEarmark(messageProcessed, lastSpendingTotalAmounts);
+
+        // assert
+        assertNotNull(result);
+        assertEquals(mockedNow, result.getTimestamp());
+        assertEquals(0, BigDecimal.valueOf(19).compareTo(result.getDailyTotal()));
+        assertEquals(0, BigDecimal.valueOf(2006).compareTo(result.getAnnualTotal()));
+    }
 }

@@ -94,4 +94,61 @@ public class TotalSpendAmountsCalculator {
         }
         return newAmount;
     }
+
+    public SpendingTotalAmounts revertAuthorisationEarmark(MessageProcessed messageProcessed, SpendingTotalAmounts lastSpendingTotalAmounts) {
+
+        Instant now = dateTimeService.now();
+        LocalDate today = now.atZone(ZoneId.of("UTC")).toLocalDate();
+        LocalDateTime transactionTimestamp = LocalDateTime.from(
+                Instant.ofEpochMilli(messageProcessed.getTransactionTimestamp()).atZone(ZoneId.of("UTC")));
+        LocalDate lastUpdateDate = lastSpendingTotalAmounts == null || lastSpendingTotalAmounts.getTimestamp() == null
+                ? null
+                : lastSpendingTotalAmounts.getTimestamp().atZone(ZoneId.of("UTC")).toLocalDate();
+        BigDecimal daily = lastUpdateDate != null
+                &&
+                lastUpdateDate.equals(today) ?
+                lastSpendingTotalAmounts.getDailyTotal() :
+                BigDecimal.ZERO;
+        BigDecimal annual = lastUpdateDate != null
+                &&
+                lastUpdateDate.getYear() == today.getYear() ?
+                lastSpendingTotalAmounts.getAnnualTotal() :
+                BigDecimal.ZERO;
+        BigDecimal earmarkAmount =
+                ObjectUtils.firstNonNull(messageProcessed.getEarmarkAmount(), DecimalTypeUtils.toDecimal(0)).getValue();
+
+        if (earmarkAmount.compareTo(BigDecimal.ZERO) == 0) {
+            LOG.info(
+                    "Spending total amounts will not be reverted - transaction's earmark amount is zero for ProviderTransactionId={}",
+                    messageProcessed.getProviderTransactionId());
+        } else if (earmarkAmount.compareTo(BigDecimal.ZERO) < 0) {
+            LOG.info(
+                    "Spending total amounts will not be reverted - transaction's earmark amount is negative ProviderTransactionId={}",
+                    messageProcessed.getProviderTransactionId());
+        } else {
+            if (transactionTimestamp.toLocalDate().equals(today)) {
+                daily = daily.subtract(earmarkAmount);
+            } else {
+                LOG.info(
+                        "Daily spending total amount will not be reverted - ProviderTransactionId={}, TransactionTimestamp={}",
+                        messageProcessed.getProviderTransactionId(), transactionTimestamp);
+            }
+
+            if (transactionTimestamp.getYear() == today.getYear()) {
+                annual = annual.subtract(earmarkAmount);
+            } else {
+                LOG.info(
+                        "Annual spending total amount will not be reverted - ProviderTransactionId={}, TransactionTimestamp={}",
+                        messageProcessed.getProviderTransactionId(), transactionTimestamp);
+            }
+        }
+
+        SpendingTotalAmounts result = new SpendingTotalAmounts();
+        result.setAnnualTotal(annual);
+        result.setDailyTotal(daily);
+        result.setTimestamp(now);
+        result.setDebitCardId(messageProcessed.getDebitCardId());
+        result.setTotalType(messageProcessed.getSpendGroup());
+        return result;
+    }
 }

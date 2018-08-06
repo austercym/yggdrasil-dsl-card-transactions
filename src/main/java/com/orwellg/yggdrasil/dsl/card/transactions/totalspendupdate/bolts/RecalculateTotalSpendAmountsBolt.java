@@ -49,7 +49,7 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
         String processId = input.getStringByField(Fields.PROCESS_ID);
         String logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
 
-        LOG.info("{}Recalculating total spend amounts", logPrefix, key, processId);
+        LOG.info("{}Recalculating total spend amounts", logPrefix);
 
         try {
             MessageProcessed eventData = (MessageProcessed) input.getValueByField(Fields.EVENT_DATA);
@@ -59,14 +59,18 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
 
             if (isAcceptedAuthorisation(eventData) || isDebitPresentment(eventData)) {
                 newSpendAmounts = calculator.recalculate(eventData, spendAmounts, authorisation);
+            } else if (isExternallyAcceptedAuthorisation(eventData)) {
+                LOG.info("{}Reverting total spend amount increased on authorisation", logPrefix);
+                newSpendAmounts = calculator.revertAuthorisationEarmark(eventData, spendAmounts);
             } else {
                 LOG.info(
                         "{}No need for recalculation of spend total amounts - MessageType={}, ResponseStatus={}",
                         logPrefix,
-                        eventData == null ? null : eventData.getMessageType(),
-                        eventData == null || eventData.getEhiResponse() == null ? null : eventData.getEhiResponse().getResponsestatus());
+                        eventData.getMessageType(),
+                        eventData.getEhiResponse() == null ? null : eventData.getEhiResponse().getResponsestatus());
             }
 
+            LOG.info("{} Before: {}. After: {}", logPrefix, spendAmounts, newSpendAmounts);
             Map<String, Object> values = new HashMap<>();
             values.put(Fields.KEY, key);
             values.put(Fields.PROCESS_ID, processId);
@@ -77,6 +81,12 @@ public class RecalculateTotalSpendAmountsBolt extends BasicRichBolt {
             LOG.error("{}Error recalculating total spend amounts. Message: {},", logPrefix, e.getMessage(), e);
             error(e, input);
         }
+    }
+
+    private boolean isExternallyAcceptedAuthorisation(MessageProcessed eventData) {
+        return MessageType.AUTHORISATION.equals(eventData.getMessageType())
+                && eventData.getRequest() != null
+                && "Y".equalsIgnoreCase(eventData.getRequest().getAuthorisedByGPS());
     }
 
     private boolean isAcceptedAuthorisation(MessageProcessed eventData) {

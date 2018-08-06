@@ -1,5 +1,6 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate;
 
+import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.commons.beans.config.kafka.SubscriberKafkaConfiguration;
 import com.orwellg.umbrella.commons.storm.topology.TopologyFactory;
 import com.orwellg.umbrella.commons.storm.topology.component.base.AbstractTopology;
@@ -12,11 +13,11 @@ import com.orwellg.umbrella.commons.storm.topology.generic.grouping.ShuffleGroup
 import com.orwellg.umbrella.commons.storm.topology.generic.spout.GSpout;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaBoltWrapper;
 import com.orwellg.umbrella.commons.storm.wrapper.kafka.KafkaSpoutWrapper;
+import com.orwellg.yggdrasil.card.transaction.commons.bolts.GenericEventMappingBolt;
 import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfig;
 import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate.bolts.LoadDataBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate.bolts.RecalculateTotalSpendAmountsBolt;
-import com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate.bolts.ResponseEventProcessBolt;
 import com.orwellg.yggdrasil.dsl.card.transactions.totalspendupdate.bolts.SaveTotalSpendAmountsBolt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -68,7 +69,8 @@ public class TotalSpendUpdateTopology extends AbstractTopology {
         // -------------------------------------------------------
         // Process events
         // -------------------------------------------------------
-        GBolt<?> kafkaEventProcess = new GRichBolt(PROCESS_COMPONENT, new ResponseEventProcessBolt(), config.getEventProcessHints());
+        GBolt<?> kafkaEventProcess = new GRichBolt(
+                PROCESS_COMPONENT, new GenericEventMappingBolt<>(MessageProcessed.class), config.getEventProcessHints());
         for (String spoutName : spoutNames) {
             kafkaEventProcess.addGrouping(new ShuffleGrouping(spoutName, KafkaSpout.EVENT_SUCCESS_STREAM));
         }
