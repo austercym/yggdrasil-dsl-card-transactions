@@ -69,13 +69,17 @@ public class EarmarkingCommandBolt extends BasicRichBolt {
     }
 
     private void initialiseIdGeneratorClient(TopologyConfig topologyConfig) {
+        LOG.info(
+                "Id generator's {} = {}",
+                CommandProducerConfig.BOOTSTRAP_SERVERS_CONFIG, topologyConfig.getZookeeperConnection());
         Properties props = new Properties();
         props.setProperty(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, SecurityProtocol.PLAINTEXT.name());
         props.setProperty(CommandProducerConfig.BOOTSTRAP_SERVERS_CONFIG, topologyConfig.getZookeeperConnection());
         props.setProperty(CommandProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
         props.setProperty(CommandProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
 
-        setIdGenerator(new GeneratorIdCommandProducer(new CommandProducerConfig(props), 1, Time.SYSTEM));
+        setIdGenerator(new GeneratorIdCommandProducer(
+                new CommandProducerConfig(props), 1, Time.SYSTEM, topologyConfig.getGeneratorIdConfig()));
     }
 
     @Override
