@@ -96,17 +96,19 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
             String cardId = eventData.getDebitCardId();
             SpendGroup totalType = eventData.getSpendGroup();
 
-            CompletableFuture<String> transactionIdFuture = eventData.isBalanceEnquiry() || eventData.isPinChange()
+            CompletableFuture<String> transactionIdFuture =
+                    eventData.isBalanceEnquiry() || eventData.isPinChange() || eventData.isAvsCheck()
                     ? CompletableFuture.completedFuture(null)
                     : CompletableFuture.supplyAsync(
                         () -> authorisationDataService.tryMatchTransaction(eventData.getMessage()));
             CompletableFuture<CardSettings> settingsFuture = CompletableFuture.supplyAsync(() ->
                     authorisationDataService.retrieveCardSettings(cardId));
-            CompletableFuture<AccountBalance> accountTransactionLogFuture = eventData.isPinChange()
+            CompletableFuture<AccountBalance> accountTransactionLogFuture =
+                    eventData.isPinChange() || eventData.isAvsCheck()
                     ? CompletableFuture.completedFuture(null)
                     : settingsFuture.thenApply(settings -> authorisationDataService.retrieveAccountBalance(settings));
             CompletableFuture<SpendingTotalAmounts> totalFuture =
-                    eventData.isBalanceEnquiry() || eventData.isPinChange()
+                    eventData.isBalanceEnquiry() || eventData.isPinChange() || eventData.isAvsCheck()
                             ? CompletableFuture.completedFuture(null)
                             : CompletableFuture.supplyAsync(() ->
                             authorisationDataService.retrieveTotalAmounts(cardId, totalType, new Date()));
