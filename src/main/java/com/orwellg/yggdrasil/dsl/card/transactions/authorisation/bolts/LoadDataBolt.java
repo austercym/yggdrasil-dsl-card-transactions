@@ -96,16 +96,17 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
             String cardId = eventData.getDebitCardId();
             SpendGroup totalType = eventData.getSpendGroup();
 
-            CompletableFuture<String> transactionIdFuture = CompletableFuture.supplyAsync(() ->
-                    StringUtils.defaultIfEmpty(
-                            authorisationDataService.tryMatchTransaction(eventData.getMessage()),
-                            processId));
+            CompletableFuture<String> transactionIdFuture = eventData.isBalanceEnquiry() || eventData.isPinChange()
+                    ? CompletableFuture.completedFuture(null)
+                    : CompletableFuture.supplyAsync(
+                        () -> authorisationDataService.tryMatchTransaction(eventData.getMessage()));
             CompletableFuture<CardSettings> settingsFuture = CompletableFuture.supplyAsync(() ->
                     authorisationDataService.retrieveCardSettings(cardId));
-            CompletableFuture<AccountBalance> accountTransactionLogFuture = settingsFuture.thenApply(settings ->
-                    authorisationDataService.retrieveAccountBalance(settings));
+            CompletableFuture<AccountBalance> accountTransactionLogFuture = eventData.isPinChange()
+                    ? CompletableFuture.completedFuture(null)
+                    : settingsFuture.thenApply(settings -> authorisationDataService.retrieveAccountBalance(settings));
             CompletableFuture<SpendingTotalAmounts> totalFuture =
-                    eventData.getIsBalanceEnquiry()
+                    eventData.isBalanceEnquiry() || eventData.isPinChange()
                             ? CompletableFuture.completedFuture(null)
                             : CompletableFuture.supplyAsync(() ->
                             authorisationDataService.retrieveTotalAmounts(cardId, totalType, new Date()));
@@ -121,7 +122,7 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
             values.put(Fields.CARD_SETTINGS, settingsFuture.get());
             values.put(Fields.ACCOUNT_BALANCE, accountTransactionLogFuture.get());
             values.put(Fields.SPENDING_TOTALS, totalFuture.get());
-            values.put(Fields.TRANSACTION_ID, transactionId);
+            values.put(Fields.TRANSACTION_ID, StringUtils.defaultIfEmpty(transactionId, processId));
             values.put(Fields.TRANSACTION_LIST, transactionList);
 
             send(input, values);

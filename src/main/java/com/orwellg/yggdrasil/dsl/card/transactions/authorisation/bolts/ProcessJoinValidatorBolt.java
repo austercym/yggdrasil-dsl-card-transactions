@@ -62,19 +62,19 @@ public class ProcessJoinValidatorBolt extends JoinFutureBolt<TransactionInfo> {
             ValidationResult statusValidationResult =
                     authorisationValidationService.validateCardStatus(key, eventData, settings);
             ValidationResult transactionTypeValidationResult =
-                    eventData.getIsBalanceEnquiry()
+                    eventData.isBalanceEnquiry() || eventData.isPinChange()
                             ? null
                             : authorisationValidationService.validateTransactionType(key, eventData, settings);
             ValidationResult merchantValidationResult =
-                    eventData.getIsBalanceEnquiry()
+                    eventData.isBalanceEnquiry() || eventData.isPinChange()
                             ? null
                             : authorisationValidationService.validateMerchant(key, eventData, settings);
             ValidationResult velocityLimitsValidationResult =
-                    eventData.getIsBalanceEnquiry()
+                    eventData.isBalanceEnquiry() || eventData.isPinChange()
                             ? null
                             : authorisationValidationService.validateVelocityLimits(key, eventData, settings, totalAmounts);
             ValidationResult balanceValidationResult =
-                    eventData.getIsBalanceEnquiry()
+                    eventData.isBalanceEnquiry() || eventData.isPinChange()
                             ? null
                             : authorisationValidationService.validateBalance(key, eventData, accountBalance);
 
