@@ -204,7 +204,7 @@
 		<profile>
 			<id>sid</id>
 			<properties>
-				<zookeeper.host>hdf-node1:2181,hdf-node2:2181,hdf-node3:2181</zookeeper.host>
+				<zookeeper.host>sid-hdf-g1-0.node.sid.consul:2181,sid-hdf-g1-1.node.sid.consul:2181,sid-hdf-g1-2.node.sid.consul:2181</zookeeper.host>
 			</properties>
 
 			<dependencies>
