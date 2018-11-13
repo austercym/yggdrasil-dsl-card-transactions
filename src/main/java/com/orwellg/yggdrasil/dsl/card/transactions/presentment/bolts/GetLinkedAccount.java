@@ -1,11 +1,15 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
 import com.datastax.driver.core.Session;
+import com.orwellg.umbrella.commons.config.ScyllaConfig;
 import com.orwellg.umbrella.commons.repositories.scylla.LinkedAccountRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.LinkedAccountRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.LinkedAccount;
+import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.yggdrasil.card.transaction.commons.config.ScyllaSessionFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfig;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -67,11 +71,13 @@ public class GetLinkedAccount extends BasicRichBolt {
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
-        initializeCardRepositories();
+        String zookeeperHost = (String) stormConf.get(Constants.ZK_HOST_LIST_PROPERTY);
+        TopologyConfig topologyConfig = TopologyConfigFactory.getTopologyConfig(propertyFile, zookeeperHost);
+        initializeCardRepositories(topologyConfig);
     }
 
-    private void initializeCardRepositories() {
-        Session session = ScyllaSessionFactory.getSession(propertyFile);
+    private void initializeCardRepositories(TopologyConfig topologyConfig) {
+        Session session = ScyllaSessionFactory.getCardsSession(topologyConfig.getScyllaConfig());
         repository = new LinkedAccountRepositoryImpl(session);
     }
 }

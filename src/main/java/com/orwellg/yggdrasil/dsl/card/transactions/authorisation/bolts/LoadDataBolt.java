@@ -18,8 +18,11 @@ import com.orwellg.umbrella.commons.types.scylla.entities.cards.AccountBalance;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardSettings;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
+import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.yggdrasil.card.transaction.commons.authorisation.services.AuthorisationDataService;
 import com.orwellg.yggdrasil.card.transaction.commons.config.ScyllaSessionFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfig;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import com.orwellg.yggdrasil.card.transaction.commons.transactionmatching.TransactionMatcher;
 import org.apache.commons.lang.StringUtils;
@@ -61,11 +64,13 @@ public class LoadDataBolt extends JoinFutureBolt<TransactionInfo> {
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
 
-        initializeCardRepositories();
+        String zookeeperHost = (String) stormConf.get(Constants.ZK_HOST_LIST_PROPERTY);
+        TopologyConfig topologyConfig = TopologyConfigFactory.getTopologyConfig(propertyFile, zookeeperHost);
+        initializeCardRepositories(topologyConfig);
     }
 
-    private void initializeCardRepositories() {
-        Session session = ScyllaSessionFactory.getSession(propertyFile);
+    private void initializeCardRepositories(TopologyConfig topologyConfig) {
+        Session session = ScyllaSessionFactory.getCardsSession(topologyConfig.getScyllaConfig());
         CardSettingsRepository cardSettingsRepository = new CardSettingsRepositoryImpl(session);
         SpendingTotalAmountsRepository totalAmountsRepository = new SpendingTotalAmountsRepositoryImpl(session);
         AccountBalanceRepository accountBalanceRepository = new AccountBalanceRepositoryImpl(session);

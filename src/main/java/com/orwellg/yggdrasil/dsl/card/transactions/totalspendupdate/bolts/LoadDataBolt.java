@@ -4,6 +4,7 @@ import com.datastax.driver.core.Session;
 import com.orwellg.umbrella.avro.types.cards.MessageProcessed;
 import com.orwellg.umbrella.avro.types.cards.MessageType;
 import com.orwellg.umbrella.avro.types.cards.SpendGroup;
+import com.orwellg.umbrella.commons.config.ScyllaConfig;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.SpendingTotalAmountsRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.SpendingTotalAmountsRepositoryImpl;
@@ -12,7 +13,10 @@ import com.orwellg.umbrella.commons.storm.topology.component.bolt.JoinFutureBolt
 import com.orwellg.umbrella.commons.storm.topology.component.spout.KafkaSpout;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.SpendingTotalAmounts;
+import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.yggdrasil.card.transaction.commons.config.ScyllaSessionFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfig;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -58,11 +62,13 @@ public class LoadDataBolt extends JoinFutureBolt<MessageProcessed> {
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
 
-        initializeCardRepositories();
+        String zookeeperHost = (String) stormConf.get(Constants.ZK_HOST_LIST_PROPERTY);
+        TopologyConfig topologyConfig = TopologyConfigFactory.getTopologyConfig(propertyFile, zookeeperHost);
+        initializeCardRepositories(topologyConfig);
     }
 
-    private void initializeCardRepositories() {
-        Session session = ScyllaSessionFactory.getSession(propertyFile);
+    private void initializeCardRepositories(TopologyConfig topologyConfig) {
+        Session session = ScyllaSessionFactory.getCardsSession(topologyConfig.getScyllaConfig());
         amountsRepository = new SpendingTotalAmountsRepositoryImpl(session);
         cardTransactionRepository = new CardTransactionRepositoryImpl(session);
     }

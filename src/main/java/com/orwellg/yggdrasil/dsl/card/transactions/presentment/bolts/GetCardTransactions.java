@@ -1,13 +1,17 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.presentment.bolts;
 
 import com.datastax.driver.core.Session;
+import com.orwellg.umbrella.commons.config.ScyllaConfig;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.cards.TransactionMatchingRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.CardTransactionRepositoryImpl;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.TransactionMatchingRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.generics.scylla.ScyllaRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
+import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.yggdrasil.card.transaction.commons.config.ScyllaSessionFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfig;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import com.orwellg.yggdrasil.card.transaction.commons.transactionmatching.TransactionMatcher;
 import org.apache.logging.log4j.LogManager;
@@ -50,7 +54,9 @@ public class GetCardTransactions extends ScyllaRichBolt<List<CardTransaction>, T
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
-        Session session = ScyllaSessionFactory.getSession(propertyFile);
+        String zookeeperHost = (String) stormConf.get(Constants.ZK_HOST_LIST_PROPERTY);
+        TopologyConfig topologyConfig = TopologyConfigFactory.getTopologyConfig(propertyFile, zookeeperHost);
+        Session session = ScyllaSessionFactory.getCardsSession(topologyConfig.getScyllaConfig());
         repository = new CardTransactionRepositoryImpl(session);
         matchingRepository = new TransactionMatchingRepositoryImpl(session);
         transactionMatcher = new TransactionMatcher(matchingRepository);

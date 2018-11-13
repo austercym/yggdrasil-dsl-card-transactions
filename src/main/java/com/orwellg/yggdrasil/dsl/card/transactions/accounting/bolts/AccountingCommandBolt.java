@@ -6,10 +6,12 @@ import com.orwellg.umbrella.avro.types.command.accounting.*;
 import com.orwellg.umbrella.avro.types.commons.TransactionType;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.utils.avro.DecimalTypeUtils;
+import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.umbrella.commons.utils.enums.CommandTypes;
 import com.orwellg.umbrella.commons.utils.enums.KafkaHeaders;
 import com.orwellg.umbrella.commons.utils.enums.Systems;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfig;
 import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import com.orwellg.yggdrasil.commons.factories.ClusterFactory;
 import com.orwellg.yggdrasil.commons.net.Cluster;
@@ -36,6 +38,7 @@ public class AccountingCommandBolt extends BasicRichBolt {
 
     private Cluster processorCluster;
     private Gson gson;
+    private String accountingResponseTopic;
 
     void setProcessorCluster(Cluster processorCluster) {
         this.processorCluster = processorCluster;
@@ -45,13 +48,18 @@ public class AccountingCommandBolt extends BasicRichBolt {
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
-        initialiseProcessorCluster();
+        String zookeeperHost = (String) stormConf.get(Constants.ZK_HOST_LIST_PROPERTY);
+        TopologyConfig topologyConfig = TopologyConfigFactory.getTopologyConfig(
+                AccountingTopology.PROPERTIES_FILE, zookeeperHost);
+        accountingResponseTopic = topologyConfig
+                .getKafkaPublisherBoltConfig()
+                .getTopic().getName().get(0);
+        initialiseProcessorCluster(topologyConfig);
         this.gson = new Gson();
     }
 
-    protected void initialiseProcessorCluster() {
-        processorCluster = ClusterFactory.createCluster(
-                TopologyConfigFactory.getTopologyConfig(AccountingTopology.PROPERTIES_FILE).getNetworkConfig());
+    protected void initialiseProcessorCluster(TopologyConfig topologyConfig) {
+        processorCluster = ClusterFactory.createCluster(topologyConfig.getNetworkConfig());
     }
 
     @Override
@@ -73,10 +81,6 @@ public class AccountingCommandBolt extends BasicRichBolt {
             MessageProcessed processed = (MessageProcessed) input.getValueByField(Fields.EVENT_DATA);
             logPrefix = String.format("[Key: %s][ProcessId: %s] ", key, processId);
             String headers = input.getStringByField(Fields.HEADERS);
-            String accountingResponseTopic = TopologyConfigFactory
-                    .getTopologyConfig(AccountingTopology.PROPERTIES_FILE)
-                    .getKafkaPublisherBoltConfig()
-                    .getTopic().getName().get(0);
 
             if (isAccountingRequired(processed)) {
                 LOG.debug("{}Generating accounting command", logPrefix);

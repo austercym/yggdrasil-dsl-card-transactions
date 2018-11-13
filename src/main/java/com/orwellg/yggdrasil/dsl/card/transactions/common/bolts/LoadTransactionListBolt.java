@@ -7,8 +7,11 @@ import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.CardTransacti
 import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.TransactionMatchingRepositoryImpl;
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
+import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.yggdrasil.card.transaction.commons.bolts.Fields;
 import com.orwellg.yggdrasil.card.transaction.commons.config.ScyllaSessionFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfig;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import com.orwellg.yggdrasil.card.transaction.commons.model.TransactionInfo;
 import com.orwellg.yggdrasil.card.transaction.commons.transactionmatching.TransactionMatcher;
 import org.apache.logging.log4j.LogManager;
@@ -41,12 +44,14 @@ public class LoadTransactionListBolt extends BasicRichBolt {
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
 
-        initializeCardRepositories();
+        String zookeeperHost = (String) stormConf.get(Constants.ZK_HOST_LIST_PROPERTY);
+        TopologyConfig topologyConfig = TopologyConfigFactory.getTopologyConfig(propertyFile, zookeeperHost);
+        initializeCardRepositories(topologyConfig);
         transactionMatcher = new TransactionMatcher(matchingRepository);
     }
 
-    private void initializeCardRepositories() {
-        Session session = ScyllaSessionFactory.getSession(propertyFile);
+    private void initializeCardRepositories(TopologyConfig topologyConfig) {
+        Session session = ScyllaSessionFactory.getCardsSession(topologyConfig.getScyllaConfig());
         transactionRepository = new CardTransactionRepositoryImpl(session);
         matchingRepository = new TransactionMatchingRepositoryImpl(session);
     }

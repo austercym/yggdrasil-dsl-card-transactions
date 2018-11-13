@@ -47,10 +47,10 @@ public class PresentmentTopology extends AbstractTopology {
     }
 
     @Override
-    public StormTopology load(String s) {
+    public StormTopology load(String zookeeperHost) {
         LOG.debug("Creating Card Presentments processing topology");
 
-        TopologyConfig config = TopologyConfigFactory.getTopologyConfig(PROPERTIES_FILE);
+        TopologyConfig config = TopologyConfigFactory.getTopologyConfig(PROPERTIES_FILE, zookeeperHost);
         int hintsSpout = config.getKafkaSpoutHints();
         int hintsProcessors = config.getActionBoltHints();
 

@@ -51,9 +51,9 @@ public class AccountingTopology extends AbstractTopology {
     }
 
     @Override
-    public StormTopology load(String s) {
+    public StormTopology load(String zookeeperHost) {
         // Read configuration params from the topology properties file and zookeeper
-        TopologyConfig config = TopologyConfigFactory.getTopologyConfig(PROPERTIES_FILE);
+        TopologyConfig config = TopologyConfigFactory.getTopologyConfig(PROPERTIES_FILE, zookeeperHost);
 
         // -------------------------------------------------------
         // Create the spouts that read events from Kafka

@@ -1,6 +1,7 @@
 package com.orwellg.yggdrasil.dsl.card.transactions.savetoscylla.bolts;
 
 import com.datastax.driver.core.Session;
+import com.orwellg.umbrella.commons.config.ScyllaConfig;
 import com.orwellg.umbrella.commons.repositories.scylla.CardTransactionRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.cards.TransactionMatchingRepository;
 import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.CardTransactionRepositoryImpl;
@@ -8,8 +9,11 @@ import com.orwellg.umbrella.commons.repositories.scylla.impl.cards.TransactionMa
 import com.orwellg.umbrella.commons.storm.topology.component.bolt.BasicRichBolt;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.CardTransaction;
 import com.orwellg.umbrella.commons.types.scylla.entities.cards.TransactionMatching;
+import com.orwellg.umbrella.commons.utils.constants.Constants;
 import com.orwellg.umbrella.commons.utils.enums.CardTransactionEvents;
 import com.orwellg.yggdrasil.card.transaction.commons.config.ScyllaSessionFactory;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfig;
+import com.orwellg.yggdrasil.card.transaction.commons.config.TopologyConfigFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.storm.task.OutputCollector;
@@ -36,11 +40,13 @@ public class SaveBolt extends BasicRichBolt {
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         super.prepare(stormConf, context, collector);
-        setScyllaConnectionParameters();
+        String zookeeperHost = (String) stormConf.get(Constants.ZK_HOST_LIST_PROPERTY);
+        TopologyConfig topologyConfig = TopologyConfigFactory.getTopologyConfig(propertyFile, zookeeperHost);
+        setScyllaConnectionParameters(topologyConfig);
     }
 
-    private void setScyllaConnectionParameters() {
-        Session session = ScyllaSessionFactory.getSession(propertyFile);
+    private void setScyllaConnectionParameters(TopologyConfig topologyConfig) {
+        Session session = ScyllaSessionFactory.getCardsSession(topologyConfig.getScyllaConfig());
         transactionRepository = new CardTransactionRepositoryImpl(session);
         matchingRepository = new TransactionMatchingRepositoryImpl(session);
     }
