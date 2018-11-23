@@ -19,9 +19,7 @@
 		<cassandra.mapping.version>3.2.0</cassandra.mapping.version>
 		<storm.cassandra.version>1.1.4-orwellg</storm.cassandra.version>
 
-		<storm.topology>com.orwellg.yggdrasil.dsl.card.transactions.authorisation.AuthorisationDSLTopology</storm.topology>
-
-		<zookeeper.host>localhost:2181</zookeeper.host>
+		<storm.scope>compile</storm.scope>
 	</properties>
 
 	<dependencies>
@@ -37,6 +35,25 @@
 			<groupId>org.apache.storm</groupId>
 			<artifactId>storm-core</artifactId>
 			<version>${storm.version}</version>
+			<scope>${storm.scope}</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>log4j</groupId>
+					<artifactId>log4j</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.logging.log4j</groupId>
+					<artifactId>log4j-slf4j-impl</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>log4j-over-slf4j</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
         <dependency>
             <groupId>org.apache.storm</groupId>
@@ -70,11 +87,6 @@
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
-					<archive>
-						<manifest>
-							<mainClass>${storm.topology}</mainClass>
-						</manifest>
-					</archive>
 				</configuration>
 				<executions>
 					<execution>
@@ -103,7 +115,6 @@
 					<includeProjectDependencies>true</includeProjectDependencies>
 					<includePluginDependencies>false</includePluginDependencies>
 					<classpathScope>compile</classpathScope>
-					<mainClass>${storm.topology}</mainClass>
 				</configuration>
 			</plugin>
 
@@ -131,108 +142,11 @@
 	</build>
 
 	<profiles>
-		<!-- Development environment @ my laptop -->
 		<profile>
-			<id>dev</id>
+            <id>deploy</id>
 			<properties>
-				<zookeeper.host>localhost:2181</zookeeper.host>
+				<storm.scope>provided</storm.scope>
 			</properties>
-		</profile>
-		<!-- AWS / UAT -->
-		<profile>
-			<id>aws</id>
-			<properties>
-				<zookeeper.host>hdf-group1-0:2181,hdf-group1-1:2181,hdf-group2-1:2181</zookeeper.host>
-			</properties>
-
-			<dependencies>
-				<dependency>
-					<groupId>org.apache.storm</groupId>
-					<artifactId>storm-core</artifactId>
-					<version>${storm.version}</version>
-					<scope>provided</scope>
-					<exclusions>
-						<exclusion>
-							<groupId>org.slf4j</groupId>
-							<artifactId>slf4j-log4j12</artifactId>
-						</exclusion>
-						<exclusion>
-							<groupId>log4j</groupId>
-							<artifactId>log4j</artifactId>
-						</exclusion>
-					</exclusions>
-				</dependency>
-				<dependency>
-					<groupId>org.apache.storm</groupId>
-					<artifactId>storm-cassandra</artifactId>
-					<version>${storm.cassandra.version}</version>
-					<scope>compile</scope>
-				</dependency>
-			</dependencies>
-		</profile>
-		<!-- SID -->
-		<profile>
-			<id>sid</id>
-			<properties>
-				<zookeeper.host>sid-hdf-g1-0.node.sid.consul:2181,sid-hdf-g1-1.node.sid.consul:2181,sid-hdf-g1-2.node.sid.consul:2181</zookeeper.host>
-			</properties>
-
-			<dependencies>
-				<dependency>
-					<groupId>org.apache.storm</groupId>
-					<artifactId>storm-core</artifactId>
-					<version>${storm.version}</version>
-					<scope>provided</scope>
-					<exclusions>
-						<exclusion>
-							<groupId>org.slf4j</groupId>
-							<artifactId>slf4j-log4j12</artifactId>
-						</exclusion>
-						<exclusion>
-							<groupId>log4j</groupId>
-							<artifactId>log4j</artifactId>
-						</exclusion>
-					</exclusions>
-				</dependency>
-				<dependency>
-					<groupId>org.apache.storm</groupId>
-					<artifactId>storm-cassandra</artifactId>
-					<version>${storm.cassandra.version}</version>
-					<scope>compile</scope>
-				</dependency>
-			</dependencies>
-		</profile>
-		<!-- Production environment @ production server -->
-		<profile>
-			<id>production</id>
-			<properties>
-				<zookeeper.host>hdf-node1:2181,hdf-node2:2181,hdf-node3:2181</zookeeper.host>
-			</properties>
-
-			<dependencies>
-				<dependency>
-					<groupId>org.apache.storm</groupId>
-					<artifactId>storm-core</artifactId>
-					<version>${storm.version}</version>
-					<scope>provided</scope>
-					<exclusions>
-						<exclusion>
-							<groupId>org.slf4j</groupId>
-							<artifactId>slf4j-log4j12</artifactId>
-						</exclusion>
-						<exclusion>
-							<groupId>log4j</groupId>
-							<artifactId>log4j</artifactId>
-						</exclusion>
-					</exclusions>
-				</dependency>
-				<dependency>
-					<groupId>org.apache.storm</groupId>
-					<artifactId>storm-cassandra</artifactId>
-					<version>${storm.cassandra.version}</version>
-					<scope>compile</scope>
-				</dependency>
-			</dependencies>
 		</profile>
 	</profiles>
 
