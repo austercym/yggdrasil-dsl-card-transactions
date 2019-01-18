@@ -107,7 +107,7 @@ pipeline {
             steps {
 
                     script {
-                        rtMaven.run pom: pomPath, goals: '-U clean test -Pdeploy'
+                        rtMaven.run pom: pomPath, goals: '-U clean compile test -Pdeploy'
                     }
                 
             }
@@ -118,6 +118,27 @@ pipeline {
                   }
             }
         }
+
+	stage('SonarAnalysis') {
+		agent {
+			docker {
+				image 'docker.registry.service.cicd.consul/sonarqube-scanner:latest'
+				args '-u root:root'
+				reuseNode true
+			}
+		}
+		steps {
+			withSonarQubeEnv('SonarQube') {
+				sh "sudo sonar-scanner -Dsonar.host.url=http://11.0.200.26:9000 -Dsonar.projectKey=${env.JOB_NAME.replace('/','_')} -Dsonar.sources=./src/main -Dsonar.java.binaries=."
+			}
+		}
+		post {
+                    always {
+                        echo 'inside post always sonar stage'
+			sh 'rm -rf .scannerwork'
+                    }
+                }
+	}
 
         stage('Build') {
             agent{
